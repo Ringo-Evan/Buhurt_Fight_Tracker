@@ -116,3 +116,4 @@ desktop.ini
 # dotenv
 .env
 .env.*
+CLAUDE.md
