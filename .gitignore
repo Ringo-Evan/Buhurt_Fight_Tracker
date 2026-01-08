@@ -1,5 +1,7 @@
-#prompt files
+# Prompt files and session notes
 *prompt*
+SESSION*.md
+NEXT_SESSION.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

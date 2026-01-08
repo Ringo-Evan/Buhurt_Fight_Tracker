@@ -60,7 +60,7 @@ class TestCountryServiceCreate:
         assert result == expected_country
         assert result.name == "Czech Republic"
         assert result.code == "CZE"
-        mock_repository.get_by_code.assert_awaited_once_with("CZE")
+        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deleted=False)
         mock_repository.create.assert_awaited_once_with(country_data)
 
     @pytest.mark.asyncio
@@ -95,7 +95,7 @@ class TestCountryServiceCreate:
         with pytest.raises(DuplicateCountryCodeError, match="Country with code CZE already exists"):
             await service.create(country_data)
 
-        mock_repository.get_by_code.assert_awaited_once_with("CZE")
+        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deleted=False)
         mock_repository.create.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -228,7 +228,7 @@ class TestCountryServiceRetrieve:
         # Assert
         assert result == expected_country
         assert result.id == country_id
-        mock_repository.get_by_id.assert_awaited_once_with(country_id)
+        mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deleted=False)
 
     @pytest.mark.asyncio
     async def test_get_by_id_raises_not_found_error_when_not_exists(self):
@@ -250,7 +250,7 @@ class TestCountryServiceRetrieve:
         with pytest.raises(CountryNotFoundError, match="Country not found"):
             await service.get_by_id(country_id)
 
-        mock_repository.get_by_id.assert_awaited_once_with(country_id)
+        mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deleted=False)
 
     @pytest.mark.asyncio
     async def test_get_by_code_returns_country_when_exists(self):
@@ -281,7 +281,7 @@ class TestCountryServiceRetrieve:
         # Assert
         assert result == expected_country
         assert result.code == "CZE"
-        mock_repository.get_by_code.assert_awaited_once_with("CZE")
+        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deleted=False)
 
 
 class TestCountryServiceDelete:

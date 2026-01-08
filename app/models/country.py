@@ -57,5 +57,27 @@ class Country(Base):
         nullable=False
     )
 
+    def __init__(self, **kwargs):
+        """
+        Initialize Country with Python-level defaults.
+
+        This ensures defaults are applied when creating instances programmatically
+        (not just when inserting to database), making the model work correctly in
+        tests, mocks, and outside database context.
+
+        Rationale: Prefer explicit Python defaults over relying solely on database
+        defaults. This makes the model portable and easier to test.
+        """
+        super().__init__(**kwargs)
+
+        # Apply Python defaults if not provided
+        # Database defaults (in mapped_column) will override these on insert
+        if 'id' not in kwargs:
+            self.id = uuid4()
+        if 'is_deleted' not in kwargs:
+            self.is_deleted = False
+        if 'created_at' not in kwargs:
+            self.created_at = datetime.utcnow()
+
     def __repr__(self) -> str:
         return f"<Country(id={self.id}, name='{self.name}', code='{self.code}', is_deleted={self.is_deleted})>"

@@ -201,6 +201,7 @@ class CountryRepository:
 
         Raises:
             ValueError: If either country not found
+            NotImplementedError: Team entity not yet implemented
         """
         old_country = await self.get_by_id(old_country_id, include_deleted=True)
         if old_country is None:
@@ -210,7 +211,9 @@ class CountryRepository:
         if new_country is None:
             raise ValueError("New country not found")
 
-        # In a real implementation, this would update all team.country_id references
+        # TODO: Implement when Team entity exists (Issue #33)
+        # This method requires the Team model to update team.country_id references
+        # Expected implementation:
         # query = (
         #     update(Team)
         #     .where(Team.country_id == old_country_id)
@@ -220,6 +223,9 @@ class CountryRepository:
         # await self.session.commit()
         # return result.rowcount
 
-        # Mock implementation for testing
-        await self.session.commit()
-        return 0
+        raise NotImplementedError(
+            "Country replacement requires Team entity implementation. "
+            "This method will update all team.country_id foreign key references "
+            "from old_country_id to new_country_id. "
+            "See Issue #33 (Team Implementation) and docs/domain/business-rules.md"
+        )
