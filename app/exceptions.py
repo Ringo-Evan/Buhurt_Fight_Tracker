@@ -28,3 +28,19 @@ class ValidationError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
+
+
+class TeamNotFoundError(Exception):
+    """Raised when a team is not found in the database."""
+
+    def __init__(self, message: str = "Team not found"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class InvalidCountryError(Exception):
+    """Raised when a team references an invalid or inactive country."""
+
+    def __init__(self, message: str = "Invalid country"):
+        self.message = message
+        super().__init__(self.message)

@@ -8,7 +8,12 @@ Uses UUID primary keys and SQLAlchemy 2.0 mapped_column style.
 from datetime import datetime, UTC
 from uuid import UUID, uuid4
 from sqlalchemy import Boolean, DateTime, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING, List
+
+# Type checking import to avoid circular import at runtime
+if TYPE_CHECKING:
+    from app.models.team import Team
 
 
 class Base(DeclarativeBase):
@@ -26,6 +31,11 @@ class Country(Base):
         code: ISO 3166-1 alpha-3 country code (3 uppercase letters)
         is_deleted: Soft delete flag (defaults to False)
         created_at: Timestamp of creation (auto-generated)
+
+        teams: Relationship to Team entities (lazy loaded)
+
+    Relationships:
+        - teams: One-to-Many with Team (back_populates="country")
     """
     __tablename__ = "countries"
 
@@ -57,6 +67,14 @@ class Country(Base):
         DateTime,
         default=lambda: datetime.now(UTC),
         nullable=False
+    )
+
+    # Relationships
+    teams: Mapped[List["Team"]] = relationship(
+        "Team",
+        back_populates="country",
+        lazy="select",  # Don't eager load teams when retrieving country
+        cascade="all, delete-orphan"  # If country deleted, cascade to teams
     )
 
     def __init__(self, **kwargs):
