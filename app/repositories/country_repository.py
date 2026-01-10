@@ -171,22 +171,28 @@ class CountryRepository:
             country_id: UUID of the country
 
         Returns:
-            Number of related entities
+            Number of related teams
+
+        Raises:
+            ValueError: If country not found
+            NotImplementedError: Team entity not yet implemented
         """
-        # For now, this returns a count from a hypothetical teams table
-        # In a real implementation, this would query the teams table
-        # Since teams don't exist yet, we'll return 0 for testing purposes
-        # The query would look like:
+        # Validate country exists
+        country = await self.get_by_id(country_id, include_deleted=True)
+        if country is None:
+            raise ValueError("Country not found")
+
+        # TODO: Implement when Team entity exists (Issue #33)
+        # Expected implementation:
         # query = select(func.count(Team.id)).where(Team.country_id == country_id)
         # result = await self.session.execute(query)
         # return result.scalar()
 
-        # Mock implementation for testing
-        query = select(func.count()).select_from(Country).where(Country.id == country_id)
-        result = await self.session.execute(query)
-        # This will return 0 or 1 depending on if country exists
-        # In real implementation, this would count related teams
-        return result.scalar()
+        raise NotImplementedError(
+            "Counting country relationships requires Team entity implementation. "
+            "This method will count all teams associated with the country. "
+            "See Issue #33 (Team Implementation) and docs/domain/business-rules.md"
+        )
 
     async def replace(self, old_country_id: UUID, new_country_id: UUID) -> int:
         """
