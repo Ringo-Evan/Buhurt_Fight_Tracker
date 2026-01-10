@@ -5,6 +5,7 @@ Provides fixtures for unit tests (mocks) and integration tests (Testcontainers).
 """
 
 import pytest
+import pytest_asyncio
 from uuid import uuid4
 from testcontainers.postgres import PostgresContainer
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -34,7 +35,7 @@ def postgres_container():
         yield postgres
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def db_engine(postgres_container):
     """
     Function-scoped async database engine.
@@ -52,10 +53,15 @@ async def db_engine(postgres_container):
     # Get connection URL from container
     connection_url = postgres_container.get_connection_url()
 
-    # Convert psycopg2 URL to asyncpg URL for async operations
-    # Testcontainers returns "postgresql+psycopg2://..." by default
+    # Convert to asyncpg URL for async operations
+    # Testcontainers may return "postgresql://..." or "postgresql+psycopg2://..."
     # We need "postgresql+asyncpg://..." for SQLAlchemy async
-    async_url = connection_url.replace("psycopg2", "asyncpg")
+    if "+psycopg2" in connection_url:
+        async_url = connection_url.replace("psycopg2", "asyncpg")
+    elif connection_url.startswith("postgresql://"):
+        async_url = connection_url.replace("postgresql://", "postgresql+asyncpg://")
+    else:
+        async_url = connection_url
 
     # Create async engine
     engine = create_async_engine(
@@ -78,7 +84,7 @@ async def db_engine(postgres_container):
     await engine.dispose()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session(db_engine):
     """
     Function-scoped async database session.

@@ -41,12 +41,16 @@ class CountryRepository:
         Raises:
             IntegrityError: If code violates unique constraint
         """
-        country = Country(**country_data)
-        self.session.add(country)
-        await self.session.commit()
-        await self.session.refresh(country)
-        return country
-
+        try:
+            country = Country(**country_data)
+            self.session.add(country)
+            await self.session.commit()
+            await self.session.refresh(country)
+            return country
+        except Exception as e:
+            await self.session.rollback()
+            raise e
+        
     async def get_by_id(self, country_id: UUID, include_deleted: bool = False) -> Country | None:
         """
         Retrieve a country by ID.
