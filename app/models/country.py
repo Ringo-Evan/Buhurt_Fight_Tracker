@@ -5,7 +5,7 @@ Implements soft delete pattern with is_deleted flag.
 Uses UUID primary keys and SQLAlchemy 2.0 mapped_column style.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID, uuid4
 from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -42,7 +42,9 @@ class Country(Base):
 
     code: Mapped[str] = mapped_column(
         String(3),
-        nullable=False
+        nullable=False,
+        unique=True,  # Enforce uniqueness at database level
+        index=True    # Optimize country code lookups
     )
 
     is_deleted: Mapped[bool] = mapped_column(
@@ -53,7 +55,7 @@ class Country(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
         nullable=False
     )
 
@@ -77,7 +79,7 @@ class Country(Base):
         if 'is_deleted' not in kwargs:
             self.is_deleted = False
         if 'created_at' not in kwargs:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(UTC)
 
     def __repr__(self) -> str:
         return f"<Country(id={self.id}, name='{self.name}', code='{self.code}', is_deleted={self.is_deleted})>"

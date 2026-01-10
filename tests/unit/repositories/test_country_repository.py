@@ -30,6 +30,7 @@ class TestCountryRepositoryCreate:
         """
         # Arrange
         mock_session = AsyncMock()
+        mock_session.add = MagicMock()  # session.add() is not async
         repository = CountryRepository(mock_session)
 
         country_data = {
@@ -63,6 +64,7 @@ class TestCountryRepositoryCreate:
         """
         # Arrange
         mock_session = AsyncMock()
+        mock_session.add = MagicMock()  # session.add() is not async
         mock_session.commit.side_effect = IntegrityError(
             statement="INSERT INTO countries...",
             params={},
@@ -638,6 +640,7 @@ class TestCountryRepositoryPermanentDelete:
         """
         # Arrange
         mock_session = AsyncMock()
+        mock_session.delete = MagicMock()  # session.delete() is not async
         country_id = uuid4()
         country = Country(
             id=country_id,
