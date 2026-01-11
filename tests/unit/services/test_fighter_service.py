@@ -77,7 +77,7 @@ class TestFighterServiceCreate:
         """
         Test creating fighter with non-existent team raises InvalidTeamError.
 
-        Arrange: Mock team repository returning None
+        Arrange: Mock team repository returning None (team doesn't exist at all)
         Act: Call service.create()
         Assert: InvalidTeamError raised with "Team not found"
         """
@@ -86,7 +86,8 @@ class TestFighterServiceCreate:
         mock_team_repo = AsyncMock(spec=TeamRepository)
 
         team_id = uuid4()
-        mock_team_repo.get_by_id.return_value = None  # Team doesn't exist
+        # Service checks twice: first with include_deleted=False, then with include_deleted=True
+        mock_team_repo.get_by_id.side_effect = [None, None]  # Team doesn't exist at all
 
         service = FighterService(mock_fighter_repo, mock_team_repo)
 
@@ -94,7 +95,7 @@ class TestFighterServiceCreate:
         with pytest.raises(InvalidTeamError, match="Team not found"):
             await service.create({"name": "John Smith", "team_id": team_id})
 
-        mock_team_repo.get_by_id.assert_awaited_once_with(team_id, include_deleted=False)
+        assert mock_team_repo.get_by_id.await_count == 2  # Checked twice
         mock_fighter_repo.create.assert_not_awaited()
 
     @pytest.mark.asyncio

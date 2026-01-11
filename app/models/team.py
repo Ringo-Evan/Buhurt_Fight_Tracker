@@ -8,9 +8,9 @@ Follows same patterns as Country model for consistency.
 
 from datetime import datetime, UTC
 from uuid import UUID, uuid4
+from typing import TYPE_CHECKING, List
 from sqlalchemy import Boolean, DateTime, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import TYPE_CHECKING
 
 # Import Base from country module to ensure single metadata instance
 from app.models.country import Base
@@ -19,7 +19,6 @@ from app.models.country import Base
 if TYPE_CHECKING:
     from app.models.country import Country
     from app.models.fighter import Fighter
-    from typing import List
 
 
 class Team(Base):
