@@ -18,6 +18,8 @@ from app.models.country import Base
 # Type checking import to avoid circular import at runtime
 if TYPE_CHECKING:
     from app.models.country import Country
+    from app.models.fighter import Fighter
+    from typing import List
 
 
 class Team(Base):
@@ -103,6 +105,13 @@ class Team(Base):
         lazy="joined",  # Eager load by default to avoid N+1 queries
         foreign_keys=[country_id],
         back_populates="teams"  # Will be added to Country model
+    )
+
+    fighters: Mapped[List["Fighter"]] = relationship(
+        "Fighter",
+        back_populates="team",
+        lazy="select",  # Not eager-loaded by default (fighters load team eagerly instead)
+        cascade="all, delete-orphan"  # Cascade operations to fighters
     )
 
     def __init__(self, **kwargs):

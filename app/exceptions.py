@@ -44,3 +44,19 @@ class InvalidCountryError(Exception):
     def __init__(self, message: str = "Invalid country"):
         self.message = message
         super().__init__(self.message)
+
+
+class FighterNotFoundError(Exception):
+    """Raised when a fighter is not found in the database."""
+
+    def __init__(self, message: str = "Fighter not found"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class InvalidTeamError(Exception):
+    """Raised when a fighter references an invalid or inactive team."""
+
+    def __init__(self, message: str = "Invalid team"):
+        self.message = message
+        super().__init__(self.message)
