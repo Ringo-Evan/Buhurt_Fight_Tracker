@@ -10,7 +10,10 @@ from uuid import uuid4
 from testcontainers.postgres import PostgresContainer
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
-from app.models.country import Base  # Import Base for table creation
+
+# Import all models to ensure proper relationship resolution
+# This must be done before Base.metadata.create_all() is called
+from app.models import Base, Country, Team, Fighter  # noqa: F401
 
 
 # ============================================================================
