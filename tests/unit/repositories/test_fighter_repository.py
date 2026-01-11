@@ -8,7 +8,7 @@ Following TDD approach - these tests are written before implementation.
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy.exc import IntegrityError
 
 # These imports will fail until implementation exists - that's expected in TDD
@@ -100,7 +100,7 @@ class TestFighterRepositoryGetById:
             name="United States",
             code="USA",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         team = Team(
@@ -108,7 +108,7 @@ class TestFighterRepositoryGetById:
             name="Team USA",
             country_id=country_id,
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
         team.country = country
 
@@ -117,7 +117,7 @@ class TestFighterRepositoryGetById:
             name="John Smith",
             team_id=team_id,
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
         fighter.team = team
 
@@ -201,7 +201,7 @@ class TestFighterRepositoryGetById:
             name="John Smith",
             team_id=uuid4(),
             is_deleted=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -237,7 +237,7 @@ class TestFighterRepositoryList:
             name="John Smith",
             team_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -270,14 +270,14 @@ class TestFighterRepositoryList:
             name="John Smith",
             team_id=team_id,
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
         fighter2 = Fighter(
             id=uuid4(),
             name="Jane Doe",
             team_id=team_id,
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -311,14 +311,14 @@ class TestFighterRepositoryList:
             name="John Smith",
             team_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
         fighter2 = Fighter(
             id=uuid4(),
             name="Jane Doe",
             team_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -351,7 +351,7 @@ class TestFighterRepositoryList:
             name="John Smith",
             team_id=team_id,
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -387,7 +387,7 @@ class TestFighterRepositorySoftDelete:
             name="John Smith",
             team_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -445,7 +445,7 @@ class TestFighterRepositoryUpdate:
             name="John Smith",
             team_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -482,7 +482,7 @@ class TestFighterRepositoryUpdate:
             name="John Smith",
             team_id=old_team_id,
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -536,7 +536,7 @@ class TestFighterRepositoryUpdate:
             name="John Smith",
             team_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()

@@ -8,7 +8,7 @@ Following TDD approach - these tests are written before implementation.
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy.exc import IntegrityError
 
 # These imports will fail until implementation exists - that's expected in TDD
@@ -47,7 +47,7 @@ class TestFighterServiceCreate:
             name="Team USA",
             country_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         fighter = Fighter(
@@ -55,7 +55,7 @@ class TestFighterServiceCreate:
             name="John Smith",
             team_id=team_id,
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_team_repo.get_by_id.return_value = team
@@ -117,7 +117,7 @@ class TestFighterServiceCreate:
             name="Defunct Team",
             country_id=uuid4(),
             is_deleted=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         # First call (include_deleted=False) returns None, second call (include_deleted=True) returns deleted team
@@ -196,7 +196,7 @@ class TestFighterServiceRetrieve:
             name="John Smith",
             team_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_fighter_repo.get_by_id.return_value = fighter
@@ -245,8 +245,8 @@ class TestFighterServiceRetrieve:
         mock_team_repo = AsyncMock(spec=TeamRepository)
 
         fighters = [
-            Fighter(id=uuid4(), name="John Smith", team_id=uuid4(), is_deleted=False, created_at=datetime.utcnow()),
-            Fighter(id=uuid4(), name="Jane Doe", team_id=uuid4(), is_deleted=False, created_at=datetime.utcnow())
+            Fighter(id=uuid4(), name="John Smith", team_id=uuid4(), is_deleted=False, created_at=datetime.now(UTC)),
+            Fighter(id=uuid4(), name="Jane Doe", team_id=uuid4(), is_deleted=False, created_at=datetime.now(UTC))
         ]
 
         mock_fighter_repo.list_all.return_value = fighters
@@ -275,8 +275,8 @@ class TestFighterServiceRetrieve:
 
         team_id = uuid4()
         fighters = [
-            Fighter(id=uuid4(), name="John Smith", team_id=team_id, is_deleted=False, created_at=datetime.utcnow()),
-            Fighter(id=uuid4(), name="Jane Doe", team_id=team_id, is_deleted=False, created_at=datetime.utcnow())
+            Fighter(id=uuid4(), name="John Smith", team_id=team_id, is_deleted=False, created_at=datetime.now(UTC)),
+            Fighter(id=uuid4(), name="Jane Doe", team_id=team_id, is_deleted=False, created_at=datetime.now(UTC))
         ]
 
         mock_fighter_repo.list_by_team.return_value = fighters
@@ -306,8 +306,8 @@ class TestFighterServiceRetrieve:
 
         country_id = uuid4()
         fighters = [
-            Fighter(id=uuid4(), name="John Smith", team_id=uuid4(), is_deleted=False, created_at=datetime.utcnow()),
-            Fighter(id=uuid4(), name="Jane Doe", team_id=uuid4(), is_deleted=False, created_at=datetime.utcnow())
+            Fighter(id=uuid4(), name="John Smith", team_id=uuid4(), is_deleted=False, created_at=datetime.now(UTC)),
+            Fighter(id=uuid4(), name="Jane Doe", team_id=uuid4(), is_deleted=False, created_at=datetime.now(UTC))
         ]
 
         mock_fighter_repo.list_by_country.return_value = fighters
@@ -344,7 +344,7 @@ class TestFighterServiceUpdate:
             name="Jonathan Smith",
             team_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_fighter_repo.update.return_value = updated_fighter
@@ -379,7 +379,7 @@ class TestFighterServiceUpdate:
             name="New Team",
             country_id=uuid4(),
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         updated_fighter = Fighter(
@@ -387,7 +387,7 @@ class TestFighterServiceUpdate:
             name="John Smith",
             team_id=new_team_id,
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_team_repo.get_by_id.return_value = new_team
@@ -446,7 +446,7 @@ class TestFighterServiceUpdate:
             name="Defunct Team",
             country_id=uuid4(),
             is_deleted=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_team_repo.get_by_id.side_effect = [None, deleted_team]

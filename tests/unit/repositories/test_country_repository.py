@@ -8,7 +8,7 @@ Following TDD approach - these tests are written before implementation.
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy.exc import IntegrityError
 
 # These imports will fail until implementation exists - that's expected in TDD
@@ -105,7 +105,7 @@ class TestCountryRepositoryGetById:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -193,7 +193,7 @@ class TestCountryRepositoryGetById:
             name="Czech Republic",
             code="CZE",
             is_deleted=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -230,7 +230,7 @@ class TestCountryRepositoryGetByCode:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -319,14 +319,14 @@ class TestCountryRepositoryList:
                 name="Czech Republic",
                 code="CZE",
                 is_deleted=False,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(UTC)
             ),
             Country(
                 id=uuid4(),
                 name="Poland",
                 code="POL",
                 is_deleted=False,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(UTC)
             )
         ]
 
@@ -387,21 +387,21 @@ class TestCountryRepositoryList:
                 name="Czech Republic",
                 code="CZE",
                 is_deleted=False,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(UTC)
             ),
             Country(
                 id=uuid4(),
                 name="Poland",
                 code="POL",
                 is_deleted=True,  # Soft-deleted
-                created_at=datetime.utcnow()
+                created_at=datetime.now(UTC)
             ),
             Country(
                 id=uuid4(),
                 name="Germany",
                 code="DEU",
                 is_deleted=False,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(UTC)
             )
         ]
 
@@ -440,7 +440,7 @@ class TestCountryRepositorySoftDelete:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -502,7 +502,7 @@ class TestCountryRepositoryUpdate:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -539,7 +539,7 @@ class TestCountryRepositoryUpdate:
             name="Czechia",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -576,7 +576,7 @@ class TestCountryRepositoryUpdate:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -647,7 +647,7 @@ class TestCountryRepositoryPermanentDelete:
             name="Czech Republic",
             code="CZE",
             is_deleted=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_result = MagicMock()
@@ -706,7 +706,7 @@ class TestCountryRepositoryPermanentDelete:
             name="United States",
             code="USA",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         # First execute: get_by_id returns country
@@ -745,7 +745,7 @@ class TestCountryRepositoryPermanentDelete:
             name="Test Country",
             code="TST",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         # Mock get_by_id result (first execute call)
@@ -790,7 +790,7 @@ class TestCountryRepositoryReplace:
             name="Soviet Union",
             code="SUN",
             is_deleted=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         new_country = Country(
@@ -798,7 +798,7 @@ class TestCountryRepositoryReplace:
             name="Russia",
             code="RUS",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         # Mock the queries to return countries
@@ -865,7 +865,7 @@ class TestCountryRepositoryReplace:
             name="Soviet Union",
             code="SUN",
             is_deleted=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         call_count = 0

@@ -8,7 +8,7 @@ Following TDD approach - these tests are written before implementation.
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 
 # These imports will fail until implementation exists - that's expected in TDD
 from app.services.country_service import CountryService
@@ -47,7 +47,7 @@ class TestCountryServiceCreate:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_repository.get_by_code.return_value = None  # No existing country
@@ -86,7 +86,7 @@ class TestCountryServiceCreate:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_repository.get_by_code.return_value = existing_country
@@ -121,7 +121,7 @@ class TestCountryServiceCreate:
             name="Czechia",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         # Repository filters out deleted countries, so get_by_code returns None
@@ -217,7 +217,7 @@ class TestCountryServiceRetrieve:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_repository.get_by_id.return_value = expected_country
@@ -270,7 +270,7 @@ class TestCountryServiceRetrieve:
             name="Czech Republic",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_repository.get_by_code.return_value = expected_country
@@ -356,7 +356,7 @@ class TestCountryServiceUpdate:
             name="Czechia",
             code="CZE",
             is_deleted=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_repository.update.return_value = updated_country
@@ -489,7 +489,7 @@ class TestCountryServiceAdminAccess:
             name="Czech Republic",
             code="CZE",
             is_deleted=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         mock_repository.get_by_id.return_value = deleted_country
@@ -521,14 +521,14 @@ class TestCountryServiceAdminAccess:
                 name="Czech Republic",
                 code="CZE",
                 is_deleted=False,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(UTC)
             ),
             Country(
                 id=uuid4(),
                 name="Poland",
                 code="POL",
                 is_deleted=True,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(UTC)
             )
         ]
 
