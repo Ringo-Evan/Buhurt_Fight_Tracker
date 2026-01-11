@@ -97,7 +97,7 @@ class FighterRepository:
             query = query.where(Fighter.is_deleted == False)
 
         result = await self.session.execute(query)
-        return result.unique().scalars().all()
+        return list(result.unique().scalars().all())
 
     async def list_by_team(self, team_id: UUID, include_deleted: bool = False) -> list[Fighter]:
         """
@@ -120,7 +120,7 @@ class FighterRepository:
             query = query.where(Fighter.is_deleted == False)
 
         result = await self.session.execute(query)
-        return result.unique().scalars().all()
+        return list(result.unique().scalars().all())
 
     async def list_by_country(self, country_id: UUID, include_deleted: bool = False) -> list[Fighter]:
         """
@@ -144,7 +144,7 @@ class FighterRepository:
             query = query.where(Fighter.is_deleted == False)
 
         result = await self.session.execute(query)
-        return result.unique().scalars().all()
+        return list(result.unique().scalars().all())
 
     async def soft_delete(self, fighter_id: UUID) -> None:
         """

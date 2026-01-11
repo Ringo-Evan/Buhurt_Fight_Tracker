@@ -198,5 +198,5 @@ class TeamRepository:
         if team is None:
             raise ValueError("Team not found")
 
-        self.session.delete(team)  # delete() is not async
+        await self.session.delete(team)  # delete() is not async
         await self.session.commit()

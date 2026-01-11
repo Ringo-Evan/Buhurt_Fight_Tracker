@@ -106,7 +106,7 @@ class CountryRepository:
             query = query.where(Country.is_deleted == False)
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def soft_delete(self, country_id: UUID) -> None:
         """
@@ -165,7 +165,7 @@ class CountryRepository:
         if country is None:
             raise ValueError("Country not found")
 
-        self.session.delete(country)  # delete() is not async
+        await self.session.delete(country)
         await self.session.commit()
 
     async def count_relationships(self, country_id: UUID) -> int:
@@ -190,7 +190,7 @@ class CountryRepository:
         # Count all teams associated with this country (including soft-deleted)
         query = select(func.count(Team.id)).where(Team.country_id == country_id)
         result = await self.session.execute(query)
-        return result.scalar()
+        return result.scalar() or 0
 
     async def replace(self, old_country_id: UUID, new_country_id: UUID) -> int:
         """
