@@ -196,18 +196,18 @@ class CountryService:
         if country is None:
             raise CountryNotFoundError("Country not found")
 
-        # TODO: Implement when Team entity exists (Issue #33)
-        # Full implementation requires checking for team relationships
-        # Expected flow:
-        # 1. Check relationship count via repository.count_relationships()
-        # 2. If count > 0, raise ValidationError
-        # 3. Else, permanently delete via repository.permanent_delete()
+        # Check for team relationships
+        relationship_count = await self.repository.count_relationships(country_id)
+        if relationship_count > 0:
+            raise ValidationError(
+                "Cannot permanently delete country with existing relationships"
+            )
 
-        raise NotImplementedError(
-            "Permanent delete with relationship checking requires Team entity implementation. "
-            "This method must verify no teams are associated before deleting. "
-            "See Issue #33 (Team Implementation) and docs/domain/business-rules.md"
-        )
+        # Permanently delete country
+        try:
+            await self.repository.permanent_delete(country_id)
+        except ValueError as e:
+            raise CountryNotFoundError(str(e))
 
     async def replace(self, old_country_id: UUID, new_country_id: UUID) -> int:
         """

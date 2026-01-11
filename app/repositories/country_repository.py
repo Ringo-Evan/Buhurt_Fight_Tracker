@@ -10,6 +10,7 @@ from uuid import UUID
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.country import Country
+from app.models.team import Team
 
 
 class CountryRepository:
@@ -186,17 +187,10 @@ class CountryRepository:
         if country is None:
             raise ValueError("Country not found")
 
-        # TODO: Implement when Team entity exists (Issue #33)
-        # Expected implementation:
-        # query = select(func.count(Team.id)).where(Team.country_id == country_id)
-        # result = await self.session.execute(query)
-        # return result.scalar()
-
-        raise NotImplementedError(
-            "Counting country relationships requires Team entity implementation. "
-            "This method will count all teams associated with the country. "
-            "See Issue #33 (Team Implementation) and docs/domain/business-rules.md"
-        )
+        # Count all teams associated with this country (including soft-deleted)
+        query = select(func.count(Team.id)).where(Team.country_id == country_id)
+        result = await self.session.execute(query)
+        return result.scalar()
 
     async def replace(self, old_country_id: UUID, new_country_id: UUID) -> int:
         """
@@ -221,21 +215,12 @@ class CountryRepository:
         if new_country is None:
             raise ValueError("New country not found")
 
-        # TODO: Implement when Team entity exists (Issue #33)
-        # This method requires the Team model to update team.country_id references
-        # Expected implementation:
-        # query = (
-        #     update(Team)
-        #     .where(Team.country_id == old_country_id)
-        #     .values(country_id=new_country_id)
-        # )
-        # result = await self.session.execute(query)
-        # await self.session.commit()
-        # return result.rowcount
-
-        raise NotImplementedError(
-            "Country replacement requires Team entity implementation. "
-            "This method will update all team.country_id foreign key references "
-            "from old_country_id to new_country_id. "
-            "See Issue #33 (Team Implementation) and docs/domain/business-rules.md"
+        # Update all team.country_id references from old to new
+        query = (
+            update(Team)
+            .where(Team.country_id == old_country_id)
+            .values(country_id=new_country_id)
         )
+        result = await self.session.execute(query)
+        await self.session.commit()
+        return result.rowcount

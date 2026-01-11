@@ -701,10 +701,23 @@ class TestCountryRepositoryPermanentDelete:
         # Arrange
         mock_session = AsyncMock()
         country_id = uuid4()
+        country = Country(
+            id=country_id,
+            name="United States",
+            code="USA",
+            is_deleted=False,
+            created_at=datetime.utcnow()
+        )
 
-        mock_result = MagicMock()
-        mock_result.scalar.return_value = 3  # 3 team relationships
-        mock_session.execute.return_value = mock_result
+        # First execute: get_by_id returns country
+        mock_get_result = MagicMock()
+        mock_get_result.scalar_one_or_none.return_value = country
+
+        # Second execute: count query returns 3
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 3
+
+        mock_session.execute.side_effect = [mock_get_result, mock_count_result]
 
         repository = CountryRepository(mock_session)
 
@@ -713,7 +726,7 @@ class TestCountryRepositoryPermanentDelete:
 
         # Assert
         assert result == 3
-        mock_session.execute.assert_awaited_once()
+        assert mock_session.execute.await_count == 2  # get_by_id + count query
 
     @pytest.mark.asyncio
     async def test_count_relationships_returns_zero_for_no_relationships(self):
@@ -727,10 +740,23 @@ class TestCountryRepositoryPermanentDelete:
         # Arrange
         mock_session = AsyncMock()
         country_id = uuid4()
+        country = Country(
+            id=country_id,
+            name="Test Country",
+            code="TST",
+            is_deleted=False,
+            created_at=datetime.utcnow()
+        )
 
-        mock_result = MagicMock()
-        mock_result.scalar.return_value = 0
-        mock_session.execute.return_value = mock_result
+        # Mock get_by_id result (first execute call)
+        mock_get_result = MagicMock()
+        mock_get_result.scalar_one_or_none.return_value = country
+
+        # Mock count result (second execute call)
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+
+        mock_session.execute.side_effect = [mock_get_result, mock_count_result]
 
         repository = CountryRepository(mock_session)
 
@@ -739,7 +765,7 @@ class TestCountryRepositoryPermanentDelete:
 
         # Assert
         assert result == 0
-        mock_session.execute.assert_awaited_once()
+        assert mock_session.execute.await_count == 2  # get_by_id + count query
 
 
 class TestCountryRepositoryReplace:
