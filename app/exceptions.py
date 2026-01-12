@@ -60,3 +60,67 @@ class InvalidTeamError(Exception):
     def __init__(self, message: str = "Invalid team"):
         self.message = message
         super().__init__(self.message)
+
+
+class FightNotFoundError(Exception):
+    """Raised when a fight is not found in the database."""
+
+    def __init__(self, message: str = "Fight not found"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class InvalidFighterError(Exception):
+    """Raised when a participation references an invalid fighter."""
+
+    def __init__(self, message: str = "Invalid fighter"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class InvalidFightError(Exception):
+    """Raised when referencing an invalid or inactive fight."""
+
+    def __init__(self, message: str = "Invalid fight"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class TagTypeNotFoundError(Exception):
+    """Raised when a tag type is not found."""
+
+    def __init__(self, message: str = "Tag type not found"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class TagNotFoundError(Exception):
+    """Raised when a tag is not found."""
+
+    def __init__(self, message: str = "Tag not found"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class DuplicateTagError(Exception):
+    """Raised when attempting to create a duplicate tag."""
+
+    def __init__(self, message: str = "Tag already exists"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class TagChangeRequestNotFoundError(Exception):
+    """Raised when a tag change request is not found."""
+
+    def __init__(self, message: str = "Tag change request not found"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class DuplicateVoteError(Exception):
+    """Raised when a session tries to vote twice on the same request."""
+
+    def __init__(self, message: str = "Already voted on this request"):
+        self.message = message
+        super().__init__(self.message)

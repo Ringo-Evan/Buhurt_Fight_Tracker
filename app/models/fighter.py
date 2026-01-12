@@ -16,6 +16,7 @@ from app.models.country import Base
 
 if TYPE_CHECKING:
     from app.models.team import Team
+    from app.models.fight_participation import FightParticipation
 
 
 class Fighter(Base):
@@ -68,6 +69,10 @@ class Fighter(Base):
         lazy="joined",  # Eager load team (which eager loads country) to prevent N+1 queries
         foreign_keys=[team_id],
         back_populates="fighters"
+    )
+    participations: Mapped[list["FightParticipation"]] = relationship(
+        "FightParticipation",
+        back_populates="fighter"
     )
 
     def __init__(self, **kwargs):

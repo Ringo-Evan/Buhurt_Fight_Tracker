@@ -165,7 +165,7 @@ class CountryRepository:
         if country is None:
             raise ValueError("Country not found")
 
-        self.session.delete(country)  # delete() is synchronous
+        await self.session.delete(country)  # delete() is synchronous
         await self.session.commit()
 
     async def count_relationships(self, country_id: UUID) -> int:

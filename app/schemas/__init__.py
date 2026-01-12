@@ -18,6 +18,7 @@ from app.schemas.fighter import (
     FighterWithTeamResponse,
     FighterFullResponse,
 )
+from app.schemas.fight import FightCreate, FightUpdate, FightResponse
 
 __all__ = [
     # Country schemas
@@ -35,4 +36,8 @@ __all__ = [
     "FighterResponse",
     "FighterWithTeamResponse",
     "FighterFullResponse",
+    # Fight schemas
+    "FightCreate",
+    "FightUpdate",
+    "FightResponse",
 ]
