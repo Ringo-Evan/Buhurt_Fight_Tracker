@@ -44,6 +44,24 @@ class TagTypeService:
         except Exception as e:
             # Handle specific exceptions if needed
             raise e
+        
+    async def get_by_id(self, tag_type_id: str) -> TagType:
+        """
+        Retrieve a tag type by its ID.
+
+        Args:
+            tag_type_id: ID of the tag type to retrieve
+
+        Returns:
+            TagType instance
+
+        Raises:
+            ValidationError: If tag type not found
+        """
+        tag_type = await self.tag_type_repository.get_by_id(tag_type_id)
+        if not tag_type:
+            raise ValidationError(f"Tag type with ID {tag_type_id} not found")
+        return tag_type
 
     ###Helper Methods###
 
