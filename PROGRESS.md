@@ -12,14 +12,16 @@
 | Phase | Status | Tests | Time Spent |
 |-------|--------|-------|------------|
 | Phase 1: Foundation (Country, Team, Fighter) | ✅ COMPLETE | 130 unit, 41 integration, 98 BDD | ~6.5 hrs |
-| Phase 2: Fight Tracking | ⏸️ READY | 0 | 0 |
-| Phase 3: Tags (Simplified) | 📋 PLANNED | 0 | 0 |
-| Phase 4: API Polish & Docs | 📋 PLANNED | 0 | 0 |
-| Phase 5: E2E Tests | 📋 DEFERRED | 0 | 0 |
-| Phase 6: Auth (v2) | 📋 FUTURE | 0 | 0 |
+| Phase 2A: Tag Foundation | ⏸️ READY | 0 | 0 |
+| Phase 2B: Fight Tracking | 📋 PLANNED | 0 | 0 |
+| Phase 3: Tag Expansion | 📋 PLANNED | 0 | 0 |
+| Phase 4A: Basic Deployment | 📋 PLANNED | 0 | 0 |
+| Phase 4B: Infrastructure as Code | 📋 OPTIONAL | 0 | 0 |
+| Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
+| Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
 **Total Tests**: 130 unit + 41 integration + 98 BDD scenarios
-**Estimated Remaining**: 25-35 hours to "portfolio complete"
+**Estimated Remaining**: 28-36 hours to "portfolio complete" (through Phase 4A)
 
 ---
 
@@ -30,14 +32,14 @@ The project is portfolio-ready when someone can:
 2. Read the README and understand the architecture
 3. See TDD/BDD discipline in git history
 4. Review ADRs and understand design decisions
-5. Run the API and interact with it
+5. **Hit the live API** at a public URL
 6. See test coverage reports (>90%)
 
-**NOT required for portfolio:**
+**NOT required for portfolio v1:**
 - Full tag voting system (deferred to v2)
 - User authentication (deferred to v2)
 - Frontend (deferred to v3)
-- Production deployment
+- E2E tests with Playwright
 
 ---
 
@@ -69,11 +71,48 @@ The project is portfolio-ready when someone can:
 
 ---
 
-### Phase 2: Fight Tracking ⏸️ READY TO START
+### Phase 2A: Tag Foundation ⏸️ READY TO START
+
+**Estimated Time**: 4-6 hours
+**Complexity**: Medium (new pattern, but simpler than Fight)
+**Prerequisite for**: Phase 2B (Fight needs fight_format tag)
+
+| Entity | Purpose | Key Complexity |
+|--------|---------|----------------|
+| TagType | Reference data for tag categories | Seed data, validation rules |
+| Tag | Links tags to fights | FK to TagType, value validation |
+
+**Why Tags Before Fights?**
+Fight validation depends on `fight_format` (singles vs melee):
+- Singles: exactly 1 fighter per side
+- Melee: minimum 5 fighters per side
+
+Without tags, Fight can't properly validate participant counts.
+
+**Seed Data**:
+```
+TagType: fight_format (required=true)
+Values: "singles", "melee"
+```
+
+**Business Rules to Implement**:
+- [ ] TagType is reference data (admin-seeded)
+- [ ] Tag.value must be valid for its TagType
+- [ ] fight_format tag is required (enforced when creating Fight)
+- [ ] Only one tag per TagType per Fight (for now)
+
+**Success Criteria**:
+- TagType seeding works
+- Tag CRUD with validation
+- No regressions in Phase 1
+
+---
+
+### Phase 2B: Fight Tracking 📋 PLANNED
 
 **Estimated Time**: 6-8 hours
-**Complexity**: High (many-to-many, transactions)
-**Documentation**: Complete (`planning/IMPLEMENTATION_PLAN_PHASE2.md`)
+**Complexity**: High (many-to-many, transactions, format-dependent validation)
+**Prerequisites**: Phase 2A complete
 
 | Entity | Purpose | Key Complexity |
 |--------|---------|----------------|
@@ -81,81 +120,121 @@ The project is portfolio-ready when someone can:
 | FightParticipation | Junction table | Side/role validation, transactions |
 
 **Business Rules to Implement**:
-- [ ] At least 2 participants required
-- [ ] Both sides must have participants  
+- [ ] Fight must have exactly one fight_format tag (singles or melee)
+- [ ] Singles: exactly 1 fighter per side
+- [ ] Melee: minimum 5 fighters per side
+- [ ] Both sides must have participants
 - [ ] No duplicate fighters in same fight
 - [ ] Max 1 captain per side
 - [ ] Fight date cannot be in future
 - [ ] Location is required
+- [ ] Fight + Tag + Participations created atomically (single transaction)
 
 **Success Criteria**:
-- 60+ new tests passing
-- No regressions in Phase 1
 - Transactional fight creation working
+- Format-dependent validation working
 - API endpoints functional
+- No regressions in Phase 1 or 2A
 
 ---
 
-### Phase 3: Tags (Simplified) 📋 PLANNED
+### Phase 3: Tag Expansion 📋 PLANNED
 
-**Estimated Time**: 8-12 hours
-**Scope Change**: Simplified from original design
+**Estimated Time**: 8-10 hours
+**Complexity**: Medium (extending existing pattern)
+**Prerequisites**: Phase 2B complete
 
-**Original Scope** (deferred):
-- Full hierarchical tag system (SuperCategory → Category → Subcategory → Weapon)
-- Community voting on privileged tags
-- Cascading soft deletes on hierarchy changes
-- Vote fraud prevention
+**Scope**: Extend tag system with hierarchy and more tag types
 
-**Simplified Scope** (v1):
-- TagType (reference data: Category, Gender, Custom)
-- Tag (simple tags on fights, no hierarchy)
-- Custom tags auto-accepted
-- Category tags admin-only (no voting)
+**New TagTypes to Add**:
+| TagType | Parent | Required | Values |
+|---------|--------|----------|--------|
+| category | fight_format | No | Singles: duel, profight / Melee: 3s, 5s, 10s, etc. |
+| gender | none | No | male, female, mixed |
+| weapon | category (duel only) | No | longsword, polearm, sword_shield, etc. |
+| league | category | No | BI, IMCF, AMMA, etc. |
+| custom | none | No | freeform text |
 
-**Rationale**: The voting system adds ~15 hours of work without proportional portfolio value. Design is documented; implementation can come in v2.
+**New Features**:
+- [ ] Tag.parent_tag_id for hierarchy
+- [ ] Validation: child tags require valid parent
+- [ ] Cascading soft delete (change category → delete weapon)
+- [ ] Custom tags allow multiple per fight
+- [ ] Category-specific allowed values
 
-**What Gets Deferred to v2**:
-- TagChangeRequest entity
-- Vote entity  
-- Hierarchical tag relationships
-- Cascading delete logic
-- Voting threshold logic
+**Deferred to v2**:
+- TagChangeRequest (voting proposals)
+- Vote entity
+- Community voting workflow
+- Session-based fraud prevention
+
+**Success Criteria**:
+- Hierarchical tags working
+- Cascade delete working
+- No regressions
 
 ---
 
-### Phase 4: API Polish & Documentation 📋 PLANNED
+### Phase 4A: Basic Deployment 📋 PLANNED
 
 **Estimated Time**: 4-6 hours
+**Focus**: Get API running in cloud
+
+**Stack**:
+- Azure App Service (B1 tier, with stop/start scripts)
+- Neon PostgreSQL (free tier, serverless)
+- GitHub Actions (CI/CD)
 
 **Tasks**:
-- [ ] OpenAPI documentation complete and accurate
-- [ ] README with setup instructions
-- [ ] Architecture diagram (Mermaid)
-- [ ] API examples (curl/httpx)
-- [ ] Coverage report generation
-- [ ] Lint/type check passing (ruff, mypy)
+- [ ] Set up Neon account and database
+- [ ] Create Azure App Service via portal
+- [ ] Configure environment variables (connection strings, secrets)
+- [ ] Create GitHub Actions workflow for deployment
+- [ ] Create start/stop shell scripts for cost management
+- [ ] Verify API accessible at public URL
+- [ ] Add basic health check endpoint
 
-**Portfolio Value**: High - this is what reviewers see first
+**Cost Strategy**:
+- Neon free tier: $0/month
+- App Service B1 stopped: $0/month
+- App Service B1 running: ~$13/month (prorated by hour)
+- **Target**: <$5/month during development
 
----
-
-### Phase 5: E2E Tests 📋 DEFERRED
-
-**Estimated Time**: 6-8 hours
-**Tools**: Playwright
-**Status**: Deferred until frontend exists or API-only E2E needed
-
-**When to Add**:
-- If targeting full-stack roles
-- If frontend is built
-- If demonstrating Playwright specifically
+**Success Criteria**:
+- API deployed and accessible
+- Can stop/start to manage costs
+- CI/CD pipeline working
+- README updated with deployment info
 
 ---
 
-### Phase 6: Auth & v2 Features 📋 FUTURE
+### Phase 4B: Infrastructure as Code 📋 OPTIONAL
 
-**Not part of portfolio scope**
+**Estimated Time**: 8-12 hours
+**Focus**: Reproducible infrastructure
+
+**Stack**:
+- Terraform (cloud-agnostic IaC)
+- Azure provider
+- GitHub Actions for apply/destroy
+
+**Tasks**:
+- [ ] Learn Terraform basics
+- [ ] Define App Service in Terraform
+- [ ] Define resource group, networking
+- [ ] Create terraform apply/destroy workflow
+- [ ] Document infrastructure in code
+
+**Why Optional**:
+- Not required for portfolio
+- Can add after Phase 4A if time permits
+- Good stretch goal
+
+---
+
+### Phase 5: Auth (v2) 📋 FUTURE
+
+**Not part of v1 scope**
 
 **Learning Goals**:
 - OAuth2/OIDC implementation
@@ -163,11 +242,29 @@ The project is portfolio-ready when someone can:
 - Role-based access control
 - Session management
 
-**Features for v2**:
+**Features**:
 - User registration/login
-- Tag voting system (full implementation)
-- Admin moderation tools
-- Search/filtering
+- Protected endpoints
+- Admin vs user roles
+- Tag voting (requires auth for fraud prevention)
+
+---
+
+### Phase 6: Frontend (v3) 📋 FUTURE
+
+**Not part of v1 scope**
+
+**Learning Goals**:
+- React 18+ with TypeScript
+- Modern CSS (Tailwind)
+- Frontend testing (Jest, RTL, Playwright)
+- State management
+
+**Rationale for Deferral**:
+- Backend + deployment demonstrates skills
+- Frontend adds 40-55 hours
+- Auth should come before public frontend (prevent spam)
+- Can be separate learning project
 
 ---
 
@@ -179,9 +276,14 @@ See `DECISIONS.md` for full list. Key decisions:
 |----|----------|--------|
 | ADR-001 | UUIDs for all primary keys | ✅ Implemented |
 | ADR-002 | Soft deletes with is_deleted flag | ✅ Implemented |
-| DD-001 | Tags created only on acceptance | 📋 Planned |
-| DD-002 | One pending request per (fight, tag_type) | 📋 Deferred |
-| DD-003 | Anonymous voting via session_id | 📋 Deferred |
+| ADR-003 | UTC timestamps | ✅ Implemented |
+| ADR-004 | Three-layer architecture | ✅ Implemented |
+| ADR-005 | Eager loading by default | ✅ Implemented |
+| DD-001 | Tags before Fights (fight_format dependency) | 📋 Decided |
+| DD-002 | fight_format: "singles" or "melee" | 📋 Decided |
+| DD-003 | Singles: exactly 1 fighter per side | 📋 Decided |
+| DD-004 | Melee: minimum 5 fighters per side | 📋 Decided |
+| DD-005 | Voting system deferred to v2 | 📋 Decided |
 
 ---
 
@@ -262,18 +364,20 @@ Types: feat, fix, test, docs, refactor
 ## Next Actions
 
 ### Immediate (Next Session)
-1. [ ] Create feature branch: `git checkout -b feature/fight-entity`
+1. [ ] Create feature branch: `git checkout -b feature/tag-foundation`
 2. [ ] Verify Phase 1 tests pass: `pytest tests/unit/ -v`
-3. [ ] Read `planning/IMPLEMENTATION_PLAN_PHASE2.md`
-4. [ ] Begin Fight BDD scenarios (strict TDD: one scenario at a time)
+3. [ ] Write TagType BDD scenarios (strict TDD: one scenario at a time)
+4. [ ] Create TagType model with seed data support
 
 ### This Week
-- [ ] Complete Fight model and repository tests (RED phase)
-- [ ] Implement Fight repository (GREEN phase)
+- [ ] Complete TagType entity (model, repo, service, tests)
+- [ ] Complete Tag entity (model, repo, service, tests)
+- [ ] Seed fight_format TagType with "singles" and "melee" values
 
 ### This Month
-- [ ] Complete Phase 2 (Fight + FightParticipation)
-- [ ] Begin Phase 3 (simplified tags)
+- [ ] Complete Phase 2A (Tag Foundation)
+- [ ] Complete Phase 2B (Fight + FightParticipation)
+- [ ] Begin Phase 3 (Tag Expansion) or Phase 4A (Deployment)
 
 ---
 

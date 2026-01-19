@@ -114,65 +114,130 @@ stmt = select(Fighter).options(selectinload(Fighter.team).selectinload(Team.coun
 
 ## Architectural Decisions (Planned)
 
-### DD-001: Tags Created on Vote Acceptance 📋 DECIDED
+### DD-001: Tags Before Fights (Dependency Order) 📋 DECIDED
 
-**Decision**: Tag records only created when vote threshold reached, not at proposal time.
+**Decision**: Build Tag Foundation (Phase 2A) before Fight entity (Phase 2B).
 
 **Rationale**:
-- Simpler data model (no "pending tags")
-- Clearer state management
-- Proposed values stored as strings in TagChangeRequest
+- Fight validation rules depend on `fight_format` tag (singles vs melee)
+- Singles allows exactly 1 fighter per side
+- Melee requires minimum 5 fighters per side
+- Without tags, Fight cannot properly validate participant counts
 
-**Status**: Documented, implementation deferred (simplified tag system for v1)
+**Trade-offs Accepted**:
+- Slightly more work before "Fight" entity exists
+- But: no throwaway code, no refactoring needed later
+
+**Alternative Rejected**: Enum on Fight model (would require migration to tags later)
 
 ---
 
-### DD-002: Fight as Aggregate Root 📋 DECIDED
+### DD-002: fight_format Tag Type 📋 DECIDED
 
-**Decision**: Fight + FightParticipations treated as single transactional unit.
+**Decision**: Use `fight_format` as the name for the required singles/melee distinction.
+
+**Values**: `"singles"`, `"melee"`
+
+**Properties**:
+- Required: Yes (every fight must have exactly one)
+- Created: Atomically with Fight (same transaction)
+
+**Alternatives Considered**:
+- `super_category` (original name) - too abstract
+- `fight_type` - could be confused with other meanings
+- `match_type` - less clear
+- `format` - too generic
+
+---
+
+### DD-003: Singles Fighter Validation 📋 DECIDED
+
+**Decision**: Singles fights allow exactly 1 fighter per side.
+
+**Validation**:
+```python
+if fight_format == "singles":
+    side_1_count = len([p for p in participants if p.side == 1 and p.role == "fighter"])
+    side_2_count = len([p for p in participants if p.side == 2 and p.role == "fighter"])
+    if side_1_count != 1 or side_2_count != 1:
+        raise InvalidParticipantCountError("Singles fights require exactly 1 fighter per side")
+```
+
+**Note**: Alternates/coaches may be allowed in future, but don't count toward fighter requirement.
+
+---
+
+### DD-004: Melee Fighter Validation 📋 DECIDED
+
+**Decision**: Melee fights require minimum 5 fighters per side.
+
+**Rationale**:
+- 5v5 is the smallest standard melee format
+- Allows testing with real-world data (5s fights are common)
+- Team size maximums (3s, 5s, 10s, etc.) deferred to Phase 3
+
+**Validation**:
+```python
+if fight_format == "melee":
+    side_1_count = len([p for p in participants if p.side == 1 and p.role == "fighter"])
+    side_2_count = len([p for p in participants if p.side == 2 and p.role == "fighter"])
+    if side_1_count < 5 or side_2_count < 5:
+        raise InvalidParticipantCountError("Melee fights require at least 5 fighters per side")
+```
+
+**Future (Phase 3)**: Category tag (3s, 5s, 10s, etc.) will enforce specific team sizes.
+
+---
+
+### DD-005: Fight as Aggregate Root 📋 DECIDED
+
+**Decision**: Fight + Tag + FightParticipations treated as single transactional unit.
 
 **Rationale**:
 - Atomic creation (all-or-nothing)
-- Service layer orchestrates both repositories
+- Service layer orchestrates multiple repositories
 - Clear consistency boundary
 
 **Implementation Pattern**:
 ```python
-async def create_fight_with_participants(self, fight_data, participations):
+async def create_fight_with_participants(self, fight_data, fight_format, participations):
     async with self.session.begin():
         fight = await self.fight_repo.create(fight_data)
+        await self.tag_repo.create({
+            "fight_id": fight.id,
+            "tag_type_id": self.fight_format_tag_type_id,
+            "value": fight_format
+        })
         for p in participations:
             await self.participation_repo.create({...})
         return fight
 ```
 
-**Status**: Ready to implement in Phase 2
+**Status**: Ready to implement in Phase 2B
 
 ---
 
-### DD-003: Simplified Tag System for v1 📋 DECIDED
+### DD-006: Simplified Tag System for v1 📋 DECIDED
 
-**Decision**: Implement flat tags (no hierarchy, no voting) for portfolio version.
+**Decision**: Implement tag hierarchy without voting for portfolio version.
 
-**Original Design** (documented in tag-rules.md):
-- Hierarchical: SuperCategory → Category → Subcategory → Weapon
-- Community voting on privileged tags
-- Cascading soft deletes
+**v1 Scope** (Phases 2A + 3):
+- TagType: fight_format (required), category, gender, weapon, league, custom
+- Tag: Links to fights with hierarchy support
+- Cascading soft deletes when parent changes
+- Admin-only tag management (no community voting)
 
-**v1 Simplified Design**:
-- TagType: Category, Gender, Custom
-- Tag: Simple key-value on fights
-- Custom tags: Auto-accepted
-- Category/Gender: Admin-only assignment
+**Deferred to v2**:
+- TagChangeRequest entity
+- Vote entity
+- Community voting workflow
+- Session-based fraud prevention
 
 **Rationale**:
-- Full voting system adds ~15 hours without proportional portfolio value
-- Design is documented, shows system thinking
-- Can implement full system in v2
-
-**Trade-offs Accepted**:
-- Less impressive feature set
-- But: shows pragmatic scoping (leadership skill)
+- Voting system adds ~15 hours without proportional portfolio value
+- Hierarchy and cascading demonstrate domain modeling skills
+- Design is documented in tag-rules.md, shows system thinking
+- Can implement full voting in v2 after auth exists
 
 ---
 
@@ -244,6 +309,46 @@ async def create_fight_with_participants(self, fight_data, participations):
 
 **Rationale**: For portfolio, showing behavior documentation is valuable regardless of test execution level.
 
+
+### OQ-005: Open Tofu or Teraform
+
+**Question**: Whether to change to Open Tofu from Teraform for IAC?
+
+**Current Choice**: Teraform
+
+**Pros**:
+ * Open-Source better fit for community project
+ * No worries about licenscing
+ * Have more experience with it than Teraform proper
+
+**Cons**:
+ * Not as common in corporate projects
+ * No official support from Hashicorp
+ * Possibly behind?
+
+**Action Needed**: Investigate practical differences between the two
+
+
+### OQ-006: Trunk Based Development
+
+**Question**: Is there value to following a strict Trunk based development process?
+ 
+**Current Branching Strategy**: None, Many commits straight to dev
+
+**Pros**
+ * Only one developer and AI agent working so branches less important anyway
+ * Should force smaller commits and running tests constantly
+ * Force Pipeline work earlier
+
+**Cons**
+ * Branching strategies are more common
+ * Not familiar with TBD
+
+**Actions Needed**
+
+
+
+
 ---
 
 ## Deferred Decisions
@@ -258,13 +363,15 @@ async def create_fight_with_participants(self, fight_data, participations):
 
 ---
 
-### DF-002: Tag Hierarchy Cascading ⏸️ DEFERRED
+### DF-002: Team Size Maximums ⏸️ DEFERRED
 
-**Original Plan**: Changing category soft-deletes subcategory and weapon
+**Original Plan**: Enforce exact team sizes (3s = 3-5, 5s = 5-8, etc.)
 
-**Deferred To**: v2 (with full tag system)
+**v1 Approach**: Just minimum 5 for melee, no maximum
 
-**Documented In**: tag-rules.md (preserves design work)
+**Deferred To**: Phase 3 (when category tag added)
+
+**Rationale**: Minimum validation proves the pattern; maximums are straightforward extension
 
 ---
 
@@ -290,46 +397,101 @@ async def create_fight_with_participants(self, fight_data, participations):
 
 ---
 
+### DF-005: Full Azure PostgreSQL ⏸️ DEFERRED
+
+**Original Plan**: Azure Database for PostgreSQL Flexible Server (~$25/mo)
+
+**v1 Approach**: Neon free tier (serverless Postgres, $0/mo)
+
+**Deferred To**: Production deployment (if ever)
+
+**Rationale**: 
+- Neon is real Postgres, same SQL/features
+- Free tier sufficient for portfolio
+- Can migrate data if needed later
+
+---
+
+### DF-006: Infrastructure as Code ⏸️ OPTIONAL
+
+**Plan**: Terraform for reproducible infrastructure
+
+**Status**: Phase 4B, optional stretch goal
+
+**Rationale**:
+- High learning value
+- Not required for portfolio complete
+- Can add after basic deployment works
+
+---
+
 ## Scope Decisions (Portfolio Focus)
 
 ### SD-001: What's In Scope for Portfolio ✅ DECIDED
 
-**In Scope**:
-- Country, Team, Fighter (complete)
+**In Scope (v1)**:
+- Country, Team, Fighter (✅ complete)
+- TagType + Tag (fight_format required, hierarchy in Phase 3)
 - Fight + FightParticipation
-- Simplified Tags (no voting)
-- Full test coverage
-- API documentation
+- Format-dependent validation (singles vs melee)
+- Full test coverage (unit, integration, BDD)
+- API documentation (OpenAPI)
 - Architecture documentation (ADRs)
+- **Cloud deployment (Azure App Service + Neon)**
+- CI/CD pipeline (GitHub Actions)
 
-**Out of Scope** (documented as future work):
+**Out of Scope (documented as v2/v3)**:
 - User authentication
 - Tag voting system
-- Frontend
-- Production deployment
-- E2E tests
+- Frontend (React/TypeScript)
+- Production-grade infrastructure (managed Postgres, monitoring)
+- E2E tests with Playwright
 
 **Rationale**: 
-- Portfolio demonstrates TDD/BDD discipline, clean architecture, system design
-- Partial implementation + good documentation > complete but sloppy
+- Portfolio demonstrates TDD/BDD discipline, clean architecture, deployment skills
+- Deployed API is more impressive than localhost demo
+- Partial implementation + documentation > complete but undocumented
 
 ---
 
 ### SD-002: Target Interview Narrative ✅ DECIDED
 
 **Story to Tell**:
-1. "I designed a complex domain model for fight tracking with community tagging"
-2. "I followed strict TDD/BDD discipline - every feature has tests first"
-3. "I made pragmatic scope decisions - implemented core, documented future"
-4. "I can show you the ADRs explaining my architectural choices"
-5. "Test coverage is 90%+ across all implemented layers"
+1. "I designed a complex domain model for fight tracking with hierarchical tagging"
+2. "I discovered that Fight depends on Tags for validation - showing I understood the domain"
+3. "I followed strict TDD discipline - tests defined requirements before code"
+4. "I made pragmatic scope decisions - implemented core, documented future work"
+5. "I deployed to Azure with cost-conscious infrastructure choices"
+6. "I can show you ADRs explaining my architectural choices"
+7. "Test coverage is 90%+ across all implemented layers"
 
 **Evidence to Show**:
 - Git history with test-first commits
 - ADR documents with rationale
 - Comprehensive test suite
 - OpenAPI documentation
+- Live deployed API
 - This decisions document (meta-documentation)
+- Cost management scripts (shows operational thinking)
+
+---
+
+### SD-003: Deployment Strategy ✅ DECIDED
+
+**Stack**:
+- **Compute**: Azure App Service B1 (~$13/mo when running)
+- **Database**: Neon PostgreSQL free tier ($0/mo)
+- **CI/CD**: GitHub Actions
+- **Cost Management**: Stop/start scripts
+
+**Rationale**:
+- Real cloud deployment (not just localhost)
+- Near-zero cost during development
+- Learn Azure fundamentals
+- Neon is production-quality Postgres
+- Can upgrade components independently
+
+**Monthly Cost Target**: <$5/month during development
 
 ---
 
@@ -373,6 +535,10 @@ These don't need answers now, but should be considered eventually:
 
 | Date | Change |
 |------|--------|
+| 2026-01-18 | Added DD-001 through DD-006 (tags before fights, fight_format, validation rules) |
+| 2026-01-18 | Added SD-003 (deployment strategy with Neon + Azure) |
+| 2026-01-18 | Added DF-005, DF-006 (Azure Postgres deferred, IaC optional) |
+| 2026-01-18 | Restructured phases: 2A (tags) → 2B (fights) → 3 (tag expansion) → 4A/4B (deployment) |
 | 2026-01-18 | Initial consolidation from multiple docs |
 | 2026-01-14 | ADR-001 through ADR-005 implemented |
 | 2025-12-11 | Project started, initial design decisions |
