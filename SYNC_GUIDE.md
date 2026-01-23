@@ -7,7 +7,7 @@
 
 ## The Two-Claude Workflow
 
-You're using two Claude contexts:
+User is using two Claude contexts:
 
 | Context | Purpose | Strengths |
 |---------|---------|-----------|
@@ -22,7 +22,7 @@ You're using two Claude contexts:
 
 ### Claude.ai (Project Files)
 
-Add these to your Claude Project:
+Add these to the Claude Project:
 
 | File | Purpose | Update Frequency |
 |------|---------|------------------|

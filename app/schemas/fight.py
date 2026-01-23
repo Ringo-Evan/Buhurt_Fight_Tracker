@@ -46,7 +46,7 @@ class FightUpdate(BaseModel):
         winner_side: Optional new winner
         notes: Optional new notes
     """
-    date: date | None = None
+    date: date # TODO None|None was causing issues. What is happening here?
     location: str | None = Field(None, min_length=1, max_length=200)
     video_url: str | None = Field(None, max_length=500)
     winner_side: int | None = None
