@@ -36,17 +36,35 @@ class TagTypeCreate(BaseModel):
     Schema for creating a new TagType.
 
     Attributes:
-        name: Name of the tag type (1-100 characters)
+        name: Name of the tag type (1-50 characters)
         is_privileged: If True, changes require voting (default: True)
         is_parent: If True, can have child tags (default: False)
         has_children: If True, has child tags (default: False)
         display_order: Order for display purposes (default: 0)
     """
-    name: str = Field(..., min_length=1, max_length=100)
+    name: str = Field(..., min_length=1, max_length=50)
     is_privileged: bool = True
     is_parent: bool = False
     has_children: bool = False
     display_order: int = 0
+
+
+class TagTypeUpdate(BaseModel):
+    """
+    Schema for updating a TagType (all fields optional for partial updates).
+
+    Attributes:
+        name: Name of the tag type (1-50 characters)
+        is_privileged: If True, changes require voting
+        is_parent: If True, can have child tags
+        has_children: If True, has child tags
+        display_order: Order for display purposes
+    """
+    name: str | None = Field(None, min_length=1, max_length=50)
+    is_privileged: bool | None = None
+    is_parent: bool | None = None
+    has_children: bool | None = None
+    display_order: int | None = None
 
 
 class TagTypeResponse(TagTypeBase):

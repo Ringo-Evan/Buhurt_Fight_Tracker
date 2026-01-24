@@ -57,6 +57,21 @@ class TagTypeRepository:
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    async def update(self, tag_type_id: UUID, update_data: Dict[str, Any]) -> TagType:
+        """Update a tag type."""
+        tag_type = await self.get_by_id(tag_type_id)
+        if tag_type is None:
+            raise ValueError("Tag type not found")
+
+        # Update fields
+        for key, value in update_data.items():
+            if hasattr(tag_type, key):
+                setattr(tag_type, key, value)
+
+        await self.session.commit()
+        await self.session.refresh(tag_type)
+        return tag_type
+
     async def soft_delete(self, tag_type_id: UUID) -> None:
         """Soft delete a tag type."""
         tag_type = await self.get_by_id(tag_type_id)
