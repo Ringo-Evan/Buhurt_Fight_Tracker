@@ -26,19 +26,24 @@ This document outlines the TDD implementation plan for the remaining core domain
     ▼                  ▼                  │
   Fight ◄───── FightParticipation        │
     │                                     │
-    │         TagType (independent)       │
+    │         TagType ✅ (2026-01-24)     │
     │              │                      │
     └──────────────┼──────────────────────┘
                    │
                    ▼
-                  Tag
+                  Tag ⏸️ (next)
                    │
                    ▼
-           TagChangeRequest
+           TagChangeRequest 📋 (deferred to v2)
                    │
                    ▼
-                 Vote
+                 Vote 📋 (deferred to v2)
 ```
+
+**Status Update (2026-01-24)**:
+- ✅ TagType: Complete with 19 unit tests + 8 integration tests
+- ⏸️ Tag: Next to implement
+- 📋 TagChangeRequest + Vote: Deferred to v2 (per DD-006)
 
 ---
 
