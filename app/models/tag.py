@@ -40,9 +40,9 @@ class Tag(Base):
         primary_key=True,
         default=uuid4
     )
-    fight_id: Mapped[UUID] = mapped_column(
+    fight_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("fights.id", onupdate="CASCADE", ondelete="RESTRICT"),
-        nullable=False
+        nullable=True  # Optional for now - will be required when Fight is implemented
     )
     tag_type_id: Mapped[UUID] = mapped_column(
         ForeignKey("tag_types.id", onupdate="CASCADE", ondelete="RESTRICT"),
@@ -68,7 +68,7 @@ class Tag(Base):
     )
 
     # Relationships
-    fight: Mapped["Fight"] = relationship(
+    fight: Mapped["Fight | None"] = relationship(
         "Fight",
         back_populates="tags"
     )

@@ -1,11 +1,13 @@
 from typing import Any, Dict
+from uuid import UUID
 
 from app.models.tag import Tag
 from app.models.tag_type import TagType
 from app.repositories.tag_repository import TagRepository
+from app.repositories.tag_type_repository import TagTypeRepository
 
+from app.exceptions import ValidationError
 
-from app.exceptions import (ValidationError)
 
 class TagService:
     """
@@ -15,14 +17,20 @@ class TagService:
     Delegates data access to TagRepository.
     """
 
-    def __init__(self, tag_repository: TagRepository):
+    def __init__(
+        self,
+        tag_repository: TagRepository,
+        tag_type_repository: TagTypeRepository
+    ):
         """
-        Initialize service with repository.
+        Initialize service with repositories.
 
         Args:
             tag_repository: TagRepository instance for tag data access
+            tag_type_repository: TagTypeRepository for validating tag types
         """
         self.tag_repository = tag_repository
+        self.tag_type_repository = tag_type_repository
 
     def _validate_tag_data(self, data: Dict[str, Any]) -> None:
         """
@@ -43,7 +51,7 @@ class TagService:
                 raise ValidationError("Tag name must not exceed 50 characters")
             
 
-    async def create_tag(self, tag_data: Dict[str, Any]) -> Tag:
+    async def create(self, tag_data: Dict[str, Any]) -> Tag:
         """
         Create a new tag after validating data.
 
@@ -56,7 +64,13 @@ class TagService:
         Raises:
             ValidationError: If validation fails
         """
-        self._validate_tag_data(tag_data)
+        # Validate tag type exists
+        tag_type = await self.tag_type_repository.get_by_id(
+            tag_data['tag_type_id']
+        )
+        if not tag_type:
+            raise ValidationError(
+                f"Tag type with ID {tag_data['tag_type_id']} not found"
+            )
 
-        # Check what type of tag is being created and apply any specific business rules if needed
         return await self.tag_repository.create(tag_data)

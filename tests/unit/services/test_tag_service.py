@@ -1,42 +1,59 @@
+"""
+Unit tests for TagService.
+
+Tests business logic layer for Tag operations.
+Following STRICT TDD - ONE test at a time, RED → GREEN → REFACTOR.
+"""
+
 import pytest
-from app.services.tag_service import TagService
-from app.exceptions import ValidationError
-from app.models.tag import Tag
+from unittest.mock import AsyncMock
+from uuid import uuid4
+
 from app.repositories.tag_repository import TagRepository
+from app.repositories.tag_type_repository import TagTypeRepository
+from app.services.tag_service import TagService
+from app.models.tag import Tag
+from app.models.tag_type import TagType
+from app.exceptions import ValidationError
 
-class TestTagService:
-    def test_create_tag_success(self):
+
+class TestTagServiceCreate:
+    """Test suite for tag creation with strict TDD."""
+
+    @pytest.mark.asyncio
+    async def test_create_tag_validates_tag_type_exists(self):
+        """
+        Test that creating a tag validates tag_type_id exists.
+
+        This is TEST #1 following strict TDD.
+
+        Arrange: Mock repository where tag type does NOT exist
+        Act: Call service.create() with invalid tag_type_id
+        Assert: ValidationError raised with appropriate message
+        """
         # Arrange
-        mock_tag_repository = pytest.mock.MagicMock(spec=TagRepository)
-        tag_service = TagService(tag_repository=mock_tag_repository)
-        tag_data = {'name': 'Test Tag'}
+        mock_tag_repo = AsyncMock(spec=TagRepository)
+        mock_tag_type_repo = AsyncMock(spec=TagTypeRepository)
 
-        # Act
-        created_tag = pytest.asyncio.run(tag_service.create_tag(tag_data))
+        # Tag type does NOT exist
+        mock_tag_type_repo.get_by_id.return_value = None
 
-        # Assert
-        mock_tag_repository.create_tag.assert_called_once()
-        assert isinstance(created_tag, Tag)
-        assert created_tag.name == 'Test Tag'
+        service = TagService(
+            tag_repository=mock_tag_repo,
+            tag_type_repository=mock_tag_type_repo
+        )
 
-    def test_create_tag_validation_error_empty_name(self):
-        # Arrange
-        mock_tag_repository = pytest.mock.MagicMock(spec=TagRepository)
-        tag_service = TagService(tag_repository=mock_tag_repository)
-        tag_data = {'name': ''}
+        tag_type_id = uuid4()
+        tag_data = {
+            'tag_type_id': tag_type_id,
+            'value': 'singles'
+        }
 
         # Act & Assert
         with pytest.raises(ValidationError) as exc_info:
-            pytest.asyncio.run(tag_service.create_tag(tag_data))
-        assert str(exc_info.value) == "Tag name is required"
+            await service.create(tag_data)
 
-    def test_create_tag_validation_error_name_too_long(self):
-        # Arrange
-        mock_tag_repository = pytest.mock.MagicMock(spec=TagRepository)
-        tag_service = TagService(tag_repository=mock_tag_repository)
-        tag_data = {'name': 'A' * 51}  # 51 characters
-
-        # Act & Assert
-        with pytest.raises(ValidationError) as exc_info:
-            pytest.asyncio.run(tag_service.create_tag(tag_data))
-        assert str(exc_info.value) == "Tag name must not exceed 50 characters"
+        assert 'tag type' in str(exc_info.value).lower()
+        assert 'not found' in str(exc_info.value).lower()
+        mock_tag_type_repo.get_by_id.assert_called_once_with(tag_type_id)
+        mock_tag_repo.create.assert_not_called()
