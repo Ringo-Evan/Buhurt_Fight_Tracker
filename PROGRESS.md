@@ -1,6 +1,6 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-01-18
+**Last Updated**: 2026-01-24
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
 **Velocity**: ~8 hours/week (target: 14)
@@ -12,7 +12,7 @@
 | Phase | Status | Tests | Time Spent |
 |-------|--------|-------|------------|
 | Phase 1: Foundation (Country, Team, Fighter) | ✅ COMPLETE | 130 unit, 41 integration, 98 BDD | ~6.5 hrs |
-| Phase 2A: Tag Foundation | ⏸️ READY | 0 | 0 |
+| Phase 2A: Tag Foundation (TagType + Tag) | 🚧 IN PROGRESS | 19 unit, 8 integration (TagType) | ~2 hrs |
 | Phase 2B: Fight Tracking | 📋 PLANNED | 0 | 0 |
 | Phase 3: Tag Expansion | 📋 PLANNED | 0 | 0 |
 | Phase 4A: Basic Deployment | 📋 PLANNED | 0 | 0 |
@@ -20,7 +20,7 @@
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
-**Total Tests**: 130 unit + 41 integration + 98 BDD scenarios
+**Total Tests**: 149 unit + 49 integration + 98 BDD scenarios (TagType: 19 unit, 8 integration)
 **Estimated Remaining**: 28-36 hours to "portfolio complete" (through Phase 4A)
 
 ---
@@ -71,16 +71,32 @@ The project is portfolio-ready when someone can:
 
 ---
 
-### Phase 2A: Tag Foundation ⏸️ READY TO START
+### Phase 2A: Tag Foundation 🚧 IN PROGRESS
 
+**Started**: 2026-01-24
 **Estimated Time**: 4-6 hours
+**Time Spent**: ~2 hours
 **Complexity**: Medium (new pattern, but simpler than Fight)
 **Prerequisite for**: Phase 2B (Fight needs fight_format tag)
 
-| Entity | Purpose | Key Complexity |
-|--------|---------|----------------|
-| TagType | Reference data for tag categories | Seed data, validation rules |
-| Tag | Links tags to fights | FK to TagType, value validation |
+| Entity | Status | Unit Tests | Integration Tests | API | Migration |
+|--------|--------|-----------|-------------------|-----|-----------|
+| TagType | ✅ COMPLETE | 19 | 8 | ✅ Full CRUD | ⏸️ Pending |
+| Tag | ⏸️ NOT STARTED | 0 | 0 | ❌ | ❌ |
+
+**TagType Key Achievements**:
+- Complete CRUD implementation following Phase 1 patterns
+- Repository layer: create, get_by_id, get_by_name, list_all, update, soft_delete
+- Service layer: Full validation (duplicate names, required fields, 50 char limit)
+- API layer: 5 endpoints (POST, GET list, GET by ID, PATCH, DELETE)
+- Feature file corrected to match actual model (removed incorrect parent_tag_type hierarchy)
+- Integration tests written as specification (not BDD step definitions)
+- All 19 unit tests passing (186/191 overall project tests passing)
+
+**TagType Lessons Learned**:
+- ⚠️ **TDD Violation**: Wrote all 9 service tests at once instead of strict one-at-a-time RED-GREEN-REFACTOR
+- ✅ **Feature File as Spec**: Used Gherkin scenarios as specification for integration tests (cleaner than BDD step defs)
+- ✅ **Pattern Reuse**: Repository/Service/API patterns from Phase 1 accelerated implementation
 
 **Why Tags Before Fights?**
 Fight validation depends on `fight_format` (singles vs melee):
@@ -338,6 +354,18 @@ Types: feat, fix, test, docs, refactor
 
 ## Session Log
 
+### 2026-01-24: Phase 2A Started - TagType Complete
+- ✅ Implemented TagType entity with full CRUD
+- ✅ 19 unit tests (10 repository, 9 service) - all passing
+- ✅ 8 integration tests following feature file specification
+- ✅ Complete API layer (POST, GET list, GET by ID, PATCH, DELETE)
+- ✅ Added repository.update() method
+- ✅ Full validation: duplicate names, required fields, length limits
+- ⚠️ **Lesson learned**: Violated strict TDD by writing all 9 service tests at once instead of one-at-a-time
+- 📝 Used feature file as specification for integration tests (not BDD step definitions)
+- ⏸️ Integration tests require Docker (blocked currently)
+- **Commits**: `a556b61` (CRUD implementation), `723898d` (integration tests)
+
 ### 2026-01-14: Phase 1 Complete
 - Completed Fighter entity
 - All 130 unit tests passing
@@ -364,14 +392,16 @@ Types: feat, fix, test, docs, refactor
 ## Next Actions
 
 ### Immediate (Next Session)
-1. [ ] Create feature branch: `git checkout -b feature/tag-foundation`
-2. [ ] Verify Phase 1 tests pass: `pytest tests/unit/ -v`
-3. [ ] Write TagType BDD scenarios (strict TDD: one scenario at a time)
-4. [ ] Create TagType model with seed data support
+1. [ ] Implement Tag entity following **STRICT TDD** (ONE test at a time)
+2. [ ] Tag model with parent_tag_id (self-referential FK for hierarchy)
+3. [ ] Tag validation: FK to TagType, value validation
+4. [ ] Write Tag feature file scenarios
+5. [ ] Follow strict TDD discipline: Write ONE test → make it pass → next test
 
 ### This Week
-- [ ] Complete TagType entity (model, repo, service, tests)
+- [x] Complete TagType entity (model, repo, service, tests)
 - [ ] Complete Tag entity (model, repo, service, tests)
+- [ ] Create Alembic migration for TagType and Tag tables
 - [ ] Seed fight_format TagType with "singles" and "melee" values
 
 ### This Month
@@ -387,8 +417,8 @@ Types: feat, fix, test, docs, refactor
 
 | Week | Planned | Actual | Notes |
 |------|---------|--------|-------|
-| Week 1 | 14 hrs | ~6.5 hrs | Phase 1 complete |
-| Week 2 | 14 hrs | TBD | Phase 2 start |
+| Week 1 (Jan 10-14) | 14 hrs | ~6.5 hrs | Phase 1 complete |
+| Week 2 (Jan 17-24) | 14 hrs | ~2 hrs | TagType complete (Phase 2A partial) |
 
 ### Velocity
 
