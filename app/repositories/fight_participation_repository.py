@@ -50,15 +50,13 @@ class FightParticipationRepository:
 
     async def get_by_id(
         self,
-        participation_id: UUID,
-        include_deleted: bool = False
+        participation_id: UUID
     ) -> FightParticipation | None:
         """
         Retrieve a participation by ID with eager-loaded fighter.
 
         Args:
             participation_id: UUID of the participation
-            include_deleted: If True, include soft-deleted records
 
         Returns:
             FightParticipation instance or None if not found
@@ -67,23 +65,18 @@ class FightParticipationRepository:
             joinedload(FightParticipation.fighter)
         ).where(FightParticipation.id == participation_id)
 
-        if not include_deleted:
-            query = query.where(FightParticipation.is_deleted == False)
-
         result = await self.session.execute(query)
         return result.unique().scalar_one_or_none()
 
     async def list_by_fight(
         self,
-        fight_id: UUID,
-        include_deleted: bool = False
+        fight_id: UUID
     ) -> list[FightParticipation]:
         """
         List all participations for a specific fight.
 
         Args:
             fight_id: UUID of the fight
-            include_deleted: If True, include soft-deleted records
 
         Returns:
             List of FightParticipation instances
@@ -95,23 +88,18 @@ class FightParticipationRepository:
             FightParticipation.role
         )
 
-        if not include_deleted:
-            query = query.where(FightParticipation.is_deleted == False)
-
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
 
     async def list_by_fighter(
         self,
-        fighter_id: UUID,
-        include_deleted: bool = False
+        fighter_id: UUID
     ) -> list[FightParticipation]:
         """
         List all fight participations for a specific fighter.
 
         Args:
             fighter_id: UUID of the fighter
-            include_deleted: If True, include soft-deleted records
 
         Returns:
             List of FightParticipation instances
@@ -120,36 +108,34 @@ class FightParticipationRepository:
             joinedload(FightParticipation.fight)
         ).where(FightParticipation.fighter_id == fighter_id)
 
-        if not include_deleted:
-            query = query.where(FightParticipation.is_deleted == False)
-
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
 
-    async def soft_delete(self, participation_id: UUID) -> None:
+    async def delete(self, participation_id: UUID) -> bool:
         """
-        Soft delete a participation.
+        Hard delete a participation (junction tables use hard delete, not soft delete).
 
         Args:
             participation_id: UUID of the participation to delete
 
-        Raises:
-            ValueError: If participation not found
+        Returns:
+            True if deleted, False if not found
         """
-        participation = await self.get_by_id(participation_id, include_deleted=False)
+        participation = await self.get_by_id(participation_id)
         if participation is None:
-            raise ValueError("Participation not found")
+            return False
 
-        participation.is_deleted = True
+        self.session.delete(participation)  # delete() is synchronous
         await self.session.commit()
+        return True
 
-    async def check_fighter_on_both_sides(
+    async def check_fighter_participation(
         self,
         fight_id: UUID,
         fighter_id: UUID
     ) -> bool:
         """
-        Check if a fighter is already participating on the other side.
+        Check if a fighter is already participating in the fight.
 
         Args:
             fight_id: UUID of the fight
@@ -160,8 +146,7 @@ class FightParticipationRepository:
         """
         query = select(FightParticipation).where(
             FightParticipation.fight_id == fight_id,
-            FightParticipation.fighter_id == fighter_id,
-            FightParticipation.is_deleted == False
+            FightParticipation.fighter_id == fighter_id
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None

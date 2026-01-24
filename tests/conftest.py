@@ -13,7 +13,18 @@ from sqlalchemy.orm import sessionmaker
 
 # Import all models to ensure proper relationship resolution
 # This must be done before Base.metadata.create_all() is called
-from app.models import Base, Country, Team, Fighter  # noqa: F401
+from app.models import (  # noqa: F401
+    Base,
+    Country,
+    Team,
+    Fighter,
+    Fight,
+    FightParticipation,
+    TagType,
+    Tag,
+    TagChangeRequest,
+    Vote
+)
 
 
 # ============================================================================

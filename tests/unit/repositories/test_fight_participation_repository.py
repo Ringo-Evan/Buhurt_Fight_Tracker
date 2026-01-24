@@ -79,7 +79,6 @@ class TestFightParticipationRepositoryGetById:
             fighter_id=uuid4(),
             side=1,
             role=ParticipationRole.FIGHTER.value,
-            is_deleted=False,
             created_at=datetime.now(UTC)
         )
 
@@ -125,8 +124,8 @@ class TestFightParticipationRepositoryListByFight:
         # Arrange
         fight_id = uuid4()
         participations = [
-            FightParticipation(id=uuid4(), fight_id=fight_id, fighter_id=uuid4(), side=1, role="fighter", is_deleted=False, created_at=datetime.now(UTC)),
-            FightParticipation(id=uuid4(), fight_id=fight_id, fighter_id=uuid4(), side=2, role="fighter", is_deleted=False, created_at=datetime.now(UTC)),
+            FightParticipation(id=uuid4(), fight_id=fight_id, fighter_id=uuid4(), side=1, role="fighter", created_at=datetime.now(UTC)),
+            FightParticipation(id=uuid4(), fight_id=fight_id, fighter_id=uuid4(), side=2, role="fighter", created_at=datetime.now(UTC)),
         ]
 
         mock_scalars = MagicMock()
@@ -177,7 +176,7 @@ class TestFightParticipationRepositoryListByFighter:
         # Arrange
         fighter_id = uuid4()
         participations = [
-            FightParticipation(id=uuid4(), fight_id=uuid4(), fighter_id=fighter_id, side=1, role="fighter", is_deleted=False, created_at=datetime.now(UTC)),
+            FightParticipation(id=uuid4(), fight_id=uuid4(), fighter_id=fighter_id, side=1, role="fighter", created_at=datetime.now(UTC)),
         ]
 
         mock_scalars = MagicMock()
@@ -212,7 +211,6 @@ class TestFightParticipationRepositorySoftDelete:
             fighter_id=uuid4(),
             side=1,
             role="fighter",
-            is_deleted=False,
             created_at=datetime.now(UTC)
         )
 
@@ -225,15 +223,15 @@ class TestFightParticipationRepositorySoftDelete:
         repository = FightParticipationRepository(mock_session)
 
         # Act
-        await repository.soft_delete(participation_id)
+        result = await repository.delete(participation_id)
 
         # Assert
-        assert participation.is_deleted is True
+        assert result is True
         mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_soft_delete_raises_error_for_non_existent(self):
-        """Test that soft_delete raises ValueError for non-existent participation."""
+    async def test_delete_returns_false_for_non_existent(self):
+        """Test that delete returns False for non-existent participation."""
         # Arrange
         mock_result = MagicMock()
         mock_result.unique.return_value.scalar_one_or_none.return_value = None
@@ -243,6 +241,8 @@ class TestFightParticipationRepositorySoftDelete:
 
         repository = FightParticipationRepository(mock_session)
 
-        # Act & Assert
-        with pytest.raises(ValueError, match="Participation not found"):
-            await repository.soft_delete(uuid4())
+        # Act
+        result = await repository.delete(uuid4())
+
+        # Assert
+        assert result is False

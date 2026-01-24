@@ -26,6 +26,8 @@ class TagType(Base):
         id: UUID primary key
         name: Type name (unique)
         is_privileged: If True, changes require voting
+        is_parent: If True, can have child tags
+        has_children: If True, has child tags
         display_order: Order for display purposes
         is_deleted: Soft delete flag
         created_at: Timestamp of record creation
@@ -47,6 +49,17 @@ class TagType(Base):
         default=True,
         nullable=False
     )
+    is_parent: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+    has_children: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+    #TODO: do I want this? 
     display_order: Mapped[int] = mapped_column(
         Integer,
         default=0,
@@ -58,7 +71,7 @@ class TagType(Base):
         nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         nullable=False
     )
