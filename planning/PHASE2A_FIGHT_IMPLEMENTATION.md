@@ -1,14 +1,18 @@
-# Implementation Plan: Phase 1 - Core Fight & Tag System
+# Implementation Plan: Phase 2 - Tag Foundation & Fight System
 
 **Created**: 2026-01-11
+**Last Updated**: 2026-01-26
 **Author**: Claude Opus 4.5
-**Scope**: 6 entities (Fight, FightParticipation, TagType, Tag, TagChangeRequest, Vote)
+**Scope**: Phase 2A (TagType, Tag) + Phase 2B (Fight, FightParticipation)
 
 ---
 
 ## Executive Summary
 
 This document outlines the TDD implementation plan for the remaining core domain entities. All design decisions are documented with rationale.
+
+**Phase 2A Status**: ✅ COMPLETE (2026-01-26)
+**Phase 2B Status**: 📋 READY TO BEGIN
 
 ---
 
@@ -24,14 +28,14 @@ This document outlines the TDD implementation plan for the remaining core domain
     ┌──────────────────┼──────────────────┐
     │                  │                  │
     ▼                  ▼                  │
-  Fight ◄───── FightParticipation        │
+  Fight ⏸️ ◄─── FightParticipation ⏸️    │
     │                                     │
     │         TagType ✅ (2026-01-24)     │
     │              │                      │
     └──────────────┼──────────────────────┘
                    │
                    ▼
-                  Tag ⏸️ (next)
+                  Tag ✅ (2026-01-26)
                    │
                    ▼
            TagChangeRequest 📋 (deferred to v2)
@@ -40,9 +44,11 @@ This document outlines the TDD implementation plan for the remaining core domain
                  Vote 📋 (deferred to v2)
 ```
 
-**Status Update (2026-01-24)**:
+**Status Update (2026-01-26)**:
 - ✅ TagType: Complete with 19 unit tests + 8 integration tests
-- ⏸️ Tag: Next to implement
+- ✅ Tag: Complete with 9 unit tests + 9 integration tests (STRICT TDD)
+- ⏸️ Fight: Next to implement
+- ⏸️ FightParticipation: After Fight
 - 📋 TagChangeRequest + Vote: Deferred to v2 (per DD-006)
 
 ---

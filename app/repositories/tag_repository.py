@@ -44,6 +44,16 @@ class TagRepository:
         result = await self.session.execute(query)
         return result.unique().scalar_one_or_none()
 
+    async def list_all(self, include_deleted: bool = False) -> list[Tag]:
+        """List all tags with eager-loaded tag_type."""
+        query = select(Tag).options(
+            joinedload(Tag.tag_type)
+        )
+        if not include_deleted:
+            query = query.where(Tag.is_deleted == False)
+        result = await self.session.execute(query)
+        return list(result.unique().scalars().all())
+
     async def list_by_fight(self, fight_id: UUID, include_deleted: bool = False) -> list[Tag]:
         """List all tags for a fight."""
         query = select(Tag).options(
@@ -69,6 +79,20 @@ class TagRepository:
             query = query.where(Tag.is_deleted == False)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+    async def update(self, tag_id: UUID, update_data: Dict[str, Any]) -> Tag | None:
+        """Update an existing tag."""
+        tag = await self.get_by_id(tag_id)
+        if tag is None:
+            return None
+
+        for key, value in update_data.items():
+            if hasattr(tag, key):
+                setattr(tag, key, value)
+
+        await self.session.commit()
+        await self.session.refresh(tag)
+        return tag
 
     async def soft_delete(self, tag_id: UUID) -> None:
         """Soft delete a tag."""

@@ -11,6 +11,7 @@ from app.api.v1.teams import router as teams_router
 from app.api.v1.fighters import router as fighters_router
 from app.api.v1.fights import router as fights_router
 from app.api.v1.tag_type_controller import router as tag_types_router
+from app.api.v1.tag_controller import router as tags_router
 
 # Create combined v1 router
 api_v1_router = APIRouter()
@@ -21,5 +22,6 @@ api_v1_router.include_router(teams_router)
 api_v1_router.include_router(fighters_router)
 api_v1_router.include_router(fights_router)
 api_v1_router.include_router(tag_types_router)
+api_v1_router.include_router(tags_router)
 
 __all__ = ["api_v1_router"]

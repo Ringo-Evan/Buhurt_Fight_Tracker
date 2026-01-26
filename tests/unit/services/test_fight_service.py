@@ -354,3 +354,216 @@ class TestFightServiceDelete:
         # Act & Assert
         with pytest.raises(FightNotFoundError):
             await service.delete(uuid4())
+
+
+class TestFightServiceCreateWithParticipants:
+    """Test suite for fight creation with participants (atomic transaction)."""
+
+    @pytest.mark.asyncio
+    async def test_create_fight_with_valid_participants_succeeds(self):
+        """
+        Test that creating a fight with valid participants creates both atomically.
+
+        Following TDD: This test is written FIRST (RED phase).
+        The service.create_with_participants method doesn't exist yet.
+        """
+        # Arrange
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+        from app.models.fighter import Fighter
+        from app.models.fight_participation import FightParticipation
+
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_participation_repo = AsyncMock(spec=FightParticipationRepository)
+        mock_fighter_repo = AsyncMock(spec=FighterRepository)
+
+        fight_id = uuid4()
+        fighter1_id = uuid4()
+        fighter2_id = uuid4()
+
+        # Mock fighter lookups
+        fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deleted=False, created_at=datetime.now(UTC))
+        fighter2 = Fighter(id=fighter2_id, name="Jane Doe", is_deleted=False, created_at=datetime.now(UTC))
+        mock_fighter_repo.get_by_id.side_effect = lambda fid: fighter1 if fid == fighter1_id else fighter2
+
+        # Mock fight creation
+        fight = Fight(
+            id=fight_id,
+            date=date(2025, 6, 15),
+            location="Battle Arena Denver",
+            is_deleted=False,
+            created_at=datetime.now(UTC)
+        )
+        mock_fight_repo.create.return_value = fight
+        # Mock get_by_id to return the fight (used for refresh after creating participations)
+        mock_fight_repo.get_by_id.return_value = fight
+
+        # Mock participation creation
+        participation1 = FightParticipation(
+            id=uuid4(),
+            fight_id=fight_id,
+            fighter_id=fighter1_id,
+            side=1,
+            role="fighter",
+            created_at=datetime.now(UTC)
+        )
+        participation2 = FightParticipation(
+            id=uuid4(),
+            fight_id=fight_id,
+            fighter_id=fighter2_id,
+            side=2,
+            role="fighter",
+            created_at=datetime.now(UTC)
+        )
+        mock_participation_repo.create.side_effect = [participation1, participation2]
+
+        # Service with all dependencies
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=mock_participation_repo,
+            fighter_repository=mock_fighter_repo
+        )
+
+        fight_data = {
+            "date": date(2025, 6, 15),
+            "location": "Battle Arena Denver"
+        }
+        participations_data = [
+            {"fighter_id": fighter1_id, "side": 1, "role": "fighter"},
+            {"fighter_id": fighter2_id, "side": 2, "role": "fighter"}
+        ]
+
+        # Act
+        result = await service.create_with_participants(fight_data, participations_data)
+
+        # Assert
+        assert result.id == fight_id
+        assert result.location == "Battle Arena Denver"
+        mock_fight_repo.create.assert_awaited_once()
+        assert mock_participation_repo.create.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_create_fight_rejects_participants_on_only_one_side(self):
+        """
+        Test that creating a fight with participants on only one side fails.
+
+        Scenario: Cannot create fight with participants on only one side
+        """
+        # Arrange
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_participation_repo = AsyncMock(spec=FightParticipationRepository)
+        mock_fighter_repo = AsyncMock(spec=FighterRepository)
+
+        fighter1_id = uuid4()
+        fighter2_id = uuid4()
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=mock_participation_repo,
+            fighter_repository=mock_fighter_repo
+        )
+
+        fight_data = {
+            "date": date(2024, 6, 15),
+            "location": "Test Arena"
+        }
+        # Both fighters on side 1, no one on side 2
+        participations_data = [
+            {"fighter_id": fighter1_id, "side": 1, "role": "fighter"},
+            {"fighter_id": fighter2_id, "side": 1, "role": "fighter"}
+        ]
+
+        # Act & Assert
+        with pytest.raises(ValidationError, match="both sides"):
+            await service.create_with_participants(fight_data, participations_data)
+
+        # Verify fight was NOT created
+        mock_fight_repo.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_create_fight_rejects_duplicate_fighter(self):
+        """
+        Test that creating a fight with the same fighter twice fails.
+
+        Scenario: Cannot add same fighter twice to same fight
+        """
+        # Arrange
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_participation_repo = AsyncMock(spec=FightParticipationRepository)
+        mock_fighter_repo = AsyncMock(spec=FighterRepository)
+
+        fighter1_id = uuid4()
+        fighter2_id = uuid4()
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=mock_participation_repo,
+            fighter_repository=mock_fighter_repo
+        )
+
+        fight_data = {
+            "date": date(2024, 6, 15),
+            "location": "Test Arena"
+        }
+        # Same fighter on both sides
+        participations_data = [
+            {"fighter_id": fighter1_id, "side": 1, "role": "fighter"},
+            {"fighter_id": fighter1_id, "side": 2, "role": "fighter"},
+            {"fighter_id": fighter2_id, "side": 2, "role": "fighter"}
+        ]
+
+        # Act & Assert
+        with pytest.raises(ValidationError, match="duplicate fighter"):
+            await service.create_with_participants(fight_data, participations_data)
+
+        mock_fight_repo.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_create_fight_rejects_multiple_captains_per_side(self):
+        """
+        Test that creating a fight with multiple captains on same side fails.
+
+        Scenario: Cannot have multiple captains on same side
+        """
+        # Arrange
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_participation_repo = AsyncMock(spec=FightParticipationRepository)
+        mock_fighter_repo = AsyncMock(spec=FighterRepository)
+
+        fighter1_id = uuid4()
+        fighter2_id = uuid4()
+        fighter3_id = uuid4()
+        fighter4_id = uuid4()
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=mock_participation_repo,
+            fighter_repository=mock_fighter_repo
+        )
+
+        fight_data = {
+            "date": date(2024, 6, 15),
+            "location": "Test Arena"
+        }
+        # Two captains on side 1
+        participations_data = [
+            {"fighter_id": fighter1_id, "side": 1, "role": "captain"},
+            {"fighter_id": fighter2_id, "side": 1, "role": "captain"},
+            {"fighter_id": fighter3_id, "side": 2, "role": "fighter"},
+            {"fighter_id": fighter4_id, "side": 2, "role": "fighter"}
+        ]
+
+        # Act & Assert
+        with pytest.raises(ValidationError, match="multiple captains"):
+            await service.create_with_participants(fight_data, participations_data)
+
+        mock_fight_repo.create.assert_not_awaited()

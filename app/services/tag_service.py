@@ -74,3 +74,46 @@ class TagService:
             )
 
         return await self.tag_repository.create(tag_data)
+
+    async def get_by_id(self, tag_id: UUID) -> Tag | None:
+        """
+        Get a tag by its ID.
+
+        Args:
+            tag_id: UUID of the tag to retrieve
+
+        Returns:
+            Tag instance if found, None otherwise
+        """
+        return await self.tag_repository.get_by_id(tag_id)
+
+    async def list_all(self) -> list[Tag]:
+        """
+        List all non-deleted tags.
+
+        Returns:
+            List of Tag instances
+        """
+        return await self.tag_repository.list_all()
+
+    async def update(self, tag_id: UUID, update_data: Dict[str, Any]) -> Tag | None:
+        """
+        Update an existing tag.
+
+        Args:
+            tag_id: UUID of the tag to update
+            update_data: Dictionary with fields to update
+
+        Returns:
+            Updated Tag instance or None if not found
+        """
+        return await self.tag_repository.update(tag_id, update_data)
+
+    async def delete(self, tag_id: UUID) -> None:
+        """
+        Soft delete a tag.
+
+        Args:
+            tag_id: UUID of the tag to delete
+        """
+        await self.tag_repository.soft_delete(tag_id)

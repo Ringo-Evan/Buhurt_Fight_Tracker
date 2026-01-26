@@ -1,5 +1,7 @@
 from typing import Any, Dict
 
+from uuid import UUID
+
 from app.models.tag_type import TagType
 from app.repositories.tag_type_repository import TagTypeRepository
 
@@ -38,10 +40,10 @@ class TagTypeService:
             ValidationError: If validation fails
         """
         await self._validate_tag_type_data(tag_type_data)
-        await self._check_duplicate_name(tag_type_data.get('name'))
+        await self._check_duplicate_name(str(tag_type_data.get('name')))
         return await self.tag_type_repository.create(tag_type_data)
-        
-    async def get_by_id(self, tag_type_id: str) -> TagType:
+
+    async def get_by_id(self, tag_type_id: UUID) -> TagType:
         """
         Retrieve a tag type by its ID.
 
@@ -68,7 +70,7 @@ class TagTypeService:
         """
         return await self.tag_type_repository.list_all()
 
-    async def update(self, tag_type_id: str, update_data: Dict[str, Any]) -> TagType:
+    async def update(self, tag_type_id: UUID, update_data: Dict[str, Any]) -> TagType:
         """
         Update an existing tag type.
 
@@ -83,6 +85,7 @@ class TagTypeService:
             ValidationError: If tag type not found or validation fails
         """
         # Verify tag type exists
+        #TODO Should this check be in the repository?
         existing_tag_type = await self.tag_type_repository.get_by_id(tag_type_id)
         if not existing_tag_type:
             raise ValidationError(f"Tag type with ID {tag_type_id} not found")
@@ -96,7 +99,7 @@ class TagTypeService:
 
         return await self.tag_type_repository.update(tag_type_id, update_data)
 
-    async def delete(self, tag_type_id: str) -> None:
+    async def delete(self, tag_type_id: UUID) -> None:
         """
         Soft delete a tag type.
 

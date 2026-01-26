@@ -640,7 +640,6 @@ class TestCountryRepositoryPermanentDelete:
         """
         # Arrange
         mock_session = AsyncMock()
-        mock_session.delete = MagicMock()  # session.delete() is not async
         country_id = uuid4()
         country = Country(
             id=country_id,

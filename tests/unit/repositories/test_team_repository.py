@@ -844,7 +844,6 @@ class TestTeamRepositoryPermanentDelete:
         """
         # Arrange
         mock_session = AsyncMock()
-        mock_session.delete = MagicMock()  # session.delete() is not async
         team_id = uuid4()
         country_id = uuid4()
 

@@ -1,0 +1,29 @@
+Going forward gonna put notes here after every session. I've been using Claude Code far more than I originally intended. I'm unsure if this is actually a good thing or not. I feel pulled to use it partially because the rate it spits out code is more of a dopamine bust than writing by hand, but there are definetely actual benefits to using the LLM. It massively sped up putting in the framwork and when it works right it is at least 3 times as fast as me, if not the mythical 10x. There are two obvious downsides here. 1) I don't get to learn or practice as much which one of my original goals here. 2) Claude is not actually that good and when it makes mistakes it can take me much longer to find them because I'm less familiar with the codebase and the tech used(as a result of numnber one.)
+
+This is somewhat offset by allowing practice prompting and learning claude's quirks. I may decide later to take over most of the coding manually but for now I'm switching to making claude the primary generator of code and sitting back into a project manager and the Tester role I'm more familiar with. We're getting to the point where it might be worth spinning up the api and testing by hand to see what jumps out. I'll probably do at least one more session looking to complete the fight service before I actually start down that path. 
+
+General observations from before this session
+1) Claude does not need to be babysat if given sufficient propmting. Can release the Opus model to just go write and check later. Using docker containers makes this somewhat safe, though I need to spend some time figure out the limits of that safety.
+2) Sufficient prompting is incredibly tricky to test. Using a normal options, not in yolo mode, it can appear like the prompts have given claude sufficient guardrails, but when let off the leash, will often either have missed something important or claude's updating context will overwrite some area that wasn't specified enough.
+3) As all the current guides are saying use of external files for claude to research appear to be key. I'm mostly only using a CLAUDE.MD, and a progress document at the moment for claude specific management. This will likely change as I go forward
+4) Claude struggles with the incremental nature of TDD. Even with strict instructions to focus on a single test at a time claude will often go off and create all the tests or skip them entirely sometimes. This gets worse the longer the session, indicating context poisioning
+5) In general there will be lots of small errors like confusing async and sync, mixing types(can't seem to get datetime with time stamp correct for me), and failure to properly use object or libraries. It can usually fix these with one or two more run throughs, but that gets expensive in token usage. Currently feels more efficient for me to debug those type of failurs rather than let claude do it. It may help to create a list of common errors like that in another reference file Claude can read at the begining of each session
+6) Claude includes alot of metrics, many made up, and most not useful. I keep trying to remove references to total number  of tests as a criteria and claude keeps adding it back in.
+7) Lots of time has been wasted trying to clean up documentation and tracking. Hoping to use Claude for project management has proven a diaster. It's possible that using a sperate agent for that would help. There is a popular model of having one agent control others, a simple version is a manager agent I communicate with, that then provides instructions to a coding agent and a seperate code reviewer agent. That does not feel tenable on the pro plan and I'm not ready to spend on the max or per token api for this project. Similary not worth trying the Ralph Wigguns for this. Probably something I experiment with later on another project.
+8) I'm stuck thinking like a dotnet developer which can cause inconsistencies with Claudes more pythonic code. The question of whether I should take the time to learn the pythonic ways, try to include some prompting about using dotnet patterns/vocab, or ignore it and just have inconsistencies is one I'll need to address.
+9) Claude is not actually good at creating or updating documentation as we go. Again perhaps best down via a sperate agent to keep context clean?
+10) Claudes testing does not seem to adhere to either the one assert per test rule or a more assert all things you'd want tested strategy. I guess this makes sense if its the average of all unit test code avialable
+
+
+Thoughts from this session
+
+Did Much better at constraining Claude to TDD. Still wrote all the functional/BDD tests at once, but then implemented the code for them one at a time using red, green, red pattern and sticking to a single unit test at a time. I mentioned that multiple times in the first and subsequent prompts.
+
+Had claude generate an updated CLAUDE.md and exited the session to see if that worked. Was able to give a simple get started prompt and followed the pattern. Used required actions, forbidden actions, a bolded rule, and a specific numbered list of steps to take in a loop. May play with this more but seems to work. 
+Need to see how well this works with sonnet before I start messing though.
+
+Claude still can't run the integration tests in docker. Will make that a priority for next session. I had to fix a failure to properly refresh sqlalchemy session and another mix up of naive and time zone aware date time. 
+
+I'm also unclear what its doing with migrations. The CLI looks like its writing them itself, instead of generating them with a tool, which is how I would have expected it to work. 
+
+Claude is also not making commits. Should try to update it so a new commit at min after every working test.

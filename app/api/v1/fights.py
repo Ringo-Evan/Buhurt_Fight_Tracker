@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.repositories.fight_repository import FightRepository
+from app.repositories.fight_participation_repository import FightParticipationRepository
+from app.repositories.fighter_repository import FighterRepository
 from app.services.fight_service import FightService
 from app.schemas.fight import FightCreate, FightUpdate, FightResponse
 from app.exceptions import FightNotFoundError, ValidationError
@@ -20,9 +22,15 @@ router = APIRouter(prefix="/fights", tags=["Fights"])
 
 
 def get_fight_service(db: AsyncSession = Depends(get_db)) -> FightService:
-    """Dependency that provides a FightService instance."""
-    repository = FightRepository(db)
-    return FightService(repository)
+    """Dependency that provides a FightService instance with all repositories."""
+    fight_repository = FightRepository(db)
+    participation_repository = FightParticipationRepository(db)
+    fighter_repository = FighterRepository(db)
+    return FightService(
+        fight_repository=fight_repository,
+        participation_repository=participation_repository,
+        fighter_repository=fighter_repository
+    )
 
 
 @router.post(
@@ -30,7 +38,7 @@ def get_fight_service(db: AsyncSession = Depends(get_db)) -> FightService:
     response_model=FightResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new fight",
-    description="Record a new fight with date, location, and optional video URL.",
+    description="Record a new fight with date, location, and optional participants.",
 )
 async def create_fight(
     fight_data: FightCreate,
@@ -43,9 +51,21 @@ async def create_fight(
     - **location**: Event name/location (1-200 characters)
     - **video_url**: Optional URL to fight video
     - **winner_side**: Which side won (1, 2, or null for draw/unknown)
+    - **participations**: Optional list of fighter participations
     """
     try:
-        fight = await service.create(fight_data.model_dump())
+        # Extract participations from request
+        participations = fight_data.participations
+        fight_dict = fight_data.model_dump(exclude={"participations"})
+
+        if participations:
+            # Create fight with participations atomically
+            participations_data = [p.model_dump() for p in participations]
+            fight = await service.create_with_participants(fight_dict, participations_data)
+        else:
+            # Create fight without participations
+            fight = await service.create(fight_dict)
+
         return FightResponse.model_validate(fight)
     except ValidationError as e:
         raise HTTPException(

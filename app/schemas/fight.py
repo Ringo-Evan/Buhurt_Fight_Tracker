@@ -5,8 +5,56 @@ Defines request and response schemas for Fight API operations.
 """
 
 from datetime import datetime, date
+from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
+
+
+class ParticipationCreate(BaseModel):
+    """
+    Schema for creating a fight participation.
+
+    Attributes:
+        fighter_id: UUID of the fighter
+        side: Side assignment (1 or 2)
+        role: Role in the fight (fighter, captain, alternate, coach)
+    """
+    fighter_id: UUID
+    side: int = Field(..., ge=1, le=2)
+    role: str = Field(default="fighter")
+
+    @field_validator('role')
+    @classmethod
+    def validate_role(cls, v: str) -> str:
+        """Validate that role is valid."""
+        valid_roles = {"fighter", "captain", "alternate", "coach"}
+        if v not in valid_roles:
+            raise ValueError(f"Role must be one of: {', '.join(valid_roles)}")
+        return v
+
+
+class ParticipationResponse(BaseModel):
+    """
+    Schema for participation response.
+
+    Attributes:
+        id: Participation UUID
+        fight_id: Fight UUID
+        fighter_id: Fighter UUID
+        side: Side assignment (1 or 2)
+        role: Role in the fight
+        created_at: Timestamp of creation
+    """
+    id: UUID
+    fight_id: UUID
+    fighter_id: UUID
+    side: int
+    role: str
+    created_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class FightCreate(BaseModel):
@@ -19,12 +67,14 @@ class FightCreate(BaseModel):
         video_url: Optional URL to fight video
         winner_side: Optional winner (1 or 2, None for draw/unknown)
         notes: Optional notes about the fight
+        participations: Optional list of participations
     """
     date: date
     location: str = Field(..., min_length=1, max_length=200)
     video_url: str | None = Field(None, max_length=500)
     winner_side: int | None = None
     notes: str | None = None
+    participations: Optional[list[ParticipationCreate]] = None
 
     @field_validator('winner_side')
     @classmethod
@@ -74,6 +124,7 @@ class FightResponse(BaseModel):
         notes: Optional notes about the fight
         is_deleted: Soft delete flag
         created_at: Timestamp of creation
+        participations: List of participations (if loaded)
     """
     id: UUID
     date: date
@@ -83,6 +134,7 @@ class FightResponse(BaseModel):
     notes: str | None
     is_deleted: bool
     created_at: datetime
+    participations: Optional[list[ParticipationResponse]] = None
 
     model_config = {
         "from_attributes": True  # Enable ORM mode for SQLAlchemy compatibility

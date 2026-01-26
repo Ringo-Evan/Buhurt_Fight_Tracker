@@ -66,7 +66,7 @@ class FightRepository:
             query = query.where(Fight.is_deleted == False)
 
         result = await self.session.execute(query)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def list_all(self, include_deleted: bool = False) -> list[Fight]:
         """
@@ -155,3 +155,12 @@ class FightRepository:
         await self.session.commit()
         await self.session.refresh(fight)
         return fight
+
+    async def refresh_session(self, fight: Fight) -> None:
+        """
+        Refresh the fight instance from the database.
+
+        Args:
+            fight: Fight instance to refresh
+        """
+        await self.session.refresh(fight)

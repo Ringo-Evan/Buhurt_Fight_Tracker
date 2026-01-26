@@ -47,3 +47,71 @@ class TestTagRepositoryCreate:
         mock_session.add.assert_called_once()
         mock_session.commit.assert_awaited_once()
         mock_session.refresh.assert_awaited_once()
+
+
+class TestTagRepositoryListAll:
+    """Test suite for listing all tags."""
+
+    @pytest.mark.asyncio
+    async def test_list_all_returns_all_non_deleted_tags(self):
+        """
+        Test that list_all returns all non-deleted tags.
+
+        Arrange: Mock session to return list of tags
+        Act: Call repository.list_all()
+        Assert: All non-deleted tags returned
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        tag_type_id = uuid4()
+
+        tag1 = Tag(id=uuid4(), tag_type_id=tag_type_id, value='singles', is_deleted=False)
+        tag2 = Tag(id=uuid4(), tag_type_id=tag_type_id, value='melee', is_deleted=False)
+
+        mock_result = MagicMock()
+        mock_result.unique.return_value.scalars.return_value.all.return_value = [tag1, tag2]
+        mock_session.execute.return_value = mock_result
+
+        repository = TagRepository(mock_session)
+
+        # Act
+        result = await repository.list_all()
+
+        # Assert
+        assert len(result) == 2
+        assert result[0].value == 'singles'
+        assert result[1].value == 'melee'
+        mock_session.execute.assert_awaited_once()
+
+
+class TestTagRepositoryUpdate:
+    """Test suite for updating tags."""
+
+    @pytest.mark.asyncio
+    async def test_update_tag_modifies_value(self):
+        """
+        Test that update modifies tag value.
+
+        Arrange: Mock session with existing tag
+        Act: Call repository.update()
+        Assert: Tag value updated
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        tag_id = uuid4()
+        tag_type_id = uuid4()
+
+        existing_tag = Tag(id=tag_id, tag_type_id=tag_type_id, value='duel', is_deleted=False)
+
+        mock_result = MagicMock()
+        mock_result.unique.return_value.scalar_one_or_none.return_value = existing_tag
+        mock_session.execute.return_value = mock_result
+
+        repository = TagRepository(mock_session)
+
+        # Act
+        result = await repository.update(tag_id, {'value': 'profight'})
+
+        # Assert
+        assert result.value == 'profight'
+        mock_session.commit.assert_awaited_once()

@@ -67,7 +67,7 @@ async def get_tag_type(
 ):
     """Get a specific tag type by ID."""
     try:
-        return await service.get_by_id(str(tag_type_id))
+        return await service.get_by_id(tag_type_id)
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -88,7 +88,7 @@ async def update_tag_type(
     try:
         # Only include fields that were explicitly set
         update_dict = update_data.model_dump(exclude_unset=True)
-        return await service.update(str(tag_type_id), update_dict)
+        return await service.update(tag_type_id, update_dict)
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -105,6 +105,6 @@ async def delete_tag_type(
 ):
     """Soft delete a tag type."""
     try:
-        await service.delete(str(tag_type_id))
+        await service.delete(tag_type_id)
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

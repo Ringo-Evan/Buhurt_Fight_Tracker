@@ -72,6 +72,7 @@ class Fighter(Base):
     )
     participations: Mapped[list["FightParticipation"]] = relationship(
         "FightParticipation",
+        lazy="joined",  # Eager load participations     
         back_populates="fighter"
     )
 
