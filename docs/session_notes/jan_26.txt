@@ -27,3 +27,31 @@ Claude still can't run the integration tests in docker. Will make that a priorit
 I'm also unclear what its doing with migrations. The CLI looks like its writing them itself, instead of generating them with a tool, which is how I would have expected it to work. 
 
 Claude is also not making commits. Should try to update it so a new commit at min after every working test.
+
+
+Ran 2 more small sessions trying Sonnet.
+Managed to get Fight endpoints done, supposedly using business rules(I'm skeptical of this and need to confirm but that is gonna wait for a few days).
+Sonnet did follow TDD succesfully so that was good. However it failed to follow the "BDD" flow I outlined of creating a functional integration test first and then implementing code to make it pass via TDD. It completely skipped integration tests. 
+
+It also broke 7 unit tests and claimed they were already broken, so didn't fix them. Same with the one integration test that existed for fight. This has been a common pattern of skipping broken tests I'll need to address. Probably add a rule to always fix broken test. I can see 2 flaws that will come with that, one make the test fit the code not the other way around. And two getting stuck on a trivial problem when its better to move on. 
+
+The broken unit tests were all a result of when I changed the return of getbyId in the fight repo to use result.unique().scalar_one_or_none() from just result.scalar_one_or_none(). This was a fix I got from googling without fully understaning. It seemed like relationship between fight and fightparticipation auto joins when queried. Something in there required a unique result, maybe because both tables have the relationship so it was being returned twice? Regardless the broken tests were instaniating magic_mock with just scalar_one_or_none and it needed to be unique().scalar_one_or_none(). I am worried this is not the right solution and I'm going to see the problem till it bites me in ass.
+
+The broken integration test was the fight_data being passed into the controller was no longer being parsed right and was calling the service with incorrect parameters. Updated the controller to handle participations, format, and the service correctly. I do not think this is the right handling though. Format should be a tag and I'm not sure it's being handled like that. The JSON should look more like
+{data:{
+    fight:Date, url etc,
+    team_one: team name, id, etc
+    team_two: team name, id, etc
+    Tags:{
+        format:singles,
+        category:null,
+        etc
+    }
+    
+}}
+
+Looks like that's in decisions, which is not being referenced. I need to look into breaking CLAUDE.md up into more specific files that get referenced automatically when CLAUDE is working in an area related to that. The worry of course being if its a decision tree in a parent CLAUDE.md or something that it will get lost as context grow since CLAUDE is not deterministic. Possibly write an actual script to provide reminders to check proper files under specific conditions? 
+
+need to do more research into how CC works and other options people have implemented.
+
+Ended the session with Claude updating the PROGRESS.md to add a step to implement a CI/CD pipeline, so that Claude would be able to run integration tests while I still ran it in the sandboxed container. 

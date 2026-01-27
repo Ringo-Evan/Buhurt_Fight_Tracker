@@ -345,8 +345,15 @@ async def create_fight_with_participants(self, fight_data, fight_format, partici
  * Not familiar with TBD
 
 **Actions Needed**
+ * None atm
 
 
+### OQ-007: FightParticipation relationship
+
+**Question**: How does the FightParticpation relationship work? Why is a unique() call needed in Fight get_by_id()? Is it needed elsewhere and what is it doing to the object?
+
+**Actions Needed**
+ * Research Relationsips in SQLAlchemy. 
 
 
 ---
@@ -504,6 +511,7 @@ These don't need answers now, but should be considered eventually:
 3. **Audit Logging**: Should we track who changed what when?
 4. **Event Sourcing**: Would fight history benefit from event log?
 5. **API Versioning**: How to handle breaking changes?
+6. **Naming Strategy**: Do we want to keep using the same method and class names and relying on the context of parent objects to provide specificity or is it better to make naming explicit about the domain or layer each method and class belongs too?
 
 ---
 
