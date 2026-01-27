@@ -516,6 +516,7 @@ class TestFightIntegration:
         team = await team_repo.create({'name': 'Team USA', 'country_id': country.id})
         fighter1 = await fighter_repo.create({'name': 'Fighter 1', 'team_id': team.id})
         fighter2 = await fighter_repo.create({'name': 'Fighter 2', 'team_id': team.id})
+        await db_session.flush()  # Flush fighters so they're visible to service validation
 
         # Create service and fights
         from app.services.fight_service import FightService
