@@ -141,3 +141,433 @@ class TestFightIntegration:
 
         finally:
             app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_create_melee_fight_with_minimum_fighters(self, db_session):
+        """
+        Scenario: Create a melee fight with minimum fighters (5 per side)
+
+        Given an active country exists
+        And a team exists
+        And 10 fighters exist
+        When I create a melee fight with 5 fighters per side
+        Then the fight is created successfully
+        And the fight has 10 participants
+        And each side has 5 fighters
+
+        Verifies:
+        - Melee format requires minimum 5 fighters per side (DD-004)
+        - Format-dependent validation works correctly
+        """
+        # Arrange
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        from app.repositories.country_repository import CountryRepository
+        from app.repositories.team_repository import TeamRepository
+        from app.repositories.fighter_repository import FighterRepository
+
+        country_repo = CountryRepository(db_session)
+        team_repo = TeamRepository(db_session)
+        fighter_repo = FighterRepository(db_session)
+
+        # Create country and team
+        country = await country_repo.create({'code': 'USA', 'name': 'United States'})
+        team = await team_repo.create({'name': 'Team USA', 'country_id': country.id})
+
+        # Create 10 fighters
+        fighters = []
+        for i in range(10):
+            fighter = await fighter_repo.create({
+                'name': f'Fighter {i+1}',
+                'team_id': team.id
+            })
+            fighters.append(fighter)
+        await db_session.commit()
+
+        # Fight data with 5 fighters per side
+        participations = []
+        for i in range(5):
+            participations.append({
+                'fighter_id': str(fighters[i].id),
+                'side': 1,
+                'role': 'fighter'
+            })
+        for i in range(5, 10):
+            participations.append({
+                'fighter_id': str(fighters[i].id),
+                'side': 2,
+                'role': 'fighter'
+            })
+
+        fight_data = {
+            'date': '2025-07-20',
+            'location': 'Melee Arena',
+            'fight_format': 'melee',
+            'participations': participations
+        }
+
+        try:
+            # Act
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                response = await client.post("/api/v1/fights", json=fight_data)
+
+            # Assert
+            assert response.status_code == 201
+            response_data = response.json()
+            assert response_data['location'] == 'Melee Arena'
+            assert len(response_data['participations']) == 10
+
+            # Verify side distribution
+            side_1 = [p for p in response_data['participations'] if p['side'] == 1]
+            side_2 = [p for p in response_data['participations'] if p['side'] == 2]
+            assert len(side_1) == 5
+            assert len(side_2) == 5
+
+        finally:
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_cannot_create_fight_with_future_date(self, db_session):
+        """
+        Scenario: Cannot create fight with future date
+
+        Given fighters exist
+        When I attempt to create a fight with date in 2030
+        Then I receive a validation error
+        And the error message contains "future"
+
+        Verifies:
+        - Future date validation (existing business rule)
+        - API error handling
+        """
+        # Arrange
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        from app.repositories.country_repository import CountryRepository
+        from app.repositories.team_repository import TeamRepository
+        from app.repositories.fighter_repository import FighterRepository
+
+        country_repo = CountryRepository(db_session)
+        team_repo = TeamRepository(db_session)
+        fighter_repo = FighterRepository(db_session)
+
+        country = await country_repo.create({'code': 'USA', 'name': 'United States'})
+        team = await team_repo.create({'name': 'Team USA', 'country_id': country.id})
+        fighter1 = await fighter_repo.create({'name': 'Fighter 1', 'team_id': team.id})
+        fighter2 = await fighter_repo.create({'name': 'Fighter 2', 'team_id': team.id})
+        await db_session.commit()
+
+        fight_data = {
+            'date': '2030-12-31',  # Future date
+            'location': 'Test Arena',
+            'fight_format': 'singles',
+            'participations': [
+                {'fighter_id': str(fighter1.id), 'side': 1, 'role': 'fighter'},
+                {'fighter_id': str(fighter2.id), 'side': 2, 'role': 'fighter'}
+            ]
+        }
+
+        try:
+            # Act
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                response = await client.post("/api/v1/fights", json=fight_data)
+
+            # Assert
+            assert response.status_code == 422
+            error_detail = response.json()['detail']
+            assert 'future' in error_detail.lower()
+
+        finally:
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_cannot_create_fight_with_only_one_participant(self, db_session):
+        """
+        Scenario: Cannot create fight with only 1 participant
+
+        When I attempt to create a fight with only 1 participant
+        Then I receive a validation error
+        And the error message contains "at least 2 participants"
+
+        Verifies:
+        - Minimum participant validation
+        - Service layer validation working
+        """
+        # Arrange
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        from app.repositories.country_repository import CountryRepository
+        from app.repositories.team_repository import TeamRepository
+        from app.repositories.fighter_repository import FighterRepository
+
+        country_repo = CountryRepository(db_session)
+        team_repo = TeamRepository(db_session)
+        fighter_repo = FighterRepository(db_session)
+
+        country = await country_repo.create({'code': 'USA', 'name': 'United States'})
+        team = await team_repo.create({'name': 'Team USA', 'country_id': country.id})
+        fighter1 = await fighter_repo.create({'name': 'Fighter 1', 'team_id': team.id})
+        await db_session.commit()
+
+        fight_data = {
+            'date': '2025-06-15',
+            'location': 'Test Arena',
+            'fight_format': 'singles',
+            'participations': [
+                {'fighter_id': str(fighter1.id), 'side': 1, 'role': 'fighter'}
+            ]
+        }
+
+        try:
+            # Act
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                response = await client.post("/api/v1/fights", json=fight_data)
+
+            # Assert
+            assert response.status_code == 422
+            error_detail = response.json()['detail']
+            assert 'at least 2 participants' in error_detail.lower()
+
+        finally:
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_cannot_create_singles_fight_with_multiple_fighters_per_side(self, db_session):
+        """
+        Scenario: Singles format validation - exactly 1 fighter per side
+
+        When I attempt to create a singles fight with 2 fighters on side 1
+        Then I receive a validation error
+        And the error message indicates singles requires exactly 1 per side
+
+        Verifies:
+        - Singles format validation (DD-003)
+        - Format-dependent participant count validation
+        """
+        # Arrange
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        from app.repositories.country_repository import CountryRepository
+        from app.repositories.team_repository import TeamRepository
+        from app.repositories.fighter_repository import FighterRepository
+
+        country_repo = CountryRepository(db_session)
+        team_repo = TeamRepository(db_session)
+        fighter_repo = FighterRepository(db_session)
+
+        country = await country_repo.create({'code': 'USA', 'name': 'United States'})
+        team = await team_repo.create({'name': 'Team USA', 'country_id': country.id})
+
+        fighters = []
+        for i in range(3):
+            fighter = await fighter_repo.create({'name': f'Fighter {i+1}', 'team_id': team.id})
+            fighters.append(fighter)
+        await db_session.commit()
+
+        fight_data = {
+            'date': '2025-06-15',
+            'location': 'Test Arena',
+            'fight_format': 'singles',
+            'participations': [
+                {'fighter_id': str(fighters[0].id), 'side': 1, 'role': 'fighter'},
+                {'fighter_id': str(fighters[1].id), 'side': 1, 'role': 'fighter'},  # 2 on side 1
+                {'fighter_id': str(fighters[2].id), 'side': 2, 'role': 'fighter'}
+            ]
+        }
+
+        try:
+            # Act
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                response = await client.post("/api/v1/fights", json=fight_data)
+
+            # Assert
+            assert response.status_code == 422
+            error_detail = response.json()['detail']
+            assert 'singles' in error_detail.lower()
+            assert 'exactly 1' in error_detail.lower()
+
+        finally:
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_cannot_create_melee_with_insufficient_fighters(self, db_session):
+        """
+        Scenario: Melee format validation - minimum 5 fighters per side
+
+        When I attempt to create a melee fight with only 3 fighters per side
+        Then I receive a validation error
+        And the error message indicates melee requires minimum 5 per side
+
+        Verifies:
+        - Melee format validation (DD-004)
+        - Format-dependent participant count validation
+        """
+        # Arrange
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        from app.repositories.country_repository import CountryRepository
+        from app.repositories.team_repository import TeamRepository
+        from app.repositories.fighter_repository import FighterRepository
+
+        country_repo = CountryRepository(db_session)
+        team_repo = TeamRepository(db_session)
+        fighter_repo = FighterRepository(db_session)
+
+        country = await country_repo.create({'code': 'USA', 'name': 'United States'})
+        team = await team_repo.create({'name': 'Team USA', 'country_id': country.id})
+
+        fighters = []
+        for i in range(6):
+            fighter = await fighter_repo.create({'name': f'Fighter {i+1}', 'team_id': team.id})
+            fighters.append(fighter)
+        await db_session.commit()
+
+        fight_data = {
+            'date': '2025-06-15',
+            'location': 'Test Arena',
+            'fight_format': 'melee',
+            'participations': [
+                {'fighter_id': str(fighters[0].id), 'side': 1, 'role': 'fighter'},
+                {'fighter_id': str(fighters[1].id), 'side': 1, 'role': 'fighter'},
+                {'fighter_id': str(fighters[2].id), 'side': 1, 'role': 'fighter'},  # Only 3 on side 1
+                {'fighter_id': str(fighters[3].id), 'side': 2, 'role': 'fighter'},
+                {'fighter_id': str(fighters[4].id), 'side': 2, 'role': 'fighter'},
+                {'fighter_id': str(fighters[5].id), 'side': 2, 'role': 'fighter'}   # Only 3 on side 2
+            ]
+        }
+
+        try:
+            # Act
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                response = await client.post("/api/v1/fights", json=fight_data)
+
+            # Assert
+            assert response.status_code == 422
+            error_detail = response.json()['detail']
+            assert 'melee' in error_detail.lower()
+            assert 'minimum 5' in error_detail.lower() or '5 fighters' in error_detail.lower()
+
+        finally:
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_list_all_fights_excludes_soft_deleted(self, db_session):
+        """
+        Scenario: List all fights excludes soft-deleted fights
+
+        Given multiple fights exist
+        And one fight is soft deleted
+        When I list all fights
+        Then only non-deleted fights are returned
+
+        Verifies:
+        - GET /fights endpoint
+        - Soft delete filtering
+        - List operation working
+        """
+        # Arrange
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        from app.repositories.country_repository import CountryRepository
+        from app.repositories.team_repository import TeamRepository
+        from app.repositories.fighter_repository import FighterRepository
+        from app.repositories.fight_repository import FightRepository
+
+        country_repo = CountryRepository(db_session)
+        team_repo = TeamRepository(db_session)
+        fighter_repo = FighterRepository(db_session)
+        fight_repo = FightRepository(db_session)
+
+        # Create prerequisites
+        country = await country_repo.create({'code': 'USA', 'name': 'United States'})
+        team = await team_repo.create({'name': 'Team USA', 'country_id': country.id})
+        fighter1 = await fighter_repo.create({'name': 'Fighter 1', 'team_id': team.id})
+        fighter2 = await fighter_repo.create({'name': 'Fighter 2', 'team_id': team.id})
+
+        # Create service and fights
+        from app.services.fight_service import FightService
+        from app.repositories.tag_repository import TagRepository
+        from app.repositories.tag_type_repository import TagTypeRepository
+        from app.repositories.fighter_repository import FighterRepository as FighterRepoForService
+
+        tag_type_repo = TagTypeRepository(db_session)
+        tag_repo = TagRepository(db_session)
+        fighter_repo_service = FighterRepoForService(db_session)
+        fight_service = FightService(fight_repo, tag_type_repo, tag_repo, fighter_repo_service)
+
+        # Create two fights
+        participations_1 = [
+            {'fighter_id': fighter1.id, 'side': 1, 'role': 'fighter'},
+            {'fighter_id': fighter2.id, 'side': 2, 'role': 'fighter'}
+        ]
+        participations_2 = [
+            {'fighter_id': fighter1.id, 'side': 1, 'role': 'fighter'},
+            {'fighter_id': fighter2.id, 'side': 2, 'role': 'fighter'}
+        ]
+
+        from datetime import date
+        fight1 = await fight_service.create_with_participants(
+            fight_data={'date': date(2025, 6, 15), 'location': 'Arena A'},
+            participations=participations_1,
+            fight_format='singles'
+        )
+        fight2 = await fight_service.create_with_participants(
+            fight_data={'date': date(2025, 7, 20), 'location': 'Arena B'},
+            participations=participations_2,
+            fight_format='singles'
+        )
+        await db_session.commit()
+
+        # Soft delete fight2
+        await fight_repo.soft_delete(fight2.id)
+        await db_session.commit()
+
+        try:
+            # Act
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                response = await client.get("/api/v1/fights")
+
+            # Assert
+            assert response.status_code == 200
+            fights = response.json()
+            assert len(fights) == 1
+            assert fights[0]['location'] == 'Arena A'
+
+        finally:
+            app.dependency_overrides.clear()
