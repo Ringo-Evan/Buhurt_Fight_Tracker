@@ -8,6 +8,7 @@ httpx
 # Database
 sqlalchemy[asyncio]
 asyncpg
+psycopg2-binary  # Required for Alembic migrations (synchronous driver)
 alembic
 
 # Testing
