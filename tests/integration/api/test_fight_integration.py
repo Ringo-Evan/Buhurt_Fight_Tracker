@@ -541,12 +541,12 @@ class TestFightIntegration:
         from datetime import date
         fight1 = await fight_service.create_with_participants(
             fight_data={'date': date(2025, 6, 15), 'location': 'Arena A'},
-            participations=participations_1,
+            participations_data=participations_1,
             fight_format='singles'
         )
         fight2 = await fight_service.create_with_participants(
             fight_data={'date': date(2025, 7, 20), 'location': 'Arena B'},
-            participations=participations_2,
+            participations_data=participations_2,
             fight_format='singles'
         )
         await db_session.commit()
