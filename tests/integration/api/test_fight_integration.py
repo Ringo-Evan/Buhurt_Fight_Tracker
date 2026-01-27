@@ -516,59 +516,53 @@ class TestFightIntegration:
         team = await team_repo.create({'name': 'Team USA', 'country_id': country.id})
         fighter1 = await fighter_repo.create({'name': 'Fighter 1', 'team_id': team.id})
         fighter2 = await fighter_repo.create({'name': 'Fighter 2', 'team_id': team.id})
-        await db_session.commit()  # Commit fighters so they're visible to service validation
-
-        # Create service and fights
-        from app.services.fight_service import FightService
-        from app.repositories.tag_repository import TagRepository
-        from app.repositories.tag_type_repository import TagTypeRepository
-        from app.repositories.fighter_repository import FighterRepository as FighterRepoForService
-
-        tag_type_repo = TagTypeRepository(db_session)
-        tag_repo = TagRepository(db_session)
-        fighter_repo_service = FighterRepoForService(db_session)
-        fight_service = FightService(fight_repo, tag_type_repo, tag_repo, fighter_repo_service)
-
-        # Create two fights
-        participations_1 = [
-            {'fighter_id': fighter1.id, 'side': 1, 'role': 'fighter'},
-            {'fighter_id': fighter2.id, 'side': 2, 'role': 'fighter'}
-        ]
-        participations_2 = [
-            {'fighter_id': fighter1.id, 'side': 1, 'role': 'fighter'},
-            {'fighter_id': fighter2.id, 'side': 2, 'role': 'fighter'}
-        ]
-
-        from datetime import date
-        fight1 = await fight_service.create_with_participants(
-            fight_data={'date': date(2025, 6, 15), 'location': 'Arena A'},
-            participations_data=participations_1,
-            fight_format='singles'
-        )
-        fight2 = await fight_service.create_with_participants(
-            fight_data={'date': date(2025, 7, 20), 'location': 'Arena B'},
-            participations_data=participations_2,
-            fight_format='singles'
-        )
-        await db_session.commit()
-
-        # Soft delete fight2
-        await fight_repo.soft_delete(fight2.id)
         await db_session.commit()
 
         try:
-            # Act
             async with AsyncClient(
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                response = await client.get("/api/v1/fights")
+                # Create two fights via API
+                fight1_data = {
+                    'date': '2025-06-15',
+                    'location': 'Arena A',
+                    'fight_format': 'singles',
+                    'participations': [
+                        {'fighter_id': str(fighter1.id), 'side': 1, 'role': 'fighter'},
+                        {'fighter_id': str(fighter2.id), 'side': 2, 'role': 'fighter'}
+                    ]
+                }
+                response1 = await client.post("/api/v1/fights", json=fight1_data)
+                assert response1.status_code == 201
+                fight1_id = response1.json()['id']
 
-            # Assert
-            assert response.status_code == 200
-            fights = response.json()
-            assert len(fights) == 1
-            assert fights[0]['location'] == 'Arena A'
+                fight2_data = {
+                    'date': '2025-07-20',
+                    'location': 'Arena B',
+                    'fight_format': 'singles',
+                    'participations': [
+                        {'fighter_id': str(fighter1.id), 'side': 1, 'role': 'fighter'},
+                        {'fighter_id': str(fighter2.id), 'side': 2, 'role': 'fighter'}
+                    ]
+                }
+                response2 = await client.post("/api/v1/fights", json=fight2_data)
+                assert response2.status_code == 201
+                fight2_id = response2.json()['id']
+
+                # Soft delete fight2 via API
+                delete_response = await client.delete(f"/api/v1/fights/{fight2_id}")
+                assert delete_response.status_code == 204
+
+                # Act: List all fights
+                list_response = await client.get("/api/v1/fights")
+
+                # Assert
+                assert list_response.status_code == 200
+                fights = list_response.json()
+                assert len(fights) == 1
+                assert fights[0]['location'] == 'Arena A'
+                assert fights[0]['id'] == fight1_id
 
         finally:
             app.dependency_overrides.clear()
