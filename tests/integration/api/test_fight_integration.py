@@ -94,6 +94,7 @@ class TestFightIntegration:
         fight_data = {
             'date': '2025-06-15',
             'location': 'Battle Arena Denver',
+            'fight_format': 'singles',  # Required field for format validation
             'participations': [
                 {
                     'fighter_id': str(fighter1.id),

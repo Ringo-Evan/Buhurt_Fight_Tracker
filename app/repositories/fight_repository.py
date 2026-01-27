@@ -66,8 +66,10 @@ class FightRepository:
             query = query.where(Fight.is_deleted == False)
 
         result = await self.session.execute(query)
+        test  = result.unique().scalar_one_or_none()
+        testtwo = result.scalar_one_or_none()
         return result.unique().scalar_one_or_none()
-
+    
     async def list_all(self, include_deleted: bool = False) -> list[Fight]:
         """
         List all fights.

@@ -115,7 +115,7 @@ class TestFightRepositoryGetById:
         )
 
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = fight
+        mock_result.unique().scalar_one_or_none.return_value = fight
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -136,7 +136,7 @@ class TestFightRepositoryGetById:
         """
         # Arrange
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
+        mock_result.unique().scalar_one_or_none.return_value = None
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -156,7 +156,7 @@ class TestFightRepositoryGetById:
         """
         # Arrange
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None  # Filtered out
+        mock_result.unique().scalar_one_or_none.return_value = None  # Filtered out
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -185,7 +185,7 @@ class TestFightRepositoryGetById:
         )
 
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = fight
+        mock_result.unique().scalar_one_or_none.return_value = fight
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -305,7 +305,7 @@ class TestFightRepositorySoftDelete:
         )
 
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = fight
+        mock_result.unique().scalar_one_or_none.return_value = fight
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -326,7 +326,7 @@ class TestFightRepositorySoftDelete:
         """
         # Arrange
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
+        mock_result.unique().scalar_one_or_none.return_value = None
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -409,7 +409,7 @@ class TestFightRepositoryUpdate:
         """
         # Arrange
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
+        mock_result.unique().scalar_one_or_none.return_value = None
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result

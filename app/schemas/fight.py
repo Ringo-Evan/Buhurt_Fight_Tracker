@@ -64,6 +64,7 @@ class FightCreate(BaseModel):
     Attributes:
         date: Date of the fight (not in future)
         location: Location/event name (1-200 characters)
+        fight_format: Format of the fight (singles or melee)
         video_url: Optional URL to fight video
         winner_side: Optional winner (1 or 2, None for draw/unknown)
         notes: Optional notes about the fight
@@ -71,6 +72,7 @@ class FightCreate(BaseModel):
     """
     date: date
     location: str = Field(..., min_length=1, max_length=200)
+    fight_format: str = Field(..., pattern="^(singles|melee)$")
     video_url: str | None = Field(None, max_length=500)
     winner_side: int | None = None
     notes: str | None = None

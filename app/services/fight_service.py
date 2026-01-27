@@ -11,6 +11,8 @@ from datetime import date
 from app.repositories.fight_repository import FightRepository
 from app.repositories.fight_participation_repository import FightParticipationRepository
 from app.repositories.fighter_repository import FighterRepository
+from app.repositories.tag_repository import TagRepository
+from app.repositories.tag_type_repository import TagTypeRepository
 from app.models.fight import Fight
 from app.exceptions import FightNotFoundError, ValidationError
 
@@ -26,7 +28,9 @@ class FightService:
         self,
         fight_repository: FightRepository,
         participation_repository: Optional[FightParticipationRepository] = None,
-        fighter_repository: Optional[FighterRepository] = None
+        fighter_repository: Optional[FighterRepository] = None,
+        tag_repository: Optional[TagRepository] = None,
+        tag_type_repository: Optional[TagTypeRepository] = None
     ):
         """
         Initialize service with repositories.
@@ -35,10 +39,14 @@ class FightService:
             fight_repository: Repository for fight data access
             participation_repository: Optional repository for participation data access
             fighter_repository: Optional repository for fighter data access
+            tag_repository: Optional repository for tag data access
+            tag_type_repository: Optional repository for tag type data access
         """
         self.fight_repository = fight_repository
         self.participation_repository = participation_repository
         self.fighter_repository = fighter_repository
+        self.tag_repository = tag_repository
+        self.tag_type_repository = tag_type_repository
 
     def _validate_fight_data(self, fight_data: Dict[str, Any], is_update: bool = False) -> None:
         """
@@ -86,7 +94,11 @@ class FightService:
         self._validate_fight_data(fight_data, is_update=False)
         return await self.fight_repository.create(fight_data)
 
-    def _validate_participations(self, participations_data: List[Dict[str, Any]]) -> None:
+    async def _validate_participations(
+        self,
+        participations_data: List[Dict[str, Any]],
+        fight_format: Optional[str] = None
+    ) -> None:
         """
         Validate participation data before creating fight.
 
@@ -98,6 +110,10 @@ class FightService:
         """
         if not participations_data:
             return
+
+        # Check minimum 2 participants
+        if len(participations_data) < 2:
+            raise ValidationError("Fight must have at least 2 participants")
 
         # Check both sides have participants
         sides = {p["side"] for p in participations_data}
@@ -115,16 +131,38 @@ class FightService:
             if len(captains) > 1:
                 raise ValidationError(f"Cannot have multiple captains on side {side}")
 
+        # Check all fighters exist
+        if self.fighter_repository:
+            for participation in participations_data:
+                fighter = await self.fighter_repository.get_by_id(participation["fighter_id"])
+                if not fighter:
+                    raise ValidationError(f"Fighter with ID {participation['fighter_id']} not found")
+
+        # Format-dependent validation
+        if fight_format:
+            # Count fighters (not alternates/coaches) per side
+            side_1_fighters = [p for p in participations_data if p["side"] == 1 and p.get("role") == "fighter"]
+            side_2_fighters = [p for p in participations_data if p["side"] == 2 and p.get("role") == "fighter"]
+
+            if fight_format == "singles":
+                if len(side_1_fighters) != 1 or len(side_2_fighters) != 1:
+                    raise ValidationError("Singles fights require exactly 1 fighter per side")
+            elif fight_format == "melee":
+                if len(side_1_fighters) < 5 or len(side_2_fighters) < 5:
+                    raise ValidationError("Melee fights require at least 5 fighters per side")
+
     async def create_with_participants(
         self,
         fight_data: Dict[str, Any],
+        fight_format: str,
         participations_data: List[Dict[str, Any]]
     ) -> Fight:
         """
-        Create a fight with participants atomically.
+        Create a fight with participants and fight_format tag atomically.
 
         Args:
             fight_data: Dictionary with fight fields
+            fight_format: Format of the fight ("singles" or "melee")
             participations_data: List of participation dictionaries
 
         Returns:
@@ -134,10 +172,21 @@ class FightService:
             ValidationError: If validation fails
         """
         self._validate_fight_data(fight_data, is_update=False)
-        self._validate_participations(participations_data)
+        await self._validate_participations(participations_data, fight_format)
 
         # Create the fight first
         fight = await self.fight_repository.create(fight_data)
+
+        # Create fight_format tag
+        if self.tag_repository and self.tag_type_repository:
+            fight_format_tag_type = await self.tag_type_repository.get_by_name("fight_format")
+            if not fight_format_tag_type:
+                raise ValidationError("fight_format TagType not found")
+
+            await self.tag_repository.create({
+                "tag_type_id": fight_format_tag_type.id,
+                "value": fight_format
+            })
 
         # Create each participation
         for participation_data in participations_data:
@@ -147,7 +196,7 @@ class FightService:
                 "side": participation_data["side"],
                 "role": participation_data.get("role", "fighter")
             })
-        
+
         test = await self.participation_repository.list_by_fight(fight.id)
         partipant_one = await self.participation_repository.list_by_fighter(participations_data[0]["fighter_id"])
         fighter = await self.fighter_repository.get_by_id(participations_data[0]["fighter_id"])
