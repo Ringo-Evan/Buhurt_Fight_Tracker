@@ -4,10 +4,11 @@ Pydantic schemas for Fight entity.
 Defines request and response schemas for Fight API operations.
 """
 
-from datetime import datetime, date
+import datetime
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import Date
 
 
 class ParticipationCreate(BaseModel):
@@ -19,9 +20,9 @@ class ParticipationCreate(BaseModel):
         side: Side assignment (1 or 2)
         role: Role in the fight (fighter, captain, alternate, coach)
     """
-    fighter_id: UUID
-    side: int = Field(..., ge=1, le=2)
-    role: str = Field(default="fighter")
+    fighter_id: UUID = Field(..., description="UUID of the participating fighter")
+    side: int = Field(..., ge=1, le=2, description="Side assignment (1 or 2)")
+    role: str = Field(default="fighter", description="Role in the fight: fighter, captain, alternate, or coach")
 
     @field_validator('role')
     @classmethod
@@ -31,6 +32,12 @@ class ParticipationCreate(BaseModel):
         if v not in valid_roles:
             raise ValueError(f"Role must be one of: {', '.join(valid_roles)}")
         return v
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"fighter_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "side": 1, "role": "fighter"}]
+        }
+    }
 
 
 class ParticipationResponse(BaseModel):
@@ -45,12 +52,12 @@ class ParticipationResponse(BaseModel):
         role: Role in the fight
         created_at: Timestamp of creation
     """
-    id: UUID
-    fight_id: UUID
-    fighter_id: UUID
-    side: int
-    role: str
-    created_at: datetime
+    id: UUID = Field(..., description="Participation UUID")
+    fight_id: UUID = Field(..., description="UUID of the fight")
+    fighter_id: UUID = Field(..., description="UUID of the fighter")
+    side: int = Field(..., description="Side assignment (1 or 2)")
+    role: str = Field(..., description="Role in the fight")
+    created_at: datetime.datetime = Field(..., description="Timestamp of record creation")
 
     model_config = {
         "from_attributes": True
@@ -70,13 +77,13 @@ class FightCreate(BaseModel):
         notes: Optional notes about the fight
         participations: Optional list of participations
     """
-    date: date
-    location: str = Field(..., min_length=1, max_length=200)
-    fight_format: str = Field(..., pattern="^(singles|melee)$")
-    video_url: str | None = Field(None, max_length=500)
-    winner_side: int | None = None
-    notes: str | None = None
-    participations: Optional[list[ParticipationCreate]] = None
+    date: datetime.date = Field(..., description="Date of the fight (cannot be in the future)")
+    location: str = Field(..., min_length=1, max_length=200, description="Event name or location")
+    fight_format: str = Field(..., pattern="^(singles|melee)$", description="Fight format: 'singles' or 'melee'")
+    video_url: str | None = Field(None, max_length=500, description="URL to fight video recording")
+    winner_side: int | None = Field(None, description="Winning side (1, 2, or null for draw/unknown)")
+    notes: str | None = Field(None, description="Additional notes about the fight")
+    participations: Optional[list[ParticipationCreate]] = Field(None, description="List of fighter participations")
 
     @field_validator('winner_side')
     @classmethod
@@ -85,6 +92,19 @@ class FightCreate(BaseModel):
         if v is not None and v not in (1, 2):
             raise ValueError('Winner side must be 1, 2, or null')
         return v
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "date": "2025-06-15",
+                "location": "Battle of the Nations 2025",
+                "fight_format": "melee",
+                "video_url": "https://example.com/fight-video",
+                "winner_side": 1,
+                "notes": "Semi-final round"
+            }]
+        }
+    }
 
 
 class FightUpdate(BaseModel):
@@ -98,11 +118,11 @@ class FightUpdate(BaseModel):
         winner_side: Optional new winner
         notes: Optional new notes
     """
-    date: date # TODO None|None was causing issues. What is happening here?
-    location: str | None = Field(None, min_length=1, max_length=200)
-    video_url: str | None = Field(None, max_length=500)
-    winner_side: int | None = None
-    notes: str | None = None
+    date: datetime.date | None = Field(None, description="Updated fight date (cannot be in the future)")
+    location: str | None = Field(None, min_length=1, max_length=200, description="Updated event name or location")
+    video_url: str | None = Field(None, max_length=500, description="Updated video URL")
+    winner_side: int | None = Field(None, description="Updated winning side (1, 2, or null)")
+    notes: str | None = Field(None, description="Updated notes")
 
     @field_validator('winner_side')
     @classmethod
@@ -128,16 +148,16 @@ class FightResponse(BaseModel):
         created_at: Timestamp of creation
         participations: List of participations (if loaded)
     """
-    id: UUID
-    date: date
-    location: str
-    video_url: str | None
-    winner_side: int | None
-    notes: str | None
-    is_deleted: bool
-    created_at: datetime
-    participations: Optional[list[ParticipationResponse]] = None
+    id: UUID = Field(..., description="Fight UUID")
+    date: datetime.date = Field(..., description="Date of the fight")
+    location: str = Field(..., description="Event name or location")
+    video_url: str | None = Field(None, description="URL to fight video recording")
+    winner_side: int | None = Field(None, description="Winning side (1, 2, or null for draw/unknown)")
+    notes: str | None = Field(None, description="Additional notes about the fight")
+    is_deleted: bool = Field(..., description="Whether this record has been soft-deleted")
+    created_at: datetime.datetime = Field(..., description="Timestamp of record creation")
+    participations: Optional[list[ParticipationResponse]] = Field(None, description="List of fighter participations")
 
     model_config = {
-        "from_attributes": True  # Enable ORM mode for SQLAlchemy compatibility
+        "from_attributes": True
     }

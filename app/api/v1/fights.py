@@ -39,6 +39,9 @@ def get_fight_service(db: AsyncSession = Depends(get_db)) -> FightService:
     status_code=status.HTTP_201_CREATED,
     summary="Create a new fight",
     description="Record a new fight with date, location, and optional participants.",
+    responses={
+        422: {"description": "Validation error (e.g., future date, invalid format, invalid fighter)"},
+    },
 )
 async def create_fight(
     fight_data: FightCreate,
@@ -100,6 +103,9 @@ async def list_fights(
     response_model=FightResponse,
     summary="Get a fight by ID",
     description="Retrieve a single fight by its UUID.",
+    responses={
+        404: {"description": "Fight not found"},
+    },
 )
 async def get_fight(
     fight_id: UUID,
@@ -122,6 +128,11 @@ async def get_fight(
     response_model=FightResponse,
     summary="Update a fight",
     description="Update a fight's details.",
+    responses={
+        400: {"description": "No valid fields provided for update"},
+        404: {"description": "Fight not found"},
+        422: {"description": "Validation error"},
+    },
 )
 async def update_fight(
     fight_id: UUID,
@@ -156,6 +167,9 @@ async def update_fight(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft delete a fight",
     description="Soft delete a fight (sets is_deleted flag).",
+    responses={
+        404: {"description": "Fight not found"},
+    },
 )
 async def delete_fight(
     fight_id: UUID,

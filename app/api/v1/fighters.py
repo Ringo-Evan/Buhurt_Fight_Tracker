@@ -36,6 +36,9 @@ def get_fighter_service(db: AsyncSession = Depends(get_db)) -> FighterService:
     status_code=status.HTTP_201_CREATED,
     summary="Create a new fighter",
     description="Create a new fighter associated with an existing team.",
+    responses={
+        422: {"description": "Invalid team_id or validation error"},
+    },
 )
 async def create_fighter(
     fighter_data: FighterCreate,
@@ -114,6 +117,9 @@ async def list_fighters_by_country(
     response_model=FighterFullResponse,
     summary="Get a fighter by ID",
     description="Retrieve a single fighter by its UUID with full team and country details.",
+    responses={
+        404: {"description": "Fighter not found"},
+    },
 )
 async def get_fighter(
     fighter_id: UUID,
@@ -136,6 +142,11 @@ async def get_fighter(
     response_model=FighterFullResponse,
     summary="Update a fighter",
     description="Update a fighter's name or team (transfer).",
+    responses={
+        400: {"description": "No valid fields provided for update"},
+        404: {"description": "Fighter not found"},
+        422: {"description": "Invalid team_id or validation error"},
+    },
 )
 async def update_fighter(
     fighter_id: UUID,
@@ -175,6 +186,9 @@ async def update_fighter(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft delete a fighter",
     description="Soft delete a fighter (sets is_deleted flag).",
+    responses={
+        404: {"description": "Fighter not found"},
+    },
 )
 async def delete_fighter(
     fighter_id: UUID,

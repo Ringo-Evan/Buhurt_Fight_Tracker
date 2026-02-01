@@ -481,7 +481,6 @@ class TestFightIntegration:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Complex session management issue - to be fixed in separate PR")
     async def test_list_all_fights_excludes_soft_deleted(self, db_session):
         """
         Scenario: List all fights excludes soft-deleted fights

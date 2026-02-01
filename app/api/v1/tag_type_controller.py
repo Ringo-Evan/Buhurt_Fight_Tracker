@@ -27,7 +27,10 @@ def get_tag_type_service(db: AsyncSession = Depends(get_db)) -> TagTypeService:
     response_model=TagTypeResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new tag type",
-    description="Create a new tag type with validation for duplicate names and field constraints"
+    description="Create a new tag type with validation for duplicate names and field constraints",
+    responses={
+        400: {"description": "Validation error (e.g., duplicate name)"},
+    },
 )
 async def create_tag_type(
     tag_type: TagTypeCreate,
@@ -59,7 +62,10 @@ async def list_tag_types(
     response_model=TagTypeResponse,
     status_code=status.HTTP_200_OK,
     summary="Get tag type by ID",
-    description="Retrieve a specific tag type by its UUID"
+    description="Retrieve a specific tag type by its UUID",
+    responses={
+        404: {"description": "Tag type not found"},
+    },
 )
 async def get_tag_type(
     tag_type_id: UUID,
@@ -77,7 +83,10 @@ async def get_tag_type(
     response_model=TagTypeResponse,
     status_code=status.HTTP_200_OK,
     summary="Update a tag type",
-    description="Update an existing tag type with validation"
+    description="Update an existing tag type with validation",
+    responses={
+        400: {"description": "Validation error (e.g., duplicate name)"},
+    },
 )
 async def update_tag_type(
     tag_type_id: UUID,
@@ -97,7 +106,10 @@ async def update_tag_type(
     "/{tag_type_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a tag type",
-    description="Soft delete a tag type (sets is_deleted flag)"
+    description="Soft delete a tag type (sets is_deleted flag)",
+    responses={
+        404: {"description": "Tag type not found"},
+    },
 )
 async def delete_tag_type(
     tag_type_id: UUID,

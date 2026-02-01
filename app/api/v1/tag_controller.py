@@ -30,7 +30,10 @@ def get_tag_service(db: AsyncSession = Depends(get_db)) -> TagService:
     response_model=TagResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new tag",
-    description="Create a new tag with validation for tag type existence"
+    description="Create a new tag with validation for tag type existence",
+    responses={
+        400: {"description": "Validation error (e.g., invalid tag_type_id)"},
+    },
 )
 async def create_tag(
     tag: TagCreate,
@@ -62,7 +65,10 @@ async def list_tags(
     response_model=TagResponse,
     status_code=status.HTTP_200_OK,
     summary="Get tag by ID",
-    description="Retrieve a specific tag by its UUID"
+    description="Retrieve a specific tag by its UUID",
+    responses={
+        404: {"description": "Tag not found"},
+    },
 )
 async def get_tag(
     tag_id: UUID,
@@ -83,7 +89,10 @@ async def get_tag(
     response_model=TagResponse,
     status_code=status.HTTP_200_OK,
     summary="Update a tag",
-    description="Update an existing tag's value"
+    description="Update an existing tag's value",
+    responses={
+        404: {"description": "Tag not found"},
+    },
 )
 async def update_tag(
     tag_id: UUID,
@@ -105,7 +114,10 @@ async def update_tag(
     "/{tag_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a tag",
-    description="Soft delete a tag (sets is_deleted flag)"
+    description="Soft delete a tag (sets is_deleted flag)",
+    responses={
+        404: {"description": "Tag not found"},
+    },
 )
 async def delete_tag(
     tag_id: UUID,

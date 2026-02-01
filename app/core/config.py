@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/buhurt"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/buhurt_tracker"
 
     # API
     API_V1_PREFIX: str = "/api/v1"

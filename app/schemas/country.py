@@ -18,8 +18,14 @@ class CountryCreate(BaseModel):
         name: Country name (1-100 characters)
         code: ISO 3166-1 alpha-3 country code (3 uppercase letters)
     """
-    name: str = Field(..., min_length=1, max_length=100)
-    code: str = Field(..., min_length=3, max_length=3)
+    name: str = Field(..., min_length=1, max_length=100, description="Country name")
+    code: str = Field(..., min_length=3, max_length=3, description="ISO 3166-1 alpha-3 country code (3 uppercase letters)")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"name": "United States", "code": "USA"}]
+        }
+    }
 
     @field_validator('code')
     @classmethod
@@ -38,8 +44,8 @@ class CountryUpdate(BaseModel):
         name: Optional country name (1-100 characters)
         code: Optional ISO 3166-1 alpha-3 country code (3 uppercase letters)
     """
-    name: str | None = Field(None, min_length=1, max_length=100)
-    code: str | None = Field(None, min_length=3, max_length=3)
+    name: str | None = Field(None, min_length=1, max_length=100, description="Updated country name")
+    code: str | None = Field(None, min_length=3, max_length=3, description="Updated ISO 3166-1 alpha-3 country code")
 
     @field_validator('code')
     @classmethod
@@ -60,11 +66,11 @@ class CountryResponse(BaseModel):
         code: ISO 3166-1 alpha-3 country code
         created_at: Timestamp of creation
     """
-    id: UUID
-    name: str
-    code: str
-    created_at: datetime
+    id: UUID = Field(..., description="Country UUID")
+    name: str = Field(..., description="Country name")
+    code: str = Field(..., description="ISO 3166-1 alpha-3 country code")
+    created_at: datetime = Field(..., description="Timestamp of record creation")
 
     model_config = {
-        "from_attributes": True  # Enable ORM mode for SQLAlchemy compatibility
+        "from_attributes": True
     }

@@ -37,6 +37,9 @@ def get_team_service(db: AsyncSession = Depends(get_db)) -> TeamService:
     status_code=status.HTTP_201_CREATED,
     summary="Create a new team",
     description="Create a new team associated with an existing country.",
+    responses={
+        422: {"description": "Invalid country_id or validation error"},
+    },
 )
 async def create_team(
     team_data: TeamCreate,
@@ -99,6 +102,9 @@ async def list_teams_by_country(
     response_model=TeamWithCountryResponse,
     summary="Get a team by ID",
     description="Retrieve a single team by its UUID with country details.",
+    responses={
+        404: {"description": "Team not found"},
+    },
 )
 async def get_team(
     team_id: UUID,
@@ -121,6 +127,11 @@ async def get_team(
     response_model=TeamWithCountryResponse,
     summary="Update a team",
     description="Update a team's name or country.",
+    responses={
+        400: {"description": "No valid fields provided for update"},
+        404: {"description": "Team not found"},
+        422: {"description": "Invalid country_id or validation error"},
+    },
 )
 async def update_team(
     team_id: UUID,
@@ -160,6 +171,9 @@ async def update_team(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft delete a team",
     description="Soft delete a team (sets is_deleted flag).",
+    responses={
+        404: {"description": "Team not found"},
+    },
 )
 async def delete_team(
     team_id: UUID,

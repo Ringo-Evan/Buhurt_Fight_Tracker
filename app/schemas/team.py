@@ -19,8 +19,14 @@ class TeamCreate(BaseModel):
         name: Team name (1-100 characters)
         country_id: UUID of the associated country
     """
-    name: str = Field(..., min_length=1, max_length=100)
-    country_id: UUID
+    name: str = Field(..., min_length=1, max_length=100, description="Team name")
+    country_id: UUID = Field(..., description="UUID of the country this team represents")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"name": "Knights of Valor", "country_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"}]
+        }
+    }
 
 
 class TeamUpdate(BaseModel):
@@ -31,8 +37,8 @@ class TeamUpdate(BaseModel):
         name: Optional team name (1-100 characters)
         country_id: Optional UUID of the associated country
     """
-    name: str | None = Field(None, min_length=1, max_length=100)
-    country_id: UUID | None = None
+    name: str | None = Field(None, min_length=1, max_length=100, description="Updated team name")
+    country_id: UUID | None = Field(None, description="UUID of the new country (for transfers)")
 
 
 class TeamResponse(BaseModel):
@@ -45,13 +51,13 @@ class TeamResponse(BaseModel):
         country_id: UUID of the associated country
         created_at: Timestamp of creation
     """
-    id: UUID
-    name: str
-    country_id: UUID
-    created_at: datetime
+    id: UUID = Field(..., description="Team UUID")
+    name: str = Field(..., description="Team name")
+    country_id: UUID = Field(..., description="UUID of the associated country")
+    created_at: datetime = Field(..., description="Timestamp of record creation")
 
     model_config = {
-        "from_attributes": True  # Enable ORM mode for SQLAlchemy compatibility
+        "from_attributes": True
     }
 
 
@@ -65,11 +71,11 @@ class TeamWithCountryResponse(BaseModel):
         country: Nested country object
         created_at: Timestamp of creation
     """
-    id: UUID
-    name: str
-    country: CountryResponse
-    created_at: datetime
+    id: UUID = Field(..., description="Team UUID")
+    name: str = Field(..., description="Team name")
+    country: CountryResponse = Field(..., description="Country this team belongs to")
+    created_at: datetime = Field(..., description="Timestamp of record creation")
 
     model_config = {
-        "from_attributes": True  # Enable ORM mode for SQLAlchemy compatibility
+        "from_attributes": True
     }

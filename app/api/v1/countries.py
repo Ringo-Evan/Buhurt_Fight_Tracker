@@ -30,6 +30,10 @@ def get_country_service(db: AsyncSession = Depends(get_db)) -> CountryService:
     status_code=status.HTTP_201_CREATED,
     summary="Create a new country",
     description="Create a new country with a unique ISO 3166-1 alpha-3 code.",
+    responses={
+        409: {"description": "Country with this code already exists"},
+        422: {"description": "Validation error (e.g., invalid code format)"},
+    },
 )
 async def create_country(
     country_data: CountryCreate,
@@ -76,6 +80,9 @@ async def list_countries(
     response_model=CountryResponse,
     summary="Get a country by ID",
     description="Retrieve a single country by its UUID.",
+    responses={
+        404: {"description": "Country not found"},
+    },
 )
 async def get_country(
     country_id: UUID,
@@ -98,6 +105,9 @@ async def get_country(
     response_model=CountryResponse,
     summary="Get a country by ISO code",
     description="Retrieve a single country by its ISO 3166-1 alpha-3 code.",
+    responses={
+        404: {"description": "Country with this code not found"},
+    },
 )
 async def get_country_by_code(
     code: str,
@@ -119,6 +129,12 @@ async def get_country_by_code(
     response_model=CountryResponse,
     summary="Update a country",
     description="Update a country's name or code.",
+    responses={
+        400: {"description": "No valid fields provided for update"},
+        404: {"description": "Country not found"},
+        409: {"description": "Country with this code already exists"},
+        422: {"description": "Validation error"},
+    },
 )
 async def update_country(
     country_id: UUID,
@@ -158,6 +174,9 @@ async def update_country(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft delete a country",
     description="Soft delete a country (sets is_deleted flag).",
+    responses={
+        404: {"description": "Country not found"},
+    },
 )
 async def delete_country(
     country_id: UUID,

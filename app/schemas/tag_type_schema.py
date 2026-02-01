@@ -20,14 +20,14 @@ class TagTypeBase(BaseModel):
         has_children: If True, has child tags
         display_order: Order for display purposes
     """
-    name: str
-    is_privileged: bool
-    is_parent: bool
-    has_children: bool
-    display_order: int
+    name: str = Field(..., description="Name of the tag type")
+    is_privileged: bool = Field(..., description="If true, changes to tags of this type require voting")
+    is_parent: bool = Field(..., description="If true, this tag type can have child tags")
+    has_children: bool = Field(..., description="If true, this tag type currently has child tags")
+    display_order: int = Field(..., description="Sort order for display purposes")
 
     model_config = {
-        "from_attributes": True  # Enable ORM mode for SQLAlchemy compatibility
+        "from_attributes": True
     }
 
 
@@ -42,11 +42,23 @@ class TagTypeCreate(BaseModel):
         has_children: If True, has child tags (default: False)
         display_order: Order for display purposes (default: 0)
     """
-    name: str = Field(..., min_length=1, max_length=50)
-    is_privileged: bool = True
-    is_parent: bool = False
-    has_children: bool = False
-    display_order: int = 0
+    name: str = Field(..., min_length=1, max_length=50, description="Name of the tag type (must be unique)")
+    is_privileged: bool = Field(True, description="If true, changes to tags of this type require voting")
+    is_parent: bool = Field(False, description="If true, this tag type can have child tags")
+    has_children: bool = Field(False, description="If true, this tag type currently has child tags")
+    display_order: int = Field(0, description="Sort order for display purposes")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "name": "fight_format",
+                "is_privileged": True,
+                "is_parent": False,
+                "has_children": False,
+                "display_order": 1
+            }]
+        }
+    }
 
 
 class TagTypeUpdate(BaseModel):
@@ -60,11 +72,11 @@ class TagTypeUpdate(BaseModel):
         has_children: If True, has child tags
         display_order: Order for display purposes
     """
-    name: str | None = Field(None, min_length=1, max_length=50)
-    is_privileged: bool | None = None
-    is_parent: bool | None = None
-    has_children: bool | None = None
-    display_order: int | None = None
+    name: str | None = Field(None, min_length=1, max_length=50, description="Updated tag type name")
+    is_privileged: bool | None = Field(None, description="Updated privileged flag")
+    is_parent: bool | None = Field(None, description="Updated parent flag")
+    has_children: bool | None = Field(None, description="Updated has_children flag")
+    display_order: int | None = Field(None, description="Updated display order")
 
 
 class TagTypeResponse(TagTypeBase):
@@ -81,7 +93,6 @@ class TagTypeResponse(TagTypeBase):
         is_deleted: Soft delete flag
         created_at: Timestamp of record creation
     """
-    id: UUID
-    is_deleted: bool
-    created_at: datetime
-    
+    id: UUID = Field(..., description="Tag type UUID")
+    is_deleted: bool = Field(..., description="Whether this record has been soft-deleted")
+    created_at: datetime = Field(..., description="Timestamp of record creation")

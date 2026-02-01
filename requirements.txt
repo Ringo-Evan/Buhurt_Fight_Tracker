@@ -25,3 +25,4 @@ pycountry
 
 # Utilities
 python-dotenv
+psycopg2

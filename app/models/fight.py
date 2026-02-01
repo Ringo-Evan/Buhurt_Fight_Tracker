@@ -44,7 +44,7 @@ class Fight(Base):
         nullable=False
     )
 
-    date: Mapped[date] = mapped_column(
+    date: Mapped[Date] = mapped_column(
         Date,
         nullable=False,
         index=True  # For date range queries
