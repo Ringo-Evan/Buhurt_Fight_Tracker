@@ -1,0 +1,7 @@
+Tried to get debug working and ran into some issues. First couldn't get the VS.code launch code set up right to use docker. Need to look into that.
+Instead went with the launch specific file and am just running postgres container manually. Then didn't realize that fastapi put swagger at /docs so spent a 15 minutes getting claude to reimplement OpenApi docs.
+Claude fucked that up and had to spend some time debuging. 
+Then when trying to set up the initial migration for the db, had to install a dependency that was somehow not included? Added that to the requirements.
+Tried to run via postman in browser but Brave blocks network access and the setting to enable that is not where the first few docs said it would be.
+
+Spent an hour today, not doing much. However should be able to just start functional testing next session and write up a more detailed test strategy.
