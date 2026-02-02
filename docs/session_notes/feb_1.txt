@@ -5,3 +5,4 @@ Then when trying to set up the initial migration for the db, had to install a de
 Tried to run via postman in browser but Brave blocks network access and the setting to enable that is not where the first few docs said it would be.
 
 Spent an hour today, not doing much. However should be able to just start functional testing next session and write up a more detailed test strategy.
+

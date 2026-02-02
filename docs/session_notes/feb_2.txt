@@ -1,0 +1,14 @@
+Gave myself an hour this morning and lost half to finally debuging the conda problem. 
+.bat file was not in the path, but exe was. Thought that would be enough but guess not. adding bat got CMD working but powershell stil no.
+lauching a powershell Anaconda instance could run conda init powershell and though added a webhooks script to start up. But since this is a default user system had to change policy to Restricted.
+Anyway working now and container is saving stated from yesterday.
+
+I don't have an updated at variable. Will not need with audit table?
+422 instead of 400 for badly format requests. is this correct. check http spec
+
+Overlooked how to un delete a country apparently
+Is_deleted is currently being checked for conflict on patch and postgres
+Getting by code fails if country not found. There is no try catch(Should all gets go through a base get method? into the repo? That feels overly engineered)
+
+Working, Positive path. Checking county code is 3 uppercase letters within spec(do we need to check input if we are checking against spec?)
+getting with and without deleted. Conflict checking. Patch only updates the specified fields we want. 404s when country is delted or not reall
