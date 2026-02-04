@@ -55,12 +55,13 @@ async def create_fighter(
         return FighterFullResponse.model_validate(fighter)
     except InvalidTeamError as e:
         raise HTTPException(
+            #TODO: is this 400 or 422?
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
     except ValidationError as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
 
@@ -171,12 +172,14 @@ async def update_fighter(
         )
     except InvalidTeamError as e:
         raise HTTPException(
+            #TODO: is this 400 or 422?
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
     except ValidationError as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_400_BAD_REQUEST
+            ,
             detail=str(e),
         )
 

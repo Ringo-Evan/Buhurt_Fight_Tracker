@@ -125,7 +125,7 @@ class CountryRepository:
         country.is_deleted = True
         await self.session.commit()
 
-    async def update(self, country_id: UUID, update_data: Dict[str, Any]) -> Country:
+    async def update(self, country_id: UUID, update_data: Dict[str, Any], include_deleted: bool = False) -> Country:
         """
         Update a country's attributes.
 
@@ -140,7 +140,7 @@ class CountryRepository:
             ValueError: If country not found
             IntegrityError: If update violates unique constraint
         """
-        country = await self.get_by_id(country_id, include_deleted=False)
+        country = await self.get_by_id(country_id, include_deleted=include_deleted)
         if country is None:
             raise ValueError("Country not found")
 

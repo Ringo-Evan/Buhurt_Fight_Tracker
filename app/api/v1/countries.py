@@ -55,7 +55,7 @@ async def create_country(
         )
     except ValidationError as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
 
@@ -111,6 +111,7 @@ async def get_country(
 )
 async def get_country_by_code(
     code: str,
+    include_deleted: bool = Query(False, description="Include soft-deleted countries (admin only)"),
     service: CountryService = Depends(get_country_service),
 ) -> CountryResponse:
     """Get a country by its ISO code."""
@@ -144,13 +145,14 @@ async def update_country(
     """Update a country's attributes."""
     try:
         # Filter out None values
-        update_data = {k: v for k, v in country_data.model_dump().items() if v is not None}
+        update_data = {k: v for k, v in country_data.model_dump(exclude={"include_deleted"}).items() if v is not None}
+        is_deleted = country_data.include_deleted
         if not update_data:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No valid fields provided for update",
             )
-        country = await service.update(country_id, update_data)
+        country = await service.update(country_id, update_data, include_deleted=is_deleted)
         return CountryResponse.model_validate(country)
     except CountryNotFoundError:
         raise HTTPException(
@@ -164,7 +166,7 @@ async def update_country(
         )
     except ValidationError as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
 

@@ -112,7 +112,7 @@ class CountryService:
 
         return country
 
-    async def get_by_code(self, code: str) -> Country | None:
+    async def get_by_code(self, code: str, include_deleted: bool = False) -> Country | None:
         """
         Retrieve a country by ISO code.
 
@@ -122,7 +122,7 @@ class CountryService:
         Returns:
             Country instance or None if not found
         """
-        return await self.repository.get_by_code(code, include_deleted=False)
+        return await self.repository.get_by_code(code, include_deleted=include_deleted)
 
     async def list_all(self, include_deleted: bool = False) -> list[Country]:
         """
@@ -151,7 +151,7 @@ class CountryService:
         except ValueError as e:
             raise CountryNotFoundError(str(e))
 
-    async def update(self, country_id: UUID, update_data: Dict[str, Any]) -> Country:
+    async def update(self, country_id: UUID, update_data: Dict[str, Any], include_deleted: bool = False) -> Country:
         """
         Update a country with validation.
 
@@ -172,7 +172,7 @@ class CountryService:
 
         # Update country
         try:
-            return await self.repository.update(country_id, update_data)
+            return await self.repository.update(country_id, update_data, include_deleted=include_deleted)
         except ValueError as e:
             raise CountryNotFoundError(str(e))
         except IntegrityError:

@@ -1,0 +1,22 @@
+Started looking into 422 vs 400. Looks like it was a fast api implementation
+https://github.com/fastapi/fastapi/issues/643
+The main idea is that if its 422, its the frameworks validation and if its 400 its ours. I don't think claude matched this pattern. Investigating
+
+We are raising 422. But also we double check validation at both the service layer and the controller layer. Is this actually BAD? Do we also validate at repo level?
+
+No just the upper two. But the model itself might have some rejection? Just that code is 3 chars
+Looks like no option for get by code to do that either? Not sure this is good. Should maybe have deleted endpoints all be seperate, so that when checking auth I can validate in controller.
+Otherwise have to either look at permission in service layer or do business logic in the controller.
+
+Changing soft delete paradigm. Going to use a DEACTIVATED flag instead. Delete will be a hard delete, but might need to check for deactivted first if not an admin?
+Or maybe two delete endpoints. One that doesn't check, is only for admins and one that does and is available to public? 
+No public shouldn't be able to delete(or deactivate) at all.
+
+One endpoint that only deactivates. For admins. One endpoint that deletes. Also only for admins. 
+
+May need to rethink this in the future.
+
+Did not write tests first. FUCK
+
+broke a bunch of tests
+Thats the start of work next session. Fix tests, then write new tests for deactivate functionality, implement, then hard delete tests and implement. Update all tests that break.
