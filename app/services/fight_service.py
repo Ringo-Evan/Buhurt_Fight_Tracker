@@ -197,12 +197,6 @@ class FightService:
                 "role": participation_data.get("role", "fighter")
             })
 
-        test = await self.participation_repository.list_by_fight(fight.id)
-        partipant_one = await self.participation_repository.list_by_fighter(participations_data[0]["fighter_id"])
-        fighter = await self.fighter_repository.get_by_id(participations_data[0]["fighter_id"])
-
-
-
         # Refresh the fight to load the newly created participations
         await self.fight_repository.refresh_session(fight)
         return fight

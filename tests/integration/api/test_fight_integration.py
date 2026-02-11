@@ -285,7 +285,7 @@ class TestFightIntegration:
                 response = await client.post("/api/v1/fights", json=fight_data)
 
             # Assert
-            assert response.status_code == 422
+            assert response.status_code == 400
             error_detail = response.json()['detail']
             assert 'future' in error_detail.lower()
 
@@ -342,7 +342,7 @@ class TestFightIntegration:
                 response = await client.post("/api/v1/fights", json=fight_data)
 
             # Assert
-            assert response.status_code == 422
+            assert response.status_code == 400
             error_detail = response.json()['detail']
             assert 'at least 2 participants' in error_detail.lower()
 
@@ -405,7 +405,7 @@ class TestFightIntegration:
                 response = await client.post("/api/v1/fights", json=fight_data)
 
             # Assert
-            assert response.status_code == 422
+            assert response.status_code == 400
             error_detail = response.json()['detail']
             assert 'singles' in error_detail.lower()
             assert 'exactly 1' in error_detail.lower()
@@ -472,7 +472,7 @@ class TestFightIntegration:
                 response = await client.post("/api/v1/fights", json=fight_data)
 
             # Assert
-            assert response.status_code == 422
+            assert response.status_code == 400
             error_detail = response.json()['detail']
             assert 'melee' in error_detail.lower()
             assert 'minimum 5' in error_detail.lower() or '5 fighters' in error_detail.lower()

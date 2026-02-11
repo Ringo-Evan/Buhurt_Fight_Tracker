@@ -367,7 +367,7 @@ class TestCountryServiceUpdate:
         # Assert
         assert result == updated_country
         assert result.name == "Czechia"
-        mock_repository.update.assert_awaited_once_with(country_id, update_data)
+        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deleted=False)
 
     @pytest.mark.asyncio
     async def test_update_country_code_validates_format(self):
@@ -418,7 +418,7 @@ class TestCountryServiceUpdate:
         with pytest.raises(DuplicateCountryCodeError, match="Country with code POL already exists"):
             await service.update(country_id, update_data)
 
-        mock_repository.update.assert_awaited_once_with(country_id, update_data)
+        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deleted=False)
 
     @pytest.mark.asyncio
     async def test_update_country_rejects_empty_name(self):
@@ -464,7 +464,7 @@ class TestCountryServiceUpdate:
         with pytest.raises(CountryNotFoundError, match="Country not found"):
             await service.update(country_id, update_data)
 
-        mock_repository.update.assert_awaited_once_with(country_id, update_data)
+        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deleted=False)
 
 
 class TestCountryServiceAdminAccess:

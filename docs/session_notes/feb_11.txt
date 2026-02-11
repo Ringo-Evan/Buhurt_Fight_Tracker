@@ -1,0 +1,3 @@
+fixed tests. used claude code sonnet 4.5 via vscode. Did alot more reading and planning than needed, but my prompt gave no real context. It's worth spending 5 mins to describe problems in detail and point to the neccesary files.
+Claude also wanted to reverse using 400 as the return code for failed custom validation. Perhaps would not if I had left comments or made an ADR. 
+Otherwise nothing really worth noting. Only spend 30 minutes.

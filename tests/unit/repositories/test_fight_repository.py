@@ -217,8 +217,11 @@ class TestFightRepositoryList:
         mock_scalars = MagicMock()
         mock_scalars.all.return_value = fights
 
+        mock_unique = MagicMock()
+        mock_unique.scalars.return_value = mock_scalars
+
         mock_result = MagicMock()
-        mock_result.scalars.return_value = mock_scalars
+        mock_result.unique.return_value = mock_unique
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -241,8 +244,11 @@ class TestFightRepositoryList:
         mock_scalars = MagicMock()
         mock_scalars.all.return_value = []
 
+        mock_unique = MagicMock()
+        mock_unique.scalars.return_value = mock_scalars
+
         mock_result = MagicMock()
-        mock_result.scalars.return_value = mock_scalars
+        mock_result.unique.return_value = mock_unique
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -268,8 +274,11 @@ class TestFightRepositoryList:
         mock_scalars = MagicMock()
         mock_scalars.all.return_value = fights
 
+        mock_unique = MagicMock()
+        mock_unique.scalars.return_value = mock_scalars
+
         mock_result = MagicMock()
-        mock_result.scalars.return_value = mock_scalars
+        mock_result.unique.return_value = mock_unique
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
