@@ -53,7 +53,7 @@ class TestCountryRepositoryIntegrationCreate:
         assert isinstance(created_country.id, type(uuid4()))
         assert created_country.name == "Czech Republic"
         assert created_country.code == "CZE"
-        assert created_country.is_deleted is False
+        assert created_country.is_deactivated is False
         assert created_country.created_at is not None
 
         # Assert - verify persisted to database by retrieving
@@ -151,7 +151,7 @@ class TestCountryRepositoryIntegrationRetrieval:
         assert retrieved.id == created.id
         assert retrieved.name == "Poland"
         assert retrieved.code == "POL"
-        assert retrieved.is_deleted == created.is_deleted
+        assert retrieved.is_deactivated == created.is_deactivated
         assert retrieved.created_at == created.created_at
 
     @pytest.mark.asyncio
@@ -233,18 +233,18 @@ class TestCountryRepositoryIntegrationSoftDelete:
     """Integration tests for soft delete functionality."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_sets_flag_in_database(self, db_session):
+    async def test_deactivate_sets_flag_in_database(self, db_session):
         """
-        Test that soft delete updates is_deleted flag in database.
+        Test that soft delete updates is_deactivated flag in database.
 
         Verifies:
-        - is_deleted flag is updated to True
+        - is_deactivated flag is updated to True
         - Country still exists in database
-        - Default queries exclude soft-deleted country
+        - Default queries exclude soft-deactivated country
 
         Arrange: Create country
-        Act: Soft delete it
-        Assert: is_deleted=True, excluded from default queries
+        Act: deactivate it (soft delete)
+        Assert: is_deactivated=True, excluded from default queries
         """
         # Arrange
         repository = CountryRepository(db_session)
@@ -252,21 +252,21 @@ class TestCountryRepositoryIntegrationSoftDelete:
         country_id = country.id
 
         # Act
-        await repository.soft_delete(country_id)
+        await repository.deactivate(country_id)
 
-        # Assert - default query excludes soft-deleted
-        retrieved = await repository.get_by_id(country_id, include_deleted=False)
+        # Assert - default query excludes soft-deactivated
+        retrieved = await repository.get_by_id(country_id, include_deactivated=False)
         assert retrieved is None
 
-        # Assert - can still retrieve with include_deleted=True
-        retrieved_with_deleted = await repository.get_by_id(country_id, include_deleted=True)
-        assert retrieved_with_deleted is not None
-        assert retrieved_with_deleted.is_deleted is True
+        # Assert - can still retrieve with include_deactivated=True
+        retrieved_with_deactivated = await repository.get_by_id(country_id, include_deactivated=True)
+        assert retrieved_with_deactivated is not None
+        assert retrieved_with_deactivated.is_deactivated is True
 
     @pytest.mark.asyncio
-    async def test_list_all_excludes_soft_deleted_by_default(self, db_session):
+    async def test_list_all_excludes_deactivated_by_default(self, db_session):
         """
-        Test that list_all filters out soft-deleted countries by default.
+        Test that list_all filters out deactivated countries by default.
 
         Verifies:
         - Active countries returned
@@ -284,10 +284,10 @@ class TestCountryRepositoryIntegrationSoftDelete:
         country3 = await repository.create({"name": "Italy", "code": "ITA"})
 
         # Soft delete one country
-        await repository.soft_delete(country2.id)
+        await repository.deactivate(country2.id)
 
         # Act - default query
-        active_countries = await repository.list_all(include_deleted=False)
+        active_countries = await repository.list_all(include_deactivated=False)
 
         # Assert
         assert len(active_countries) == 2
@@ -295,7 +295,7 @@ class TestCountryRepositoryIntegrationSoftDelete:
         assert codes == {"ESP", "ITA"}
 
         # Act - query including deleted
-        all_countries = await repository.list_all(include_deleted=True)
+        all_countries = await repository.list_all(include_deactivated=True)
 
         # Assert
         assert len(all_countries) == 3
@@ -382,7 +382,7 @@ class TestCountryRepositoryIntegrationPermanentDelete:
         await repository.permanent_delete(country_id)
 
         # Assert - cannot retrieve even with include_deleted
-        retrieved = await repository.get_by_id(country_id, include_deleted=True)
+        retrieved = await repository.get_by_id(country_id, include_deactivated=True)
         assert retrieved is None
 
     @pytest.mark.asyncio

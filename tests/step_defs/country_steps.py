@@ -147,7 +147,7 @@ async def soft_delete_country(country_name, db_session, context):
     """
     country = context['countries'][country_name]
     repository = CountryRepository(db_session)
-    await repository.soft_delete(country.id)
+    await repository.deactivate(country.id)
 
 
 @given(parsers.parse('the country "{country_name}" has {count:d} team relationship'),
@@ -729,9 +729,9 @@ async def country_marked_deleted_in_db(country_name, db_session, context):
     repository = CountryRepository(db_session)
 
     # Retrieve with include_deleted=True
-    retrieved = await repository.get_by_id(country.id, include_deleted=True)
+    retrieved = await repository.get_by_id(country.id, include_deactivated=True)
     assert retrieved is not None
-    assert retrieved.is_deleted is True
+    assert retrieved.is_deactivated is True
 
 
 @then(parsers.parse('the country "{country_name}" is not removed from the database'))
@@ -741,7 +741,7 @@ async def country_not_removed_from_db(country_name, db_session, context):
     repository = CountryRepository(db_session)
 
     # Should exist with include_deleted=True
-    retrieved = await repository.get_by_id(country.id, include_deleted=True)
+    retrieved = await repository.get_by_id(country.id, include_deactivated=True)
     assert retrieved is not None
 
 
@@ -752,7 +752,7 @@ async def country_permanently_removed(country_name, db_session, context):
     repository = CountryRepository(db_session)
 
     # Should not exist even with include_deleted=True
-    retrieved = await repository.get_by_id(country.id, include_deleted=True)
+    retrieved = await repository.get_by_id(country.id, include_deactivated=True)
     assert retrieved is None
 
 

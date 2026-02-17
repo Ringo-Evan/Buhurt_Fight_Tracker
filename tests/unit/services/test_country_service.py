@@ -499,7 +499,7 @@ class TestCountryServiceAdminAccess:
 
         # Assert
         assert result == deleted_country
-        assert result.is_deleted is True
+        assert result.is_deactivated is True
         mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deleted=True)
 
     @pytest.mark.asyncio
@@ -539,7 +539,7 @@ class TestCountryServiceAdminAccess:
 
         # Assert
         assert len(result) == 2
-        assert any(c.is_deleted for c in result)
+        assert any(c.is_deactivated for c in result)
         mock_repository.list_all.assert_awaited_once_with(include_deleted=True)
 
 

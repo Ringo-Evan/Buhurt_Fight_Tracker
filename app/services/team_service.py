@@ -77,11 +77,11 @@ class TeamService:
             Teams can only reference active (not soft-deleted) countries.
             This ensures data integrity and prevents orphaned relationships.
         """
-        country = await self.country_repository.get_by_id(country_id, include_deleted=False)
+        country = await self.country_repository.get_by_id(country_id, include_deactivated=False)
         if country is None:
             # Check if country exists but is soft-deleted
-            deleted_country = await self.country_repository.get_by_id(country_id, include_deleted=True)
-            if deleted_country and deleted_country.is_deleted:
+            deleted_country = await self.country_repository.get_by_id(country_id, include_deactivated=True)
+            if deleted_country and deleted_country.is_deactivated:
                 raise InvalidCountryError("Country is not active")
             raise InvalidCountryError("Country not found")
 

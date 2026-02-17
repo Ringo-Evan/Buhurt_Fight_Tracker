@@ -5,6 +5,7 @@ Tests the data access layer for Country entity operations with mocked SQLAlchemy
 Following TDD approach - these tests are written before implementation.
 """
 
+from unittest import result
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
@@ -49,7 +50,7 @@ class TestCountryRepositoryCreate:
         # Verify the created country has expected attributes
         assert result.name == "Czech Republic"
         assert result.code == "CZE"
-        assert result.is_deleted is False
+        assert result.is_deactivated is False
         assert result.id is not None
         assert result.created_at is not None
 
@@ -177,7 +178,7 @@ class TestCountryRepositoryGetById:
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_get_by_id_as_admin_returns_soft_deleted_country(self):
+    async def test_get_by_id_with_include_deactivate_returns_deactivated_country(self):
         """
         Test that get_by_id with include_deleted=True returns soft-deleted countries.
 
@@ -188,7 +189,7 @@ class TestCountryRepositoryGetById:
         # Arrange
         mock_session = AsyncMock()
         country_id = uuid4()
-        deleted_country = Country(
+        deactivated_country = Country(
             id=country_id,
             name="Czech Republic",
             code="CZE",
@@ -197,17 +198,21 @@ class TestCountryRepositoryGetById:
         )
 
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = deleted_country
+        mock_result.scalar_one_or_none.return_value = deactivated_country
         mock_session.execute.return_value = mock_result
 
         repository = CountryRepository(mock_session)
 
         # Act
-        result = await repository.get_by_id(country_id, include_deleted=True)
+        result = await repository.get_by_id(country_id, include_deactivated=True)
+        if result is not None:
+            typed_result:Country = result  # Simulate the soft-deleted flag
+        else:
+            assert False, "Expected a country object but got None"
 
         # Assert
-        assert result == deleted_country
-        assert result.is_deleted is True
+        assert typed_result == deactivated_country
+        assert typed_result.is_deactivated is True
         mock_session.execute.assert_awaited_once()
 
 
@@ -341,7 +346,7 @@ class TestCountryRepositoryList:
 
         # Assert
         assert len(result) == 2
-        assert all(not country.is_deleted for country in result)
+        assert all(not country.is_deactivated for country in result)
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -412,11 +417,11 @@ class TestCountryRepositoryList:
         repository = CountryRepository(mock_session)
 
         # Act
-        result = await repository.list_all(include_deleted=True)
+        result = await repository.list_all(include_deactivated=True)
 
         # Assert
         assert len(result) == 3
-        assert any(country.is_deleted for country in result)
+        assert any(country.is_deactivated for country in result)
         mock_session.execute.assert_awaited_once()
 
 
@@ -450,10 +455,10 @@ class TestCountryRepositorySoftDelete:
         repository = CountryRepository(mock_session)
 
         # Act
-        await repository.soft_delete(country_id)
+        await repository.deactivate(country_id)
 
         # Assert
-        assert country.is_deleted is True
+        assert country.is_deactivated is True
         mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -477,7 +482,7 @@ class TestCountryRepositorySoftDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Country not found"):
-            await repository.soft_delete(country_id)
+            await repository.deactivate(country_id)
 
         mock_session.commit.assert_not_awaited()
 

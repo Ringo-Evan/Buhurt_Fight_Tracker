@@ -57,7 +57,7 @@ class Country(Base):
         index=True    # Optimize country code lookups
     )
 
-    is_deleted: Mapped[bool] = mapped_column(
+    is_deactivated: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False
@@ -95,9 +95,9 @@ class Country(Base):
         if 'id' not in kwargs:
             self.id = uuid4()
         if 'is_deleted' not in kwargs:
-            self.is_deleted = False
+            self.is_deactivated = False
         if 'created_at' not in kwargs:
             self.created_at = datetime.now(UTC)
 
     def __repr__(self) -> str:
-        return f"<Country(id={self.id}, name='{self.name}', code='{self.code}', is_deleted={self.is_deleted})>"
+        return f"<Country(id={self.id}, name='{self.name}', code='{self.code}', is_deleted={self.is_deactivated})>"

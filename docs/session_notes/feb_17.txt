@@ -1,0 +1,9 @@
+I'm lost on this project atm. Need to better than just taking notes on what happened. Should put goals, results, and plan for next session whether for me or claude.
+Will switch back to tickets in a bit I think but really just want to get through this next section of refactor and testing. 
+
+Today will try to add deactivate (and reactivate logic) for as many data types as possible. Will probably not finish, but if I do still need to add hard deletes.
+after that check feb2/4th for other bugs.
+
+
+
+

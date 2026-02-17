@@ -106,7 +106,7 @@ class CountryService:
         Raises:
             CountryNotFoundError: If country not found
         """
-        country = await self.repository.get_by_id(country_id, include_deleted=include_deleted)
+        country = await self.repository.get_by_id(country_id, include_deactivated=include_deleted)
         if country is None:
             raise CountryNotFoundError()
 
@@ -134,7 +134,7 @@ class CountryService:
         Returns:
             List of Country instances
         """
-        return await self.repository.list_all(include_deleted=include_deleted)
+        return await self.repository.list_all(include_deactivated=include_deleted)
 
     async def delete(self, country_id: UUID) -> None:
         """
@@ -147,7 +147,7 @@ class CountryService:
             CountryNotFoundError: If country not found
         """
         try:
-            await self.repository.soft_delete(country_id)
+            await self.repository.deactivate(country_id)
         except ValueError as e:
             raise CountryNotFoundError(str(e))
 
@@ -192,7 +192,7 @@ class CountryService:
             NotImplementedError: Team entity not yet implemented
         """
         # Validate country exists
-        country = await self.repository.get_by_id(country_id, include_deleted=True)
+        country = await self.repository.get_by_id(country_id, include_deactivated=True)
         if country is None:
             raise CountryNotFoundError("Country not found")
 

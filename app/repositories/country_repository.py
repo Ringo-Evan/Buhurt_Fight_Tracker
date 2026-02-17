@@ -52,7 +52,7 @@ class CountryRepository:
             await self.session.rollback()
             raise e
         
-    async def get_by_id(self, country_id: UUID, include_deleted: bool = False) -> Country | None:
+    async def get_by_id(self, country_id: UUID, include_deactivated: bool = False) -> Country | None:
         """
         Retrieve a country by ID.
 
@@ -65,8 +65,8 @@ class CountryRepository:
         """
         query = select(Country).where(Country.id == country_id)
 
-        if not include_deleted:
-            query = query.where(Country.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Country.is_deactivated == False)
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
@@ -85,12 +85,12 @@ class CountryRepository:
         query = select(Country).where(Country.code == code)
 
         if not include_deleted:
-            query = query.where(Country.is_deleted == False)
+            query = query.where(Country.is_deactivated == False)
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def list_all(self, include_deleted: bool = False) -> list[Country]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Country]:
         """
         List all countries.
 
@@ -102,13 +102,13 @@ class CountryRepository:
         """
         query = select(Country)
 
-        if not include_deleted:
-            query = query.where(Country.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Country.is_deactivated == False)
 
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def soft_delete(self, country_id: UUID) -> None:
+    async def deactivate(self, country_id: UUID) -> None:
         """
         Soft delete a country by setting is_deleted flag.
 
@@ -118,11 +118,11 @@ class CountryRepository:
         Raises:
             ValueError: If country not found
         """
-        country = await self.get_by_id(country_id, include_deleted=False)
+        country = await self.get_by_id(country_id, include_deactivated=False)
         if country is None:
             raise ValueError("Country not found")
 
-        country.is_deleted = True
+        country.is_deactivated = True
         await self.session.commit()
 
     async def update(self, country_id: UUID, update_data: Dict[str, Any], include_deleted: bool = False) -> Country:
@@ -140,7 +140,7 @@ class CountryRepository:
             ValueError: If country not found
             IntegrityError: If update violates unique constraint
         """
-        country = await self.get_by_id(country_id, include_deleted=include_deleted)
+        country = await self.get_by_id(country_id, include_deactivated=include_deleted)
         if country is None:
             raise ValueError("Country not found")
 
@@ -161,7 +161,7 @@ class CountryRepository:
         Raises:
             ValueError: If country not found
         """
-        country = await self.get_by_id(country_id, include_deleted=True)
+        country = await self.get_by_id(country_id, include_deactivated=True)
         if country is None:
             raise ValueError("Country not found")
 
@@ -183,7 +183,7 @@ class CountryRepository:
             NotImplementedError: Team entity not yet implemented
         """
         # Validate country exists
-        country = await self.get_by_id(country_id, include_deleted=True)
+        country = await self.get_by_id(country_id, include_deactivated=True)
         if country is None:
             raise ValueError("Country not found")
 
@@ -207,11 +207,11 @@ class CountryRepository:
             ValueError: If either country not found
             NotImplementedError: Team entity not yet implemented
         """
-        old_country = await self.get_by_id(old_country_id, include_deleted=True)
+        old_country = await self.get_by_id(old_country_id, include_deactivated=True)
         if old_country is None:
             raise ValueError("Old country not found")
 
-        new_country = await self.get_by_id(new_country_id, include_deleted=False)
+        new_country = await self.get_by_id(new_country_id, include_deactivated=False)
         if new_country is None:
             raise ValueError("New country not found")
 
