@@ -87,7 +87,7 @@ async def create_fight(
 async def list_fights(
     start_date: date | None = Query(None, description="Filter fights from this date"),
     end_date: date | None = Query(None, description="Filter fights until this date"),
-    include_deleted: bool = Query(False, description="Include soft-deleted fights (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated fights (admin only)"),
     service: FightService = Depends(get_fight_service),
 ) -> list[FightResponse]:
     """List all fights, optionally filtered by date range."""
@@ -109,7 +109,7 @@ async def list_fights(
 )
 async def get_fight(
     fight_id: UUID,
-    include_deleted: bool = Query(False, description="Include soft-deleted fights (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated fights (admin only)"),
     service: FightService = Depends(get_fight_service),
 ) -> FightResponse:
     """Get a fight by its UUID."""
@@ -165,8 +165,8 @@ async def update_fight(
 @router.delete(
     "/{fight_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Soft delete a fight",
-    description="Soft delete a fight (sets is_deleted flag).",
+    summary="Deactivate a fight",
+    description="Deactivate a fight (sets is_deactivated flag).",
     responses={
         404: {"description": "Fight not found"},
     },
@@ -175,7 +175,7 @@ async def delete_fight(
     fight_id: UUID,
     service: FightService = Depends(get_fight_service),
 ) -> None:
-    """Soft delete a fight."""
+    """Deactivate a fight."""
     try:
         await service.delete(fight_id)
     except FightNotFoundError:

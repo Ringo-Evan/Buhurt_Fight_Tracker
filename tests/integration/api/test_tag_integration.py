@@ -329,9 +329,9 @@ class TestTagIntegration:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_soft_delete_tag(self, db_session):
+    async def test_deactivate_tag(self, db_session):
         """
-        Scenario: Soft delete a tag
+        Scenario: Deactivate a tag
 
         Given a tag exists with tag_type "weapon" and value "sword"
         When I delete the tag
@@ -339,9 +339,9 @@ class TestTagIntegration:
         But the tag should still exist in the database with is_deleted true
 
         Verifies:
-        - DELETE /tags/{id} soft deletes tag
+        - DELETE /tags/{id} deactivates tag
         - Deleted tag doesn't appear in list
-        - is_deleted flag set to true
+        - is_deactivated flag set to true
         - Data still exists in database
         """
         async def get_db_override():
@@ -385,11 +385,11 @@ class TestTagIntegration:
                 values = [t['value'] for t in tags]
                 assert 'sword' not in values
 
-            # Verify still exists with is_deleted=True
-            deleted_tag = await tag_repo.get_by_id(tag.id, include_deleted=True)
+            # Verify still exists with is_deactivated=True
+            deleted_tag = await tag_repo.get_by_id(tag.id, include_deactivated=True)
             assert deleted_tag is not None
             assert deleted_tag.value == 'sword'
-            assert deleted_tag.is_deleted == True
+            assert deleted_tag.is_deactivated == True
 
         finally:
             app.dependency_overrides.clear()

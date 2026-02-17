@@ -50,7 +50,7 @@ class TestTeamServiceCreate:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -58,7 +58,7 @@ class TestTeamServiceCreate:
             id=uuid4(),
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -72,7 +72,7 @@ class TestTeamServiceCreate:
         assert result == expected_team
         assert result.name == "Team USA"
         assert result.country_id == country_id
-        mock_country_repository.get_by_id.assert_awaited_once_with(country_id, include_deleted=False)
+        mock_country_repository.get_by_id.assert_awaited_once_with(country_id, include_deactivated=False)
         mock_team_repository.create.assert_awaited_once_with(team_data)
 
     @pytest.mark.asyncio
@@ -210,17 +210,17 @@ class TestTeamServiceCreate:
 
         # Should check without deleted first, then with deleted
         assert mock_country_repository.get_by_id.await_count == 2
-        mock_country_repository.get_by_id.assert_any_await(country_id, include_deleted=False)
-        mock_country_repository.get_by_id.assert_any_await(country_id, include_deleted=True)
+        mock_country_repository.get_by_id.assert_any_await(country_id, include_deactivated=False)
+        mock_country_repository.get_by_id.assert_any_await(country_id, include_deactivated=True)
         mock_team_repository.create.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_create_team_rejects_soft_deleted_country(self):
+    async def test_create_team_rejects_deactivated_country(self):
         """
-        Test that creating a team with soft-deleted country is rejected.
+        Test that creating a team with deactivated country is rejected.
 
         Arrange: Mock country repository returning None (active) but deleted country exists
-        Act: Attempt to create team with soft-deleted country
+        Act: Attempt to create team with deactivated country
         Assert: InvalidCountryError raised with "not active" message
         """
         # Arrange
@@ -238,12 +238,12 @@ class TestTeamServiceCreate:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
-        # First call (include_deleted=False) returns None
-        # Second call (include_deleted=True) returns soft-deleted country
+        # First call (include_deactivated=False) returns None
+        # Second call (include_deactivated=True) returns deactivated country
         mock_country_repository.get_by_id.side_effect = [None, deleted_country]
 
         # Act & Assert
@@ -251,8 +251,8 @@ class TestTeamServiceCreate:
             await service.create(team_data)
 
         assert mock_country_repository.get_by_id.await_count == 2
-        mock_country_repository.get_by_id.assert_any_await(country_id, include_deleted=False)
-        mock_country_repository.get_by_id.assert_any_await(country_id, include_deleted=True)
+        mock_country_repository.get_by_id.assert_any_await(country_id, include_deactivated=False)
+        mock_country_repository.get_by_id.assert_any_await(country_id, include_deactivated=True)
         mock_team_repository.create.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -279,7 +279,7 @@ class TestTeamServiceCreate:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -323,7 +323,7 @@ class TestTeamServiceRetrieve:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -335,7 +335,7 @@ class TestTeamServiceRetrieve:
         # Assert
         assert result == expected_team
         assert result.id == team_id
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=False)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_get_by_id_raises_not_found_error_when_not_exists(self):
@@ -358,15 +358,15 @@ class TestTeamServiceRetrieve:
         with pytest.raises(TeamNotFoundError, match="Team not found"):
             await service.get_by_id(team_id)
 
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=False)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_get_by_id_as_admin_returns_deleted_team(self):
         """
-        Test that admin can retrieve soft-deleted teams.
+        Test that admin can retrieve deactivated teams.
 
         Arrange: Mock repository with include_deleted flag
-        Act: Call service.get_by_id(include_deleted=True)
+        Act: Call service.get_by_id(include_deactivated=True)
         Assert: Returns deleted team
         """
         # Arrange
@@ -380,19 +380,19 @@ class TestTeamServiceRetrieve:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
         mock_team_repository.get_by_id.return_value = deleted_team
 
         # Act
-        result = await service.get_by_id(team_id, include_deleted=True)
+        result = await service.get_by_id(team_id, include_deactivated=True)
 
         # Assert
         assert result == deleted_team
-        assert result.is_deleted is True
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=True)
+        assert result.is_deactivated is True
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=True)
 
     @pytest.mark.asyncio
     async def test_list_all_returns_all_teams(self):
@@ -414,14 +414,14 @@ class TestTeamServiceRetrieve:
                 id=uuid4(),
                 name="Team USA",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Team(
                 id=uuid4(),
                 name="Team Canada",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -434,7 +434,7 @@ class TestTeamServiceRetrieve:
         # Assert
         assert result == expected_teams
         assert len(result) == 2
-        mock_team_repository.list_all.assert_awaited_once_with(include_deleted=False)
+        mock_team_repository.list_all.assert_awaited_once_with(include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_list_all_as_admin_includes_deleted_teams(self):
@@ -442,7 +442,7 @@ class TestTeamServiceRetrieve:
         Test that admin can list all teams including deleted ones.
 
         Arrange: Mock repository returning active and deleted teams
-        Act: Call service.list_all(include_deleted=True)
+        Act: Call service.list_all(include_deactivated=True)
         Assert: Returns all teams including deleted
         """
         # Arrange
@@ -456,14 +456,14 @@ class TestTeamServiceRetrieve:
                 id=uuid4(),
                 name="Team USA",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Team(
                 id=uuid4(),
                 name="Team Canada",
                 country_id=country_id,
-                is_deleted=True,
+                is_deactivated=True,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -471,12 +471,12 @@ class TestTeamServiceRetrieve:
         mock_team_repository.list_all.return_value = all_teams
 
         # Act
-        result = await service.list_all(include_deleted=True)
+        result = await service.list_all(include_deactivated=True)
 
         # Assert
         assert len(result) == 2
-        assert any(t.is_deleted for t in result)
-        mock_team_repository.list_all.assert_awaited_once_with(include_deleted=True)
+        assert any(t.is_deactivated for t in result)
+        mock_team_repository.list_all.assert_awaited_once_with(include_deactivated=True)
 
     @pytest.mark.asyncio
     async def test_list_by_country_returns_teams_for_country(self):
@@ -498,14 +498,14 @@ class TestTeamServiceRetrieve:
                 id=uuid4(),
                 name="Team USA 1",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Team(
                 id=uuid4(),
                 name="Team USA 2",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -519,7 +519,7 @@ class TestTeamServiceRetrieve:
         assert result == expected_teams
         assert len(result) == 2
         assert all(t.country_id == country_id for t in result)
-        mock_team_repository.list_by_country.assert_awaited_once_with(country_id, include_deleted=False)
+        mock_team_repository.list_by_country.assert_awaited_once_with(country_id, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_list_by_country_returns_empty_list_when_no_teams(self):
@@ -543,7 +543,7 @@ class TestTeamServiceRetrieve:
 
         # Assert
         assert result == []
-        mock_team_repository.list_by_country.assert_awaited_once_with(country_id, include_deleted=False)
+        mock_team_repository.list_by_country.assert_awaited_once_with(country_id, include_deactivated=False)
 
 
 class TestTeamServiceUpdate:
@@ -571,7 +571,7 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -579,7 +579,7 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA Elite",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -592,7 +592,7 @@ class TestTeamServiceUpdate:
         # Assert
         assert result == updated_team
         assert result.name == "Team USA Elite"
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=True)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=True)
         mock_team_repository.update.assert_awaited_once_with(team_id, update_data)
 
     @pytest.mark.asyncio
@@ -618,7 +618,7 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA",
             country_id=old_country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -626,7 +626,7 @@ class TestTeamServiceUpdate:
             id=new_country_id,
             name="Canada",
             code="CAN",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -634,7 +634,7 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA",
             country_id=new_country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -648,8 +648,8 @@ class TestTeamServiceUpdate:
         # Assert
         assert result == updated_team
         assert result.country_id == new_country_id
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=True)
-        mock_country_repository.get_by_id.assert_awaited_once_with(new_country_id, include_deleted=False)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=True)
+        mock_country_repository.get_by_id.assert_awaited_once_with(new_country_id, include_deactivated=False)
         mock_team_repository.update.assert_awaited_once_with(team_id, update_data)
 
     @pytest.mark.asyncio
@@ -674,7 +674,7 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -684,7 +684,7 @@ class TestTeamServiceUpdate:
         with pytest.raises(ValidationError, match="Team name is required"):
             await service.update(team_id, update_data)
 
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=True)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=True)
         mock_team_repository.update.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -709,7 +709,7 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -719,7 +719,7 @@ class TestTeamServiceUpdate:
         with pytest.raises(ValidationError, match="Team name must not exceed 100 characters"):
             await service.update(team_id, update_data)
 
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=True)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=True)
         mock_team_repository.update.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -745,7 +745,7 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA",
             country_id=old_country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -757,17 +757,17 @@ class TestTeamServiceUpdate:
         with pytest.raises(InvalidCountryError, match="Country not found"):
             await service.update(team_id, update_data)
 
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=True)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=True)
         assert mock_country_repository.get_by_id.await_count == 2
         mock_team_repository.update.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_update_team_rejects_soft_deleted_country(self):
+    async def test_update_team_rejects_deactivated_country(self):
         """
-        Test that updating team to soft-deleted country is rejected.
+        Test that updating team to deactivated country is rejected.
 
-        Arrange: Mock country repository returning None (active) but deleted exists
-        Act: Attempt to update with soft-deleted country_id
+        Arrange: Mock country repository returning None (active) but deactivated exists
+        Act: Attempt to update with deactivated country_id
         Assert: InvalidCountryError raised with "not active" message
         """
         # Arrange
@@ -784,27 +784,28 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA",
             country_id=old_country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
-        deleted_country = Country(
+        deactivate_country = Country(
             id=new_country_id,
             name="Canada",
             code="CAN",
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
         mock_team_repository.get_by_id.return_value = existing_team
-        # First call returns None, second returns deleted country
-        mock_country_repository.get_by_id.side_effect = [None, deleted_country]
+        # First call returns None, second returns deactivated country
+        #mock_country_repository.get_by_id.return_value = deactivate_country
+        mock_country_repository.get_by_id.side_effect = [None, deactivate_country]
 
         # Act & Assert
         with pytest.raises(InvalidCountryError, match="Country is not active"):
             await service.update(team_id, update_data)
 
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=True)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=True)
         assert mock_country_repository.get_by_id.await_count == 2
         mock_team_repository.update.assert_not_awaited()
 
@@ -831,7 +832,7 @@ class TestTeamServiceUpdate:
         with pytest.raises(TeamNotFoundError, match="Team not found"):
             await service.update(team_id, update_data)
 
-        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deleted=True)
+        mock_team_repository.get_by_id.assert_awaited_once_with(team_id, include_deactivated=True)
         mock_team_repository.update.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -857,7 +858,7 @@ class TestTeamServiceUpdate:
             id=team_id,
             name="Team USA",
             country_id=old_country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -865,7 +866,7 @@ class TestTeamServiceUpdate:
             id=new_country_id,
             name="Canada",
             code="CAN",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -887,16 +888,16 @@ class TestTeamServiceUpdate:
         mock_team_repository.update.assert_awaited_once_with(team_id, update_data)
 
 
-class TestTeamServiceDelete:
-    """Test suite for team deletion business logic."""
+class TestTeamServiceDeactivate:
+    """Test suite for team deactivation business logic."""
 
     @pytest.mark.asyncio
-    async def test_delete_team_delegates_to_repository(self):
+    async def test_deactivate_team_delegates_to_repository(self):
         """
-        Test that delete operation delegates to repository soft_delete.
+        Test that deactivate operation delegates to repository soft_delete.
 
         Arrange: Mock repository
-        Act: Call service.delete()
+        Act: Call service.deactivate()
         Assert: Repository soft_delete called with correct ID
         """
         # Arrange
@@ -905,13 +906,13 @@ class TestTeamServiceDelete:
         service = TeamService(mock_team_repository, mock_country_repository)
 
         team_id = uuid4()
-        mock_team_repository.soft_delete.return_value = None
+        mock_team_repository.deactivate.return_value = None
 
         # Act
-        await service.delete(team_id)
+        await service.deactivate(team_id)
 
         # Assert
-        mock_team_repository.soft_delete.assert_awaited_once_with(team_id)
+        mock_team_repository.deactivate.assert_awaited_once_with(team_id)
 
     @pytest.mark.asyncio
     async def test_delete_team_handles_non_existent_team(self):
@@ -928,13 +929,13 @@ class TestTeamServiceDelete:
         service = TeamService(mock_team_repository, mock_country_repository)
 
         team_id = uuid4()
-        mock_team_repository.soft_delete.side_effect = ValueError("Team not found")
+        mock_team_repository.deactivate.side_effect = ValueError("Team not found")
 
         # Act & Assert
         with pytest.raises(TeamNotFoundError, match="Team not found"):
-            await service.delete(team_id)
+            await service.deactivate(team_id)
 
-        mock_team_repository.soft_delete.assert_awaited_once_with(team_id)
+        mock_team_repository.deactivate.assert_awaited_once_with(team_id)
 
 
 class TestTeamServicePermanentDelete:
@@ -958,7 +959,7 @@ class TestTeamServicePermanentDelete:
         mock_team_repository.permanent_delete.return_value = None
 
         # Act
-        await service.permanent_delete(team_id)
+        await service.delete(team_id)
 
         # Assert
         mock_team_repository.permanent_delete.assert_awaited_once_with(team_id)
@@ -982,6 +983,6 @@ class TestTeamServicePermanentDelete:
 
         # Act & Assert
         with pytest.raises(TeamNotFoundError, match="Team not found"):
-            await service.permanent_delete(team_id)
+            await service.delete(team_id)
 
         mock_team_repository.permanent_delete.assert_awaited_once_with(team_id)

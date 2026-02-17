@@ -335,9 +335,9 @@ class TestTagTypeIntegration:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_soft_delete_tag_type(self, db_session):
+    async def test_deactivate_tag_type(self, db_session):
         """
-        Scenario 5: Soft delete a tag type
+        Scenario 5: Deactivate a tag type
 
         Given the tag type "weapon" exists
         When I delete the tag type "weapon"
@@ -345,9 +345,9 @@ class TestTagTypeIntegration:
         But the tag type "weapon" should still exist in the database with is_deleted true
 
         Verifies:
-        - DELETE /tag-types/{id} soft deletes tag type
+        - DELETE /tag-types/{id} deactivates tag type
         - Deleted tag types don't appear in list
-        - is_deleted flag set to true
+        - is_deactivated flag set to true
         - Data still exists in database
         """
         # Arrange
@@ -369,7 +369,7 @@ class TestTagTypeIntegration:
         await db_session.commit()
 
         try:
-            # Act: Soft delete
+            # Act: Deactivate
             async with AsyncClient(
                 transport=ASGITransport(app=app),
                 base_url="http://test"
@@ -383,11 +383,11 @@ class TestTagTypeIntegration:
                 names = [tt['name'] for tt in tag_types]
                 assert 'weapon' not in names
 
-            # But: Still exists in database with is_deleted=True
-            deleted_tag_type = await repo.get_by_id(weapon.id, include_deleted=True)
+            # But: Still exists in database with is_deactivated=True
+            deleted_tag_type = await repo.get_by_id(weapon.id, include_deactivated=True)
             assert deleted_tag_type is not None
             assert deleted_tag_type.name == 'weapon'
-            assert deleted_tag_type.is_deleted == True
+            assert deleted_tag_type.is_deactivated == True
 
         finally:
             app.dependency_overrides.clear()

@@ -207,7 +207,7 @@ class FightService:
 
         Args:
             fight_id: UUID of the fight
-            include_deleted: If True, include soft-deleted fights
+            include_deleted: If True, include deactivated fights
 
         Returns:
             Fight instance
@@ -215,7 +215,7 @@ class FightService:
         Raises:
             FightNotFoundError: If fight not found
         """
-        fight = await self.fight_repository.get_by_id(fight_id, include_deleted=include_deleted)
+        fight = await self.fight_repository.get_by_id(fight_id, include_deactivated=include_deactivated)
         if fight is None:
             raise FightNotFoundError(f"Fight with ID {fight_id} not found")
         return fight
@@ -225,12 +225,12 @@ class FightService:
         List all fights.
 
         Args:
-            include_deleted: If True, include soft-deleted fights
+            include_deleted: If True, include deactivated fights
 
         Returns:
             List of Fight instances
         """
-        return await self.fight_repository.list_all(include_deleted=include_deleted)
+        return await self.fight_repository.list_all(include_deactivated=include_deactivated)
 
     async def list_by_date_range(
         self,
@@ -244,13 +244,13 @@ class FightService:
         Args:
             start_date: Start of date range
             end_date: End of date range
-            include_deleted: If True, include soft-deleted fights
+            include_deleted: If True, include deactivated fights
 
         Returns:
             List of Fight instances
         """
         return await self.fight_repository.list_by_date_range(
-            start_date, end_date, include_deleted=include_deleted
+            start_date, end_date, include_deactivated=include_deactivated
         )
 
     async def update(self, fight_id: UUID, update_data: Dict[str, Any]) -> Fight:
@@ -278,7 +278,7 @@ class FightService:
 
     async def delete(self, fight_id: UUID) -> None:
         """
-        Soft delete a fight.
+        Deactivate a fight.
 
         Args:
             fight_id: UUID of the fight to delete
@@ -287,6 +287,6 @@ class FightService:
             FightNotFoundError: If fight not found
         """
         try:
-            await self.fight_repository.soft_delete(fight_id)
+            await self.fight_repository.deactivate(fight_id)
         except ValueError:
             raise FightNotFoundError(f"Fight with ID {fight_id} not found")

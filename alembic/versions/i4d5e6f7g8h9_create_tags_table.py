@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column('tag_type_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('value', sa.String(length=200), nullable=False),
         sa.Column('parent_tag_id', postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('false')),
+        sa.Column('is_deactivated', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
     )
 
@@ -62,12 +62,12 @@ def upgrade() -> None:
     # Create indexes for optimization
     op.create_index('ix_tags_fight_id', 'tags', ['fight_id'])
     op.create_index('ix_tags_tag_type_id', 'tags', ['tag_type_id'])
-    op.create_index('ix_tags_is_deleted', 'tags', ['is_deleted'])
+    op.create_index('ix_tags_is_deactivated', 'tags', ['is_deactivated'])
 
 
 def downgrade() -> None:
     """Drop tags table."""
-    op.drop_index('ix_tags_is_deleted', table_name='tags')
+    op.drop_index('ix_tags_is_deactivated', table_name='tags')
     op.drop_index('ix_tags_tag_type_id', table_name='tags')
     op.drop_index('ix_tags_fight_id', table_name='tags')
     op.drop_constraint('fk_tags_parent_tag_id', 'tags', type_='foreignkey')

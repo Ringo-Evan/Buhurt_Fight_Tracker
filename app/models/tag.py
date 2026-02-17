@@ -30,7 +30,7 @@ class Tag(Base):
         tag_type_id: FK to tag_types table
         value: The tag value (e.g., "Singles", "Longsword")
         parent_tag_id: Optional FK to parent tag (for hierarchy)
-        is_deleted: Soft delete flag
+        is_deleted: Deactivated flag
         created_at: Timestamp of record creation
     """
 
@@ -56,7 +56,7 @@ class Tag(Base):
         ForeignKey("tags.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=True
     )
-    is_deleted: Mapped[bool] = mapped_column(
+    is_deactivated: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False

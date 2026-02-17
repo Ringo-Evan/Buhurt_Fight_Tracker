@@ -71,7 +71,7 @@ class TestTagTypeRepositoryGetById:
             name="category",
             is_privileged=True,
             display_order=2,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -117,13 +117,13 @@ class TestTagTypeRepositoryGetById:
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_get_by_id_filters_soft_deleted_by_default(self):
+    async def test_get_by_id_filters_deactivated_by_default(self):
         """
-        Test that get_by_id filters out soft-deleted tag types by default.
+        Test that get_by_id filters out deactivated tag types by default.
 
-        Arrange: Mock session, verify query filters is_deleted=False
+        Arrange: Mock session, verify query filters is_deactivated=False
         Act: Call repository.get_by_id() without include_deleted
-        Assert: Query includes soft delete filter
+        Assert: Query includes deactivate filter
         """
         # Arrange
         mock_session = AsyncMock()
@@ -136,7 +136,7 @@ class TestTagTypeRepositoryGetById:
         repository = TagTypeRepository(mock_session)
 
         # Act
-        await repository.get_by_id(tag_type_id, include_deleted=False)
+        await repository.get_by_id(tag_type_id, include_deactivated=False)
 
         # Assert
         mock_session.execute.assert_awaited_once()
@@ -163,7 +163,7 @@ class TestTagTypeRepositoryGetByName:
             name="weapon",
             is_privileged=True,
             display_order=3,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -226,19 +226,19 @@ class TestTagTypeRepositoryListAll:
             id=uuid4(),
             name="fight_format",
             display_order=1,
-            is_deleted=False
+            is_deactivated=False
         )
         tag_type_2 = TagType(
             id=uuid4(),
             name="category",
             display_order=2,
-            is_deleted=False
+            is_deactivated=False
         )
         tag_type_3 = TagType(
             id=uuid4(),
             name="weapon",
             display_order=3,
-            is_deleted=False
+            is_deactivated=False
         )
 
         mock_scalars = MagicMock()
@@ -261,13 +261,13 @@ class TestTagTypeRepositoryListAll:
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_list_all_filters_soft_deleted_by_default(self):
+    async def test_list_all_filters_deactivated_by_default(self):
         """
-        Test that list_all filters out soft-deleted tag types by default.
+        Test that list_all filters out deactivated tag types by default.
 
         Arrange: Mock session
         Act: Call repository.list_all() without include_deleted
-        Assert: Query filters soft-deleted records
+        Assert: Query filters deactivated records
         """
         # Arrange
         mock_session = AsyncMock()
@@ -282,7 +282,7 @@ class TestTagTypeRepositoryListAll:
         repository = TagTypeRepository(mock_session)
 
         # Act
-        result = await repository.list_all(include_deleted=False)
+        result = await repository.list_all(include_deactivated=False)
 
         # Assert
         assert result == []
@@ -290,16 +290,16 @@ class TestTagTypeRepositoryListAll:
 
 
 class TestTagTypeRepositorySoftDelete:
-    """Test suite for soft delete operations."""
+    """Test suite for deactivate operations."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_sets_is_deleted_to_true(self):
+    async def test_deactivate_sets_is_deactivated_to_true(self):
         """
-        Test that soft_delete sets is_deleted flag to True.
+        Test that soft_delete sets is_deactivated flag to True.
 
         Arrange: Mock session with existing tag type
         Act: Call repository.soft_delete()
-        Assert: Tag type has is_deleted=True and commit called
+        Assert: Tag type has is_deactivated=True and commit called
         """
         # Arrange
         mock_session = AsyncMock()
@@ -308,7 +308,7 @@ class TestTagTypeRepositorySoftDelete:
         mock_tag_type = TagType(
             id=tag_type_id,
             name="league",
-            is_deleted=False
+            is_deactivated=False
         )
 
         # Mock the get_by_id call that happens inside soft_delete
@@ -319,14 +319,14 @@ class TestTagTypeRepositorySoftDelete:
         repository = TagTypeRepository(mock_session)
 
         # Act
-        await repository.soft_delete(tag_type_id)
+        await repository.deactivate(tag_type_id)
 
         # Assert
-        assert mock_tag_type.is_deleted == True
+        assert mock_tag_type.is_deactivated == True
         mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_soft_delete_raises_error_when_not_found(self):
+    async def test_deactivate_raises_error_when_not_found(self):
         """
         Test that soft_delete raises ValueError when tag type not found.
 
@@ -346,4 +346,4 @@ class TestTagTypeRepositorySoftDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Tag type not found"):
-            await repository.soft_delete(tag_type_id)
+            await repository.deactivate(tag_type_id)

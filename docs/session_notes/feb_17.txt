@@ -5,5 +5,10 @@ Today will try to add deactivate (and reactivate logic) for as many data types a
 after that check feb2/4th for other bugs.
 
 
+Used Claude to refactor when got tired of the renaming. probably should have updated tests first as that did get into behavior.
+meant to limit it to renaming. But a little more than that happened.
 
+Still think most of the logic needs to be implemented
+Tried to run as a docker in docker dev container but couldn't install my libraries. probably want custom image.
+Claude broke a good 
 

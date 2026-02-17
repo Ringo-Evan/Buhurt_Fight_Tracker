@@ -30,7 +30,7 @@ class Fight(Base):
         video_url: Optional URL to fight video recording
         winner_side: Optional side that won (1 or 2, null for draw/undecided)
         notes: Optional notes about the fight
-        is_deleted: Soft delete flag (defaults to False)
+        is_deleted: Deactivated flag (defaults to False)
         created_at: Timestamp of creation (auto-generated, UTC)
 
         participations: Relationship to FightParticipation entities (eager loaded)
@@ -70,11 +70,11 @@ class Fight(Base):
         nullable=True
     )
 
-    is_deleted: Mapped[bool] = mapped_column(
+    is_deactivated: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,
-        index=True  # For filtering soft-deleted fights
+        index=True  # For filtering deactivated fights
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -108,10 +108,10 @@ class Fight(Base):
 
         if 'id' not in kwargs:
             self.id = uuid4()
-        if 'is_deleted' not in kwargs:
-            self.is_deleted = False
+        if 'is_deactivated' not in kwargs:
+            self.is_deactivated = False
         if 'created_at' not in kwargs:
             self.created_at = datetime.now(UTC)
 
     def __repr__(self) -> str:
-        return f"<Fight(id={self.id}, date={self.date}, location='{self.location}', is_deleted={self.is_deleted})>"
+        return f"<Fight(id={self.id}, date={self.date}, location='{self.location}', is_deactivated={self.is_deactivated})>"

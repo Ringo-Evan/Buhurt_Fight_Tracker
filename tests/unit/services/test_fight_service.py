@@ -32,7 +32,7 @@ class TestFightServiceCreate:
             location="IMCF Worlds 2024",
             video_url="https://youtube.com/watch?v=abc",
             winner_side=1,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         mock_repository.create.return_value = fight
@@ -140,7 +140,7 @@ class TestFightServiceCreate:
             date=date(2024, 6, 15),
             location="Test",
             winner_side=None,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         mock_repository.create.return_value = fight
@@ -173,7 +173,7 @@ class TestFightServiceRetrieve:
             id=fight_id,
             date=date(2024, 6, 15),
             location="Test",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -210,8 +210,8 @@ class TestFightServiceRetrieve:
         """
         # Arrange
         fights = [
-            Fight(id=uuid4(), date=date(2024, 1, 1), location="Fight 1", is_deleted=False, created_at=datetime.now(UTC)),
-            Fight(id=uuid4(), date=date(2024, 2, 1), location="Fight 2", is_deleted=False, created_at=datetime.now(UTC)),
+            Fight(id=uuid4(), date=date(2024, 1, 1), location="Fight 1", is_deactivated=False, created_at=datetime.now(UTC)),
+            Fight(id=uuid4(), date=date(2024, 2, 1), location="Fight 2", is_deactivated=False, created_at=datetime.now(UTC)),
         ]
 
         mock_repository = AsyncMock(spec=FightRepository)
@@ -232,7 +232,7 @@ class TestFightServiceRetrieve:
         """
         # Arrange
         fights = [
-            Fight(id=uuid4(), date=date(2024, 6, 15), location="Fight 1", is_deleted=False, created_at=datetime.now(UTC)),
+            Fight(id=uuid4(), date=date(2024, 6, 15), location="Fight 1", is_deactivated=False, created_at=datetime.now(UTC)),
         ]
 
         mock_repository = AsyncMock(spec=FightRepository)
@@ -264,7 +264,7 @@ class TestFightServiceUpdate:
             id=fight_id,
             date=date(2024, 6, 15),
             location="Updated Location",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -291,7 +291,7 @@ class TestFightServiceUpdate:
             id=fight_id,
             date=date(2024, 6, 15),
             location="Original",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -324,7 +324,7 @@ class TestFightServiceDelete:
     """Test suite for fight delete operations."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_fight_succeeds(self):
+    async def test_deactivate_fight_succeeds(self):
         """
         Test that soft deleting a fight succeeds.
         """
@@ -338,16 +338,16 @@ class TestFightServiceDelete:
         await service.delete(fight_id)
 
         # Assert
-        mock_repository.soft_delete.assert_awaited_once_with(fight_id)
+        mock_repository.deactivate.assert_awaited_once_with(fight_id)
 
     @pytest.mark.asyncio
-    async def test_soft_delete_non_existent_fight_raises_error(self):
+    async def test_deactivate_non_existent_fight_raises_error(self):
         """
         Test that soft deleting non-existent fight raises FightNotFoundError.
         """
         # Arrange
         mock_repository = AsyncMock(spec=FightRepository)
-        mock_repository.soft_delete.side_effect = ValueError("Fight not found")
+        mock_repository.deactivate.side_effect = ValueError("Fight not found")
 
         service = FightService(mock_repository)
 
@@ -382,8 +382,8 @@ class TestFightServiceCreateWithParticipants:
         fighter2_id = uuid4()
 
         # Mock fighter lookups
-        fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deleted=False, created_at=datetime.now(UTC))
-        fighter2 = Fighter(id=fighter2_id, name="Jane Doe", is_deleted=False, created_at=datetime.now(UTC))
+        fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deactivated=False, created_at=datetime.now(UTC))
+        fighter2 = Fighter(id=fighter2_id, name="Jane Doe", is_deactivated=False, created_at=datetime.now(UTC))
         mock_fighter_repo.get_by_id.side_effect = lambda fid: fighter1 if fid == fighter1_id else fighter2
 
         # Mock fight creation
@@ -391,7 +391,7 @@ class TestFightServiceCreateWithParticipants:
             id=fight_id,
             date=date(2025, 6, 15),
             location="Battle Arena Denver",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         mock_fight_repo.create.return_value = fight
@@ -631,7 +631,7 @@ class TestFightServiceCreateWithParticipants:
 
         # Mock fighter lookups - fighter1 exists, but nonexistent_fighter does not
         from app.models.fighter import Fighter
-        fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deleted=False, created_at=datetime.now(UTC))
+        fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deactivated=False, created_at=datetime.now(UTC))
         mock_fighter_repo.get_by_id.side_effect = lambda fid: fighter1 if fid == fighter1_id else None
 
         service = FightService(
@@ -683,8 +683,8 @@ class TestFightServiceCreateWithParticipants:
         fight_format_tag_type_id = uuid4()
 
         # Mock fighter lookups
-        fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deleted=False, created_at=datetime.now(UTC))
-        fighter2 = Fighter(id=fighter2_id, name="Jane Doe", is_deleted=False, created_at=datetime.now(UTC))
+        fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deactivated=False, created_at=datetime.now(UTC))
+        fighter2 = Fighter(id=fighter2_id, name="Jane Doe", is_deactivated=False, created_at=datetime.now(UTC))
         mock_fighter_repo.get_by_id.side_effect = lambda fid: fighter1 if fid == fighter1_id else fighter2
 
         # Mock fight_format TagType lookup
@@ -692,7 +692,7 @@ class TestFightServiceCreateWithParticipants:
             id=fight_format_tag_type_id,
             name="fight_format",
             is_privileged=True,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         mock_tag_type_repo.get_by_name.return_value = fight_format_tag_type
@@ -702,7 +702,7 @@ class TestFightServiceCreateWithParticipants:
             id=fight_id,
             date=date(2025, 6, 15),
             location="Battle Arena Denver",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         mock_fight_repo.create.return_value = fight
@@ -759,9 +759,9 @@ class TestFightServiceCreateWithParticipants:
 
         # Mock fighter lookups
         from app.models.fighter import Fighter
-        fighter1 = Fighter(id=fighter1_id, name="Fighter1", is_deleted=False, created_at=datetime.now(UTC))
-        fighter2 = Fighter(id=fighter2_id, name="Fighter2", is_deleted=False, created_at=datetime.now(UTC))
-        fighter3 = Fighter(id=fighter3_id, name="Fighter3", is_deleted=False, created_at=datetime.now(UTC))
+        fighter1 = Fighter(id=fighter1_id, name="Fighter1", is_deactivated=False, created_at=datetime.now(UTC))
+        fighter2 = Fighter(id=fighter2_id, name="Fighter2", is_deactivated=False, created_at=datetime.now(UTC))
+        fighter3 = Fighter(id=fighter3_id, name="Fighter3", is_deactivated=False, created_at=datetime.now(UTC))
 
         def get_fighter_mock(fid):
             if fid == fighter1_id:
@@ -818,7 +818,7 @@ class TestFightServiceCreateWithParticipants:
 
         # Mock fighter lookups
         from app.models.fighter import Fighter
-        fighters = {fid: Fighter(id=fid, name=f"Fighter{i}", is_deleted=False, created_at=datetime.now(UTC))
+        fighters = {fid: Fighter(id=fid, name=f"Fighter{i}", is_deactivated=False, created_at=datetime.now(UTC))
                     for i, fid in enumerate(fighter_ids)}
 
         mock_fighter_repo.get_by_id.side_effect = lambda fid: fighters.get(fid)

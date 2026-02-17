@@ -40,7 +40,7 @@ class TestTeamRepositoryIntegrationCreate:
         Verifies:
         - Team is inserted into database
         - UUID is generated automatically
-        - Default values (is_deleted=False, created_at) are set by model
+        - Default values (is_deactivated=False, created_at) are set by model
         - Country relationship is established via FK
         - Can be retrieved after creation with eager-loaded country data
 
@@ -70,7 +70,7 @@ class TestTeamRepositoryIntegrationCreate:
         assert isinstance(created_team.id, type(uuid4()))
         assert created_team.name == "Team USA Warriors"
         assert created_team.country_id == country.id
-        assert created_team.is_deleted is False
+        assert created_team.is_deactivated is False
         assert created_team.created_at is not None
 
         # Assert - verify country relationship is eager-loaded
@@ -307,22 +307,22 @@ class TestTeamRepositoryIntegrationRetrieval:
 
 
 class TestTeamRepositoryIntegrationSoftDelete:
-    """Integration tests for soft delete functionality."""
+    """Integration tests for deactivate functionality."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_sets_flag_preserves_country_relationship(self, db_session):
+    async def test_deactivate_sets_flag_preserves_country_relationship(self, db_session):
         """
-        Test that soft delete updates is_deleted flag but preserves country FK.
+        Test that deactivate updates is_deactivated flag but preserves country FK.
 
         Verifies:
-        - is_deleted flag is updated to True
-        - Team still exists in database (soft delete, not hard delete)
+        - is_deactivated flag is updated to True
+        - Team still exists in database (deactivate, not hard delete)
         - Country relationship preserved for historical tracking
-        - Default queries exclude soft-deleted team
+        - Default queries exclude deactivated team
 
         Arrange: Create country and team
-        Act: Soft delete team
-        Assert: is_deleted=True, excluded from default queries, country FK intact
+        Act: Deactivate team
+        Assert: is_deactivated=True, excluded from default queries, country FK intact
         """
         # Arrange
         country_repository = CountryRepository(db_session)
@@ -336,32 +336,32 @@ class TestTeamRepositoryIntegrationSoftDelete:
         team_id = team.id
 
         # Act
-        await team_repository.soft_delete(team_id)
+        await team_repository.deactivate(team_id)
 
-        # Assert - default query excludes soft-deleted
-        retrieved = await team_repository.get_by_id(team_id, include_deleted=False)
+        # Assert - default query excludes deactivated
+        retrieved = await team_repository.get_by_id(team_id, include_deactivated=False)
         assert retrieved is None
 
-        # Assert - can still retrieve with include_deleted=True
-        retrieved_with_deleted = await team_repository.get_by_id(team_id, include_deleted=True)
+        # Assert - can still retrieve with include_deactivated=True
+        retrieved_with_deleted = await team_repository.get_by_id(team_id, include_deactivated=True)
         assert retrieved_with_deleted is not None
-        assert retrieved_with_deleted.is_deleted is True
+        assert retrieved_with_deleted.is_deactivated is True
 
         # Assert - country relationship preserved
         assert retrieved_with_deleted.country_id == country.id
         assert retrieved_with_deleted.country.code == "ESP"
 
     @pytest.mark.asyncio
-    async def test_list_all_excludes_soft_deleted_teams_by_default(self, db_session):
+    async def test_list_all_excludes_deactivated_teams_by_default(self, db_session):
         """
-        Test that list_all filters out soft-deleted teams by default.
+        Test that list_all filters out deactivated teams by default.
 
         Verifies:
         - Active teams returned
         - Soft-deleted teams excluded
         - Can include deleted with flag
 
-        Arrange: Create 3 teams, soft delete 1
+        Arrange: Create 3 teams, deactivate 1
         Act: Call list_all() with and without include_deleted
         Assert: Default returns 2, with flag returns 3
         """
@@ -374,11 +374,11 @@ class TestTeamRepositoryIntegrationSoftDelete:
         team2 = await team_repository.create({"name": "Team Venice", "country_id": country.id})
         team3 = await team_repository.create({"name": "Team Milan", "country_id": country.id})
 
-        # Soft delete one team
-        await team_repository.soft_delete(team2.id)
+        # Deactivate one team
+        await team_repository.deactivate(team2.id)
 
         # Act - default query
-        active_teams = await team_repository.list_all(include_deleted=False)
+        active_teams = await team_repository.list_all(include_deactivated=False)
 
         # Assert
         assert len(active_teams) == 2
@@ -386,7 +386,7 @@ class TestTeamRepositoryIntegrationSoftDelete:
         assert team_names == {"Team Rome", "Team Milan"}
 
         # Act - query including deleted
-        all_teams = await team_repository.list_all(include_deleted=True)
+        all_teams = await team_repository.list_all(include_deactivated=True)
 
         # Assert
         assert len(all_teams) == 3
@@ -394,15 +394,15 @@ class TestTeamRepositoryIntegrationSoftDelete:
         assert all_names == {"Team Rome", "Team Venice", "Team Milan"}
 
     @pytest.mark.asyncio
-    async def test_list_by_country_excludes_soft_deleted_teams_by_default(self, db_session):
+    async def test_list_by_country_excludes_deactivated_teams_by_default(self, db_session):
         """
-        Test that list_by_country filters out soft-deleted teams by default.
+        Test that list_by_country filters out deactivated teams by default.
 
         Verifies:
-        - Filtering by country respects soft delete flag
+        - Filtering by country respects deactivate flag
         - Can include deleted teams with flag
 
-        Arrange: Create country with 3 teams, soft delete 1
+        Arrange: Create country with 3 teams, deactivate 1
         Act: Call list_by_country() with and without include_deleted
         Assert: Default returns 2, with flag returns 3
         """
@@ -415,11 +415,11 @@ class TestTeamRepositoryIntegrationSoftDelete:
         team2 = await team_repository.create({"name": "Team St Petersburg", "country_id": country.id})
         team3 = await team_repository.create({"name": "Team Kazan", "country_id": country.id})
 
-        # Soft delete one team
-        await team_repository.soft_delete(team2.id)
+        # Deactivate one team
+        await team_repository.deactivate(team2.id)
 
         # Act - default query
-        active_teams = await team_repository.list_by_country(country.id, include_deleted=False)
+        active_teams = await team_repository.list_by_country(country.id, include_deactivated=False)
 
         # Assert
         assert len(active_teams) == 2
@@ -427,7 +427,7 @@ class TestTeamRepositoryIntegrationSoftDelete:
         assert team_names == {"Team Moscow", "Team Kazan"}
 
         # Act - query including deleted
-        all_teams = await team_repository.list_by_country(country.id, include_deleted=True)
+        all_teams = await team_repository.list_by_country(country.id, include_deactivated=True)
 
         # Assert
         assert len(all_teams) == 3
@@ -549,7 +549,7 @@ class TestTeamRepositoryIntegrationPermanentDelete:
 
         Verifies:
         - Team removed from database (hard delete)
-        - Not retrievable even with include_deleted=True
+        - Not retrievable even with include_deactivated=True
         - Country record unaffected
 
         Arrange: Create country and team
@@ -568,10 +568,10 @@ class TestTeamRepositoryIntegrationPermanentDelete:
         team_id = team.id
 
         # Act
-        await team_repository.permanent_delete(team_id)
+        await team_repository.delete(team_id)
 
         # Assert - cannot retrieve even with include_deleted
-        retrieved = await team_repository.get_by_id(team_id, include_deleted=True)
+        retrieved = await team_repository.get_by_id(team_id, include_deactivated=True)
         assert retrieved is None
 
         # Assert - country still exists
@@ -597,7 +597,7 @@ class TestTeamRepositoryIntegrationPermanentDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Team not found"):
-            await team_repository.permanent_delete(nonexistent_id)
+            await team_repository.delete(nonexistent_id)
 
 
 # ============================================================================
@@ -617,10 +617,10 @@ These integration tests demonstrate:
    - Prevents N+1 query problem when iterating through teams
    - All retrieval methods (get_by_id, list_all, list_by_country) eager-load
 
-3. **Soft Delete with Relationships**: Tests verify soft delete preserves FK
+3. **Soft Delete with Relationships**: Tests verify deactivate preserves FK
    - Soft-deleted teams retain country relationship for historical tracking
-   - Can retrieve soft-deleted team with country data via include_deleted=True
-   - List operations respect soft delete flag at database level
+   - Can retrieve deactivated team with country data via include_deactivated=True
+   - List operations respect deactivate flag at database level
 
 4. **Real Database Interaction**: Tests run against actual PostgreSQL
    - Testcontainers spins up real PostgreSQL 16 container
@@ -651,7 +651,7 @@ Coverage:
 - Team creation with valid/invalid FK
 - Retrieval with eager-loaded relationships
 - Filtering by country_id
-- Soft delete preserving relationships
+- Deactivate preserving relationships
 - Update operations with FK validation
 - Permanent delete
 - Edge cases (nonexistent IDs, constraint violations)

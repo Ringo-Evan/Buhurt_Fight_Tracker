@@ -92,7 +92,7 @@ Feature: Fight Management
     And fighter "John Smith" data includes team "Team USA"
     And fighter "Jane Doe" data includes team "Team USA"
 
-  Scenario: List all fights excludes soft-deleted fights
+  Scenario: List all fights excludes deactivated fights
     Given an active country exists with code "USA" and name "United States"
     And a team "Team USA" exists for country "USA"
     And a fighter "John Smith" exists for team "Team USA"
@@ -105,7 +105,7 @@ Feature: Fight Management
       | fighter    | side | role    |
       | John Smith | 1    | fighter |
       | Jane Doe   | 2    | fighter |
-    And the fight at "Arena B" is soft deleted
+    And the fight at "Arena B" is deactivated
     When I list all fights
     Then I receive exactly 1 fight
     And the fight at "Arena A" is in the list
@@ -182,7 +182,7 @@ Feature: Fight Management
       | fighter    | side | role    |
       | John Smith | 1    | fighter |
       | Jane Doe   | 2    | fighter |
-    When I soft delete the fight
+    When I deactivate the fight
     Then the fight is marked as deleted
     And the fight does not appear in default listings
 
@@ -410,7 +410,7 @@ Feature: Fight Management
       | fighter    | side | role    |
       | John Smith | 1    | fighter |
       | Jane Doe   | 2    | fighter |
-    When I soft delete the fight
+    When I deactivate the fight
     Then the fight is marked as deleted
     And the participations still exist in database
     And the participations are still linked to the fight

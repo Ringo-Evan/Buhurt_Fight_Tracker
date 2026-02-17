@@ -74,7 +74,7 @@ async def create_team(
     description="Retrieve a list of all active teams with their countries.",
 )
 async def list_teams(
-    include_deleted: bool = Query(False, description="Include soft-deleted teams (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated teams (admin only)"),
     service: TeamService = Depends(get_team_service),
 ) -> list[TeamWithCountryResponse]:
     """List all teams, optionally including deleted ones."""
@@ -90,7 +90,7 @@ async def list_teams(
 )
 async def list_teams_by_country(
     country_id: UUID,
-    include_deleted: bool = Query(False, description="Include soft-deleted teams (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated teams (admin only)"),
     service: TeamService = Depends(get_team_service),
 ) -> list[TeamWithCountryResponse]:
     """List all teams for a specific country."""
@@ -109,12 +109,12 @@ async def list_teams_by_country(
 )
 async def get_team(
     team_id: UUID,
-    include_deleted: bool = Query(False, description="Include soft-deleted teams (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated teams (admin only)"),
     service: TeamService = Depends(get_team_service),
 ) -> TeamWithCountryResponse:
     """Get a team by its UUID."""
     try:
-        team = await service.get_by_id(team_id, include_deleted=include_deleted)
+        team = await service.get_by_id(team_id, include_deactivated=include_deleted)
         return TeamWithCountryResponse.model_validate(team)
     except TeamNotFoundError:
         raise HTTPException(
@@ -171,8 +171,8 @@ async def update_team(
 @router.delete(
     "/{team_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Soft delete a team",
-    description="Soft delete a team (sets is_deleted flag).",
+    summary="Deactivate a team",
+    description="Deactivate a team (sets is_deactivated flag).",
     responses={
         404: {"description": "Team not found"},
     },
@@ -181,9 +181,9 @@ async def delete_team(
     team_id: UUID,
     service: TeamService = Depends(get_team_service),
 ) -> None:
-    """Soft delete a team."""
+    """Deactivate a team."""
     try:
-        await service.delete(team_id)
+        await service.deactivate(team_id)
     except TeamNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

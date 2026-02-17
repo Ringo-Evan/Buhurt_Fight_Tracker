@@ -99,7 +99,7 @@ class TestFighterRepositoryGetById:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -107,7 +107,7 @@ class TestFighterRepositoryGetById:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         team.country = country
@@ -116,7 +116,7 @@ class TestFighterRepositoryGetById:
             id=fighter_id,
             name="John Smith",
             team_id=team_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         fighter.team = team
@@ -162,13 +162,13 @@ class TestFighterRepositoryGetById:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_by_id_filters_soft_deleted_fighters(self):
+    async def test_get_by_id_filters_deactivated_fighters(self):
         """
-        Test that get_by_id excludes soft-deleted fighters by default.
+        Test that get_by_id excludes deactivated fighters by default.
 
-        Arrange: Mock session with soft-deleted fighter
-        Act: Call repository.get_by_id(include_deleted=False)
-        Assert: Returns None (soft-deleted fighter excluded)
+        Arrange: Mock session with deactivated fighter
+        Act: Call repository.get_by_id(include_deactivated=False)
+        Assert: Returns None (deactivated fighter excluded)
         """
         # Arrange
         mock_session = AsyncMock()
@@ -179,20 +179,20 @@ class TestFighterRepositoryGetById:
         repository = FighterRepository(mock_session)
 
         # Act
-        result = await repository.get_by_id(uuid4(), include_deleted=False)
+        result = await repository.get_by_id(uuid4(), include_deactivated=False)
 
         # Assert
         assert result is None
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_get_by_id_as_admin_returns_soft_deleted_fighter(self):
+    async def test_get_by_id_with_include_deactivated_returns_deactivated_fighter(self):
         """
-        Test that get_by_id returns soft-deleted fighter when include_deleted=True.
+        Test that get_by_id returns deactivated fighter when include_deactivated=True.
 
-        Arrange: Mock session returning soft-deleted fighter
-        Act: Call repository.get_by_id(include_deleted=True)
-        Assert: Returns soft-deleted fighter
+        Arrange: Mock session returning deactivated fighter
+        Act: Call repository.get_by_id(include_deactivated=True)
+        Assert: Returns deactivated fighter
         """
         # Arrange
         mock_session = AsyncMock()
@@ -200,7 +200,7 @@ class TestFighterRepositoryGetById:
             id=uuid4(),
             name="John Smith",
             team_id=uuid4(),
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
@@ -211,22 +211,22 @@ class TestFighterRepositoryGetById:
         repository = FighterRepository(mock_session)
 
         # Act
-        result = await repository.get_by_id(fighter.id, include_deleted=True)
+        result = await repository.get_by_id(fighter.id, include_deactivated=True)
 
         # Assert
         assert result is not None
-        assert result.is_deleted is True
+        assert result.is_deactivated is True
 
 
 class TestFighterRepositoryList:
     """Test suite for fighter list operations."""
 
     @pytest.mark.asyncio
-    async def test_list_all_excludes_soft_deleted_fighters(self):
+    async def test_list_all_excludes_deactivated_fighters(self):
         """
-        Test that list_all excludes soft-deleted fighters by default.
+        Test that list_all excludes deactivated fighters by default.
 
-        Arrange: Mock session with active and soft-deleted fighters
+        Arrange: Mock session with active and deactivated fighters
         Act: Call repository.list_all()
         Assert: Returns only active fighters
         """
@@ -236,7 +236,7 @@ class TestFighterRepositoryList:
             id=uuid4(),
             name="John Smith",
             team_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -251,7 +251,7 @@ class TestFighterRepositoryList:
 
         # Assert
         assert len(result) == 1
-        assert all(not fighter.is_deleted for fighter in result)
+        assert all(not fighter.is_deactivated for fighter in result)
 
     @pytest.mark.asyncio
     async def test_list_by_team_filters_correctly(self):
@@ -269,14 +269,14 @@ class TestFighterRepositoryList:
             id=uuid4(),
             name="John Smith",
             team_id=team_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         fighter2 = Fighter(
             id=uuid4(),
             name="Jane Doe",
             team_id=team_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -310,14 +310,14 @@ class TestFighterRepositoryList:
             id=uuid4(),
             name="John Smith",
             team_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         fighter2 = Fighter(
             id=uuid4(),
             name="Jane Doe",
             team_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -335,12 +335,12 @@ class TestFighterRepositoryList:
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_list_by_team_excludes_soft_deleted(self):
+    async def test_list_by_team_excludes_deactivated(self):
         """
-        Test that list_by_team excludes soft-deleted fighters.
+        Test that list_by_team excludes deactivated fighters.
 
-        Arrange: Mock session with active and soft-deleted fighters
-        Act: Call repository.list_by_team(include_deleted=False)
+        Arrange: Mock session with active and deactivated fighters
+        Act: Call repository.list_by_team(include_deactivated=False)
         Assert: Returns only active fighters
         """
         # Arrange
@@ -350,7 +350,7 @@ class TestFighterRepositoryList:
             id=uuid4(),
             name="John Smith",
             team_id=team_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -361,20 +361,20 @@ class TestFighterRepositoryList:
         repository = FighterRepository(mock_session)
 
         # Act
-        result = await repository.list_by_team(team_id, include_deleted=False)
+        result = await repository.list_by_team(team_id, include_deactivated=False)
 
         # Assert
         assert len(result) == 1
-        assert all(not fighter.is_deleted for fighter in result)
+        assert all(not fighter.is_deactivated for fighter in result)
 
 
 class TestFighterRepositorySoftDelete:
     """Test suite for soft deletion operations."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_sets_is_deleted_flag_to_true(self):
+    async def test_deactivate_sets_is_deactivated_flag_to_true(self):
         """
-        Test that soft delete updates is_deleted flag to True.
+        Test that deactivate updates is_deactivated flag to True.
 
         Arrange: Mock session with active fighter
         Act: Call repository.soft_delete()
@@ -386,7 +386,7 @@ class TestFighterRepositorySoftDelete:
             id=uuid4(),
             name="John Smith",
             team_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -397,14 +397,14 @@ class TestFighterRepositorySoftDelete:
         repository = FighterRepository(mock_session)
 
         # Act
-        await repository.soft_delete(fighter.id)
+        await repository.deactivate(fighter.id)
 
         # Assert
-        assert fighter.is_deleted is True
+        assert fighter.is_deactivated is True
         mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_soft_delete_raises_error_for_non_existent_fighter(self):
+    async def test_deactivate_raises_error_for_non_existent_fighter(self):
         """
         Test that soft deleting non-existent fighter raises ValueError.
 
@@ -422,7 +422,7 @@ class TestFighterRepositorySoftDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Fighter not found"):
-            await repository.soft_delete(uuid4())
+            await repository.deactivate(uuid4())
 
 
 class TestFighterRepositoryUpdate:
@@ -444,7 +444,7 @@ class TestFighterRepositoryUpdate:
             id=fighter_id,
             name="John Smith",
             team_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -481,7 +481,7 @@ class TestFighterRepositoryUpdate:
             id=fighter_id,
             name="John Smith",
             team_id=old_team_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -535,7 +535,7 @@ class TestFighterRepositoryUpdate:
             id=fighter_id,
             name="John Smith",
             team_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 

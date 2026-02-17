@@ -1,7 +1,7 @@
 """
 Repository for Fighter entity data access.
 
-Implements data access layer with soft delete support and 3-level eager loading.
+Implements data access layer with deactivate support and 3-level eager loading.
 All queries filter out soft-deleted records by default.
 Eager loads Fighter → Team → Country to prevent N+1 queries.
 """
@@ -19,7 +19,7 @@ class FighterRepository:
     """
     Data access layer for Fighter entity.
 
-    Handles all database operations for fighters with soft delete support
+    Handles all database operations for fighters with deactivate support
     and eager loading of team and country relationships.
     """
 
@@ -55,13 +55,13 @@ class FighterRepository:
             await self.session.rollback()
             raise e
 
-    async def get_by_id(self, fighter_id: UUID, include_deleted: bool = False) -> Fighter | None:
+    async def get_by_id(self, fighter_id: UUID, include_deactivated: bool = False) -> Fighter | None:
         """
         Retrieve a fighter by ID with eager-loaded team and country.
 
         Args:
             fighter_id: UUID of the fighter
-            include_deleted: If True, include soft-deleted fighters
+            include_deleted: If True, include deactivated fighters
 
         Returns:
             Fighter instance or None if not found
@@ -72,18 +72,18 @@ class FighterRepository:
             .where(Fighter.id == fighter_id)
         )
 
-        if not include_deleted:
-            query = query.where(Fighter.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Fighter.is_deactivated == False)
 
         result = await self.session.execute(query)
         return result.unique().scalar_one_or_none()
 
-    async def list_all(self, include_deleted: bool = False) -> list[Fighter]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Fighter]:
         """
         List all fighters with eager-loaded relationships.
 
         Args:
-            include_deleted: If True, include soft-deleted fighters
+            include_deleted: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances
@@ -93,19 +93,19 @@ class FighterRepository:
             .options(joinedload(Fighter.team).joinedload(Team.country))
         )
 
-        if not include_deleted:
-            query = query.where(Fighter.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Fighter.is_deactivated == False)
 
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
 
-    async def list_by_team(self, team_id: UUID, include_deleted: bool = False) -> list[Fighter]:
+    async def list_by_team(self, team_id: UUID, include_deactivated: bool = False) -> list[Fighter]:
         """
         List fighters filtered by team with eager-loaded relationships.
 
         Args:
             team_id: UUID of the team
-            include_deleted: If True, include soft-deleted fighters
+            include_deleted: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances for the specified team
@@ -116,19 +116,19 @@ class FighterRepository:
             .where(Fighter.team_id == team_id)
         )
 
-        if not include_deleted:
-            query = query.where(Fighter.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Fighter.is_deactivated == False)
 
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
 
-    async def list_by_country(self, country_id: UUID, include_deleted: bool = False) -> list[Fighter]:
+    async def list_by_country(self, country_id: UUID, include_deactivated: bool = False) -> list[Fighter]:
         """
         List fighters filtered by country (via team relationship).
 
         Args:
             country_id: UUID of the country
-            include_deleted: If True, include soft-deleted fighters
+            include_deleted: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances from teams in the specified country
@@ -140,15 +140,15 @@ class FighterRepository:
             .where(Team.country_id == country_id)
         )
 
-        if not include_deleted:
-            query = query.where(Fighter.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Fighter.is_deactivated == False)
 
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
 
-    async def soft_delete(self, fighter_id: UUID) -> None:
+    async def deactivate(self, fighter_id: UUID) -> None:
         """
-        Soft delete a fighter by setting is_deleted flag.
+        Deactivate a fighter by setting is_deactivated flag.
 
         Args:
             fighter_id: UUID of the fighter to delete
@@ -156,11 +156,11 @@ class FighterRepository:
         Raises:
             ValueError: If fighter not found
         """
-        fighter = await self.get_by_id(fighter_id, include_deleted=False)
+        fighter = await self.get_by_id(fighter_id, include_deactivated=False)
         if fighter is None:
             raise ValueError("Fighter not found")
 
-        fighter.is_deleted = True
+        fighter.is_deactivated = True
         await self.session.commit()
 
     async def update(self, fighter_id: UUID, update_data: Dict[str, Any]) -> Fighter:
@@ -178,7 +178,7 @@ class FighterRepository:
             ValueError: If fighter not found
             IntegrityError: If update violates foreign key constraint
         """
-        fighter = await self.get_by_id(fighter_id, include_deleted=False)
+        fighter = await self.get_by_id(fighter_id, include_deactivated=False)
         if fighter is None:
             raise ValueError("Fighter not found")
 

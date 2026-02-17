@@ -4,7 +4,7 @@ Integration tests for FighterRepository with real PostgreSQL via Testcontainers.
 Tests database-level behavior including:
 - Foreign key constraints (Fighter → Team → Country hierarchy)
 - Eager loading verification (3-level relationships)
-- Soft delete filtering with relationships
+- Deactivate filtering with relationships
 - Team and country filtering
 
 Requires Docker to be running for Testcontainers.
@@ -147,14 +147,14 @@ async def test_foreign_key_constraint_prevents_orphan_fighters(db_session):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_soft_delete_fighter_preserves_team_relationship(db_session):
+async def test_deactivate_fighter_preserves_team_relationship(db_session):
     """
     Test that soft deleting fighter doesn't break the team FK.
 
     Verifies:
-    - Soft delete sets is_deleted flag
-    - Team relationship intact after soft delete
-    - Can retrieve with include_deleted=True
+    - Deactivate sets is_deactivated flag
+    - Team relationship intact after deactivate
+    - Can retrieve with include_deactivated=True
     """
     # Setup
     country_repo = CountryRepository(db_session)
@@ -166,27 +166,27 @@ async def test_soft_delete_fighter_preserves_team_relationship(db_session):
     fighter_repo = FighterRepository(db_session)
     fighter = await fighter_repo.create({"name": "John Smith", "team_id": team.id})
 
-    # Act: Soft delete
-    await fighter_repo.soft_delete(fighter.id)
+    # Act: Deactivate
+    await fighter_repo.deactivate(fighter.id)
 
     # Assert: Can still retrieve with include_deleted
-    deleted_fighter = await fighter_repo.get_by_id(fighter.id, include_deleted=True)
+    deleted_fighter = await fighter_repo.get_by_id(fighter.id, include_deactivated=True)
     assert deleted_fighter is not None
-    assert deleted_fighter.is_deleted is True
+    assert deleted_fighter.is_deactivated is True
     assert deleted_fighter.team.name == "Team USA"  # Relationship intact
     assert deleted_fighter.team.country.code == "USA"
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_list_fighters_excludes_soft_deleted_by_default(db_session):
+async def test_list_fighters_excludes_deactivated_by_default(db_session):
     """
-    Test that list operations exclude soft-deleted fighters.
+    Test that list operations exclude deactivated fighters.
 
     Verifies:
-    - list_all excludes soft-deleted fighters
-    - list_by_team excludes soft-deleted fighters
-    - list_by_country excludes soft-deleted fighters
+    - list_all excludes deactivated fighters
+    - list_by_team excludes deactivated fighters
+    - list_by_country excludes deactivated fighters
     """
     # Setup
     country_repo = CountryRepository(db_session)
@@ -198,7 +198,7 @@ async def test_list_fighters_excludes_soft_deleted_by_default(db_session):
     fighter_repo = FighterRepository(db_session)
     active_fighter = await fighter_repo.create({"name": "Active Fighter", "team_id": team.id})
     deleted_fighter = await fighter_repo.create({"name": "Deleted Fighter", "team_id": team.id})
-    await fighter_repo.soft_delete(deleted_fighter.id)
+    await fighter_repo.deactivate(deleted_fighter.id)
 
     # Test list_all
     all_fighters = await fighter_repo.list_all()

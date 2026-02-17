@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column('name', sa.String(length=100), nullable=False),
         sa.Column('code', sa.String(length=3), nullable=False),
-        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('false')),
+        sa.Column('is_deactivated', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
     )
 

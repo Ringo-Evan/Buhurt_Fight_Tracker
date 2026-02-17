@@ -73,7 +73,7 @@ async def create_fighter(
     description="Retrieve a list of all active fighters with team and country details.",
 )
 async def list_fighters(
-    include_deleted: bool = Query(False, description="Include soft-deleted fighters (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated fighters (admin only)"),
     service: FighterService = Depends(get_fighter_service),
 ) -> list[FighterFullResponse]:
     """List all fighters, optionally including deleted ones."""
@@ -89,7 +89,7 @@ async def list_fighters(
 )
 async def list_fighters_by_team(
     team_id: UUID,
-    include_deleted: bool = Query(False, description="Include soft-deleted fighters (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated fighters (admin only)"),
     service: FighterService = Depends(get_fighter_service),
 ) -> list[FighterFullResponse]:
     """List all fighters for a specific team."""
@@ -105,7 +105,7 @@ async def list_fighters_by_team(
 )
 async def list_fighters_by_country(
     country_id: UUID,
-    include_deleted: bool = Query(False, description="Include soft-deleted fighters (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated fighters (admin only)"),
     service: FighterService = Depends(get_fighter_service),
 ) -> list[FighterFullResponse]:
     """List all fighters for teams in a specific country."""
@@ -124,7 +124,7 @@ async def list_fighters_by_country(
 )
 async def get_fighter(
     fighter_id: UUID,
-    include_deleted: bool = Query(False, description="Include soft-deleted fighters (admin only)"),
+    include_deleted: bool = Query(False, description="Include deactivated fighters (admin only)"),
     service: FighterService = Depends(get_fighter_service),
 ) -> FighterFullResponse:
     """Get a fighter by its UUID."""
@@ -187,8 +187,8 @@ async def update_fighter(
 @router.delete(
     "/{fighter_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Soft delete a fighter",
-    description="Soft delete a fighter (sets is_deleted flag).",
+    summary="Deactivate a fighter",
+    description="Deactivate a fighter (sets is_deactivated flag).",
     responses={
         404: {"description": "Fighter not found"},
     },
@@ -197,7 +197,7 @@ async def delete_fighter(
     fighter_id: UUID,
     service: FighterService = Depends(get_fighter_service),
 ) -> None:
-    """Soft delete a fighter."""
+    """Deactivate a fighter."""
     try:
         await service.delete(fighter_id)
     except FighterNotFoundError:

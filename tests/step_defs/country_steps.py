@@ -132,13 +132,13 @@ async def create_countries_from_table(table, db_session, context):
     return countries
 
 
-@given(parsers.parse('the country "{country_name}" has been soft deleted'))
-async def soft_delete_country(country_name, db_session, context):
+@given(parsers.parse('the country "{country_name}" has been deactivated'))
+async def deactivate_country(country_name, db_session, context):
     """
-    Soft delete a country by name.
+    Deactivate a country by name.
 
     Args:
-        country_name: Name of country to soft delete
+        country_name: Name of country to deactivate
         db_session: Database session
         context: Shared context containing countries
 
@@ -324,7 +324,7 @@ async def list_all_countries(db_session, context):
     service = CountryService(repository)
 
     try:
-        result = await service.list_all(include_deleted=False)
+        result = await service.list_all(include_deactivated=False)
         context['result'] = result
         context['error'] = None
         return result
@@ -350,7 +350,7 @@ async def list_all_countries_as_admin(db_session, context):
     service = CountryService(repository)
 
     try:
-        result = await service.list_all(include_deleted=True)
+        result = await service.list_all(include_deactivated=True)
         context['result'] = result
         context['error'] = None
         return result
@@ -379,7 +379,7 @@ async def retrieve_by_id_as_regular_user(country_name, db_session, context):
     service = CountryService(repository)
 
     try:
-        result = await service.get_by_id(country.id, include_deleted=False)
+        result = await service.get_by_id(country.id, include_deactivated=False)
         context['result'] = result
         context['error'] = None
         return result
@@ -408,7 +408,7 @@ async def retrieve_by_id_as_admin(country_name, db_session, context):
     service = CountryService(repository)
 
     try:
-        result = await service.get_by_id(country.id, include_deleted=True)
+        result = await service.get_by_id(country.id, include_deactivated=True)
         context['result'] = result
         context['error'] = None
         return result
@@ -436,7 +436,7 @@ async def retrieve_by_code_as_regular_user(code, db_session, context):
     service = CountryService(repository)
 
     try:
-        result = await service.get_by_code(code, include_deleted=False)
+        result = await service.get_by_code(code, include_deactivated=False)
         context['result'] = result
         context['error'] = None
         return result
@@ -450,7 +450,7 @@ async def retrieve_by_code_as_regular_user(code, db_session, context):
       target_fixture='delete_result')
 async def delete_country(country_name, db_session, context):
     """
-    Soft delete a country.
+    Deactivate a country.
 
     Args:
         country_name: Name of country to delete
@@ -609,14 +609,14 @@ def country_has_code(expected_code, context):
 def country_is_not_deleted(context):
     """Assert country is_deleted flag is False."""
     country = context['result']
-    assert country.is_deleted is False
+    assert country.is_deactivated is False
 
 
 @then('the country is marked as deleted')
 def country_is_marked_deleted(context):
     """Assert country is_deleted flag is True."""
     country = context['result']
-    assert country.is_deleted is True
+    assert country.is_deactivated is True
 
 
 @then('the country has a creation timestamp')
@@ -728,7 +728,7 @@ async def country_marked_deleted_in_db(country_name, db_session, context):
     country = context['countries'][country_name]
     repository = CountryRepository(db_session)
 
-    # Retrieve with include_deleted=True
+    # Retrieve with include_deactivated=True
     retrieved = await repository.get_by_id(country.id, include_deactivated=True)
     assert retrieved is not None
     assert retrieved.is_deactivated is True
@@ -736,11 +736,11 @@ async def country_marked_deleted_in_db(country_name, db_session, context):
 
 @then(parsers.parse('the country "{country_name}" is not removed from the database'))
 async def country_not_removed_from_db(country_name, db_session, context):
-    """Assert country still exists in database (soft delete, not hard delete)."""
+    """Assert country still exists in database (deactivate, not hard delete)."""
     country = context['countries'][country_name]
     repository = CountryRepository(db_session)
 
-    # Should exist with include_deleted=True
+    # Should exist with include_deactivated=True
     retrieved = await repository.get_by_id(country.id, include_deactivated=True)
     assert retrieved is not None
 
@@ -751,7 +751,7 @@ async def country_permanently_removed(country_name, db_session, context):
     country = context['countries'][country_name]
     repository = CountryRepository(db_session)
 
-    # Should not exist even with include_deleted=True
+    # Should not exist even with include_deactivated=True
     retrieved = await repository.get_by_id(country.id, include_deactivated=True)
     assert retrieved is None
 

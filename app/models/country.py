@@ -74,6 +74,7 @@ class Country(Base):
         "Team",
         back_populates="country",
         lazy="select",  # Don't eager load teams when retrieving country
+        #TODO: Consider cascade options if we want to automatically handle teams when country is deactivated/deleted
         cascade="all, delete-orphan"  # If country deleted, cascade to teams
     )
 
@@ -94,10 +95,10 @@ class Country(Base):
         # Database defaults (in mapped_column) will override these on insert
         if 'id' not in kwargs:
             self.id = uuid4()
-        if 'is_deleted' not in kwargs:
+        if 'is_deactivated' not in kwargs:
             self.is_deactivated = False
         if 'created_at' not in kwargs:
             self.created_at = datetime.now(UTC)
 
     def __repr__(self) -> str:
-        return f"<Country(id={self.id}, name='{self.name}', code='{self.code}', is_deleted={self.is_deactivated})>"
+        return f"<Country(id={self.id}, name='{self.name}', code='{self.code}', is_deactivated={self.is_deactivated})>"

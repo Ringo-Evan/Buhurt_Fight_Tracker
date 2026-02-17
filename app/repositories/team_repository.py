@@ -1,7 +1,7 @@
 """
 Repository for Team entity data access.
 
-Implements data access layer with soft delete support and country relationship.
+Implements data access layer with deactivate support and country relationship.
 All queries filter out soft-deleted records by default and eager load country data.
 """
 
@@ -17,7 +17,7 @@ class TeamRepository:
     """
     Data access layer for Team entity.
 
-    Handles all database operations for teams with soft delete support
+    Handles all database operations for teams with deactivate support
     and country relationship management.
     """
 
@@ -53,13 +53,13 @@ class TeamRepository:
             await self.session.rollback()
             raise e
 
-    async def get_by_id(self, team_id: UUID, include_deleted: bool = False) -> Team | None:
+    async def get_by_id(self, team_id: UUID, include_deactivated: bool = False) -> Team | None:
         """
         Retrieve a team by ID with eager-loaded country data.
 
         Args:
             team_id: UUID of the team
-            include_deleted: If True, include soft-deleted teams
+            include_deleted: If True, include deactivated teams
 
         Returns:
             Team instance with country relationship loaded, or None if not found
@@ -70,18 +70,18 @@ class TeamRepository:
         """
         query = select(Team).options(joinedload(Team.country)).where(Team.id == team_id)
 
-        if not include_deleted:
-            query = query.where(Team.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Team.is_deactivated == False)
 
         result = await self.session.execute(query)
         return result.unique().scalar_one_or_none()
 
-    async def list_all(self, include_deleted: bool = False) -> list[Team]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Team]:
         """
         List all teams with eager-loaded country data.
 
         Args:
-            include_deleted: If True, include soft-deleted teams
+            include_deleted: If True, include deactivated teams
 
         Returns:
             List of Team instances, each with country relationship loaded
@@ -92,8 +92,8 @@ class TeamRepository:
         """
         query = select(Team).options(joinedload(Team.country))
 
-        if not include_deleted:
-            query = query.where(Team.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Team.is_deactivated == False)
 
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
@@ -101,14 +101,14 @@ class TeamRepository:
     async def list_by_country(
         self,
         country_id: UUID,
-        include_deleted: bool = False
+        include_deactivated: bool = False
     ) -> list[Team]:
         """
         List all teams for a specific country.
 
         Args:
             country_id: UUID of the country to filter by
-            include_deleted: If True, include soft-deleted teams
+            include_deleted: If True, include deactivated teams
 
         Returns:
             List of Team instances for the specified country
@@ -121,8 +121,8 @@ class TeamRepository:
             Team.country_id == country_id
         )
 
-        if not include_deleted:
-            query = query.where(Team.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Team.is_deactivated == False)
 
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
@@ -142,7 +142,7 @@ class TeamRepository:
             ValueError: If team not found
             IntegrityError: If country_id violates FK constraint
         """
-        team = await self.get_by_id(team_id, include_deleted=True)
+        team = await self.get_by_id(team_id, include_deactivated=True)
         if team is None:
             raise ValueError("Team not found")
 
@@ -157,29 +157,29 @@ class TeamRepository:
             await self.session.rollback()
             raise e
 
-    async def soft_delete(self, team_id: UUID) -> None:
+    async def deactivate(self, team_id: UUID) -> None:
         """
-        Soft delete a team by setting is_deleted flag.
+        Deactivate a team by setting is_deactivated flag.
 
         Args:
-            team_id: UUID of the team to soft delete
+            team_id: UUID of the team to deactivate
 
         Raises:
             ValueError: If team not found
 
         Note:
             Soft deleting a team preserves the country relationship.
-            The team can still be retrieved with include_deleted=True.
+            The team can still be retrieved with include_deactivated=True.
             Country reference remains valid for historical tracking.
         """
-        team = await self.get_by_id(team_id, include_deleted=True)
+        team = await self.get_by_id(team_id, include_deactivated=True)
         if team is None:
             raise ValueError("Team not found")
 
-        team.is_deleted = True
+        team.is_deactivated = True
         await self.session.commit()
 
-    async def permanent_delete(self, team_id: UUID) -> None:
+    async def delete(self, team_id: UUID) -> None:
         """
         Permanently delete a team from database.
 
@@ -191,10 +191,10 @@ class TeamRepository:
 
         Warning:
             This is a hard delete - the team is removed from the database entirely.
-            Use soft_delete() for most cases to preserve historical data.
+            Use deactivate() for most cases to preserve historical data.
             Only use this for data cleanup or GDPR compliance.
         """
-        team = await self.get_by_id(team_id, include_deleted=True)
+        team = await self.get_by_id(team_id, include_deactivated=True)
         if team is None:
             raise ValueError("Team not found")
 

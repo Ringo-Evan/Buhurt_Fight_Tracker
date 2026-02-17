@@ -34,33 +34,33 @@ class TagRepository:
             await self.session.rollback()
             raise e
 
-    async def get_by_id(self, tag_id: UUID, include_deleted: bool = False) -> Tag | None:
+    async def get_by_id(self, tag_id: UUID, include_deactivated: bool = False) -> Tag | None:
         """Get tag by ID with eager-loaded tag_type."""
         query = select(Tag).options(
             joinedload(Tag.tag_type)
         ).where(Tag.id == tag_id)
-        if not include_deleted:
-            query = query.where(Tag.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Tag.is_deactivated == False)
         result = await self.session.execute(query)
         return result.unique().scalar_one_or_none()
 
-    async def list_all(self, include_deleted: bool = False) -> list[Tag]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Tag]:
         """List all tags with eager-loaded tag_type."""
         query = select(Tag).options(
             joinedload(Tag.tag_type)
         )
-        if not include_deleted:
-            query = query.where(Tag.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Tag.is_deactivated == False)
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
 
-    async def list_by_fight(self, fight_id: UUID, include_deleted: bool = False) -> list[Tag]:
+    async def list_by_fight(self, fight_id: UUID, include_deactivated: bool = False) -> list[Tag]:
         """List all tags for a fight."""
         query = select(Tag).options(
             joinedload(Tag.tag_type)
         ).where(Tag.fight_id == fight_id)
-        if not include_deleted:
-            query = query.where(Tag.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Tag.is_deactivated == False)
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
 
@@ -68,15 +68,15 @@ class TagRepository:
         self,
         fight_id: UUID,
         tag_type_id: UUID,
-        include_deleted: bool = False
+        include_deactivated: bool = False
     ) -> Tag | None:
         """Get the active tag of a specific type for a fight."""
         query = select(Tag).where(
             Tag.fight_id == fight_id,
             Tag.tag_type_id == tag_type_id
         )
-        if not include_deleted:
-            query = query.where(Tag.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Tag.is_deactivated == False)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
@@ -94,26 +94,26 @@ class TagRepository:
         await self.session.refresh(tag)
         return tag
 
-    async def soft_delete(self, tag_id: UUID) -> None:
+    async def deactivate(self, tag_id: UUID) -> None:
         """Soft delete a tag."""
         tag = await self.get_by_id(tag_id)
         if tag is None:
             raise ValueError("Tag not found")
-        tag.is_deleted = True
+        tag.is_deactivated = True
         await self.session.commit()
 
-    async def cascade_soft_delete_children(self, parent_tag_id: UUID) -> int:
+    async def cascade_deactivate_children(self, parent_tag_id: UUID) -> int:
         """Soft delete all child tags of a parent tag."""
         query = select(Tag).where(
             Tag.parent_tag_id == parent_tag_id,
-            Tag.is_deleted == False
+            Tag.is_deactivated == False
         )
         result = await self.session.execute(query)
         children = list(result.scalars().all())
 
         count = 0
         for child in children:
-            child.is_deleted = True
+            child.is_deactivated = True
             count += 1
             # Recursively delete grandchildren
             count += await self.cascade_soft_delete_children(child.id)

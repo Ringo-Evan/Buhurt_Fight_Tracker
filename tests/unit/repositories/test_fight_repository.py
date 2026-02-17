@@ -110,7 +110,7 @@ class TestFightRepositoryGetById:
             id=fight_id,
             date=date(2024, 6, 15),
             location="Test Location",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -150,9 +150,9 @@ class TestFightRepositoryGetById:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_by_id_filters_soft_deleted_fights(self):
+    async def test_get_by_id_filters_deactivated_fights(self):
         """
-        Test that get_by_id filters out soft-deleted fights by default.
+        Test that get_by_id filters out deactivated fights by default.
         """
         # Arrange
         mock_result = MagicMock()
@@ -170,9 +170,9 @@ class TestFightRepositoryGetById:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_by_id_as_admin_returns_soft_deleted_fight(self):
+    async def test_get_by_id_with_include_deactivated_returns_deactivated_fight(self):
         """
-        Test that get_by_id with include_deleted=True returns soft-deleted fights.
+        Test that get_by_id with include_deactivated=True returns deactivated fights.
         """
         # Arrange
         fight_id = uuid4()
@@ -180,7 +180,7 @@ class TestFightRepositoryGetById:
             id=fight_id,
             date=date(2024, 6, 15),
             location="Deleted Fight",
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
@@ -193,25 +193,25 @@ class TestFightRepositoryGetById:
         repository = FightRepository(mock_session)
 
         # Act
-        result = await repository.get_by_id(fight_id, include_deleted=True)
+        result = await repository.get_by_id(fight_id, include_deactivated=True)
 
         # Assert
         assert result == fight
-        assert result.is_deleted is True
+        assert result.is_deactivated is True
 
 
 class TestFightRepositoryList:
     """Test suite for fight listing operations."""
 
     @pytest.mark.asyncio
-    async def test_list_all_excludes_soft_deleted_fights(self):
+    async def test_list_all_excludes_deactivated_fights(self):
         """
-        Test that list_all excludes soft-deleted fights by default.
+        Test that list_all excludes deactivated fights by default.
         """
         # Arrange
         fights = [
-            Fight(id=uuid4(), date=date(2024, 1, 1), location="Fight 1", is_deleted=False, created_at=datetime.now(UTC)),
-            Fight(id=uuid4(), date=date(2024, 2, 1), location="Fight 2", is_deleted=False, created_at=datetime.now(UTC)),
+            Fight(id=uuid4(), date=date(2024, 1, 1), location="Fight 1", is_deactivated=False, created_at=datetime.now(UTC)),
+            Fight(id=uuid4(), date=date(2024, 2, 1), location="Fight 2", is_deactivated=False, created_at=datetime.now(UTC)),
         ]
 
         mock_scalars = MagicMock()
@@ -233,7 +233,7 @@ class TestFightRepositoryList:
 
         # Assert
         assert len(result) == 2
-        assert all(not f.is_deleted for f in result)
+        assert all(not f.is_deactivated for f in result)
 
     @pytest.mark.asyncio
     async def test_list_all_returns_empty_list_when_no_fights(self):
@@ -268,7 +268,7 @@ class TestFightRepositoryList:
         """
         # Arrange
         fights = [
-            Fight(id=uuid4(), date=date(2024, 6, 15), location="Fight 1", is_deleted=False, created_at=datetime.now(UTC)),
+            Fight(id=uuid4(), date=date(2024, 6, 15), location="Fight 1", is_deactivated=False, created_at=datetime.now(UTC)),
         ]
 
         mock_scalars = MagicMock()
@@ -296,12 +296,12 @@ class TestFightRepositoryList:
 
 
 class TestFightRepositorySoftDelete:
-    """Test suite for fight soft delete operations."""
+    """Test suite for fight deactivate operations."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_sets_is_deleted_flag_to_true(self):
+    async def test_deactivate_sets_is_deactivated_flag_to_true(self):
         """
-        Test that soft_delete sets the is_deleted flag to True.
+        Test that soft_delete sets the is_deactivated flag to True.
         """
         # Arrange
         fight_id = uuid4()
@@ -309,7 +309,7 @@ class TestFightRepositorySoftDelete:
             id=fight_id,
             date=date(2024, 6, 15),
             location="Test Fight",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -322,14 +322,14 @@ class TestFightRepositorySoftDelete:
         repository = FightRepository(mock_session)
 
         # Act
-        await repository.soft_delete(fight_id)
+        await repository.deactivate(fight_id)
 
         # Assert
-        assert fight.is_deleted is True
+        assert fight.is_deactivated is True
         mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_soft_delete_raises_error_for_non_existent_fight(self):
+    async def test_deactivate_raises_error_for_non_existent_fight(self):
         """
         Test that soft_delete raises ValueError for non-existent fight.
         """
@@ -344,7 +344,7 @@ class TestFightRepositorySoftDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Fight not found"):
-            await repository.soft_delete(uuid4())
+            await repository.deactivate(uuid4())
 
 
 class TestFightRepositoryUpdate:
@@ -361,7 +361,7 @@ class TestFightRepositoryUpdate:
             id=fight_id,
             date=date(2024, 6, 15),
             location="Old Location",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -393,7 +393,7 @@ class TestFightRepositoryUpdate:
             date=date(2024, 6, 15),
             location="Test",
             winner_side=None,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 

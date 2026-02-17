@@ -71,17 +71,17 @@ class TeamService:
             country_id: UUID of the country to validate
 
         Raises:
-            InvalidCountryError: If country not found or soft-deleted
+            InvalidCountryError: If country not found or deactivated
 
         Note:
-            Teams can only reference active (not soft-deleted) countries.
+            Teams can only reference active (not deactivated) countries.
             This ensures data integrity and prevents orphaned relationships.
         """
         country = await self.country_repository.get_by_id(country_id, include_deactivated=False)
         if country is None:
-            # Check if country exists but is soft-deleted
-            deleted_country = await self.country_repository.get_by_id(country_id, include_deactivated=True)
-            if deleted_country and deleted_country.is_deactivated:
+            # Check if country exists but is deactivated
+            deactivated_country = await self.country_repository.get_by_id(country_id, include_deactivated=True)
+            if deactivated_country and deactivated_country.is_deactivated:
                 raise InvalidCountryError("Country is not active")
             raise InvalidCountryError("Country not found")
 
@@ -124,13 +124,13 @@ class TeamService:
                 raise InvalidCountryError("Country not found")
             raise
 
-    async def get_by_id(self, team_id: UUID, include_deleted: bool = False) -> Team:
+    async def get_by_id(self, team_id: UUID, include_deactivated: bool = False) -> Team:
         """
         Retrieve a team by ID.
 
         Args:
             team_id: UUID of the team
-            include_deleted: If True, include soft-deleted teams
+            include_deactivated: If True, include deactivated teams
 
         Returns:
             Team instance with eager-loaded country
@@ -138,34 +138,34 @@ class TeamService:
         Raises:
             TeamNotFoundError: If team not found
         """
-        team = await self.team_repository.get_by_id(team_id, include_deleted=include_deleted)
+        team = await self.team_repository.get_by_id(team_id, include_deactivated=include_deactivated)
         if team is None:
             raise TeamNotFoundError()
         return team
 
-    async def list_all(self, include_deleted: bool = False) -> list[Team]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Team]:
         """
         List all teams.
 
         Args:
-            include_deleted: If True, include soft-deleted teams
+            include_deactivated: If True, include deactivated teams
 
         Returns:
             List of Team instances, each with eager-loaded country
         """
-        return await self.team_repository.list_all(include_deleted=include_deleted)
+        return await self.team_repository.list_all(include_deactivated=include_deactivated)
 
     async def list_by_country(
         self,
         country_id: UUID,
-        include_deleted: bool = False
+        include_deactivated: bool = False
     ) -> list[Team]:
         """
         List all teams for a specific country.
 
         Args:
             country_id: UUID of the country to filter by
-            include_deleted: If True, include soft-deleted teams
+            include_deactivated: If True, include deactivated teams
 
         Returns:
             List of Team instances for the specified country
@@ -174,7 +174,7 @@ class TeamService:
             Does not validate country exists - returns empty list if no teams found.
             Country validation only happens on team creation/update.
         """
-        return await self.team_repository.list_by_country(country_id, include_deleted=include_deleted)
+        return await self.team_repository.list_by_country(country_id, include_deactivated=include_deactivated)
 
     async def update(self, team_id: UUID, update_data: Dict[str, Any]) -> Team:
         """
@@ -196,7 +196,7 @@ class TeamService:
             If updating country_id, validates that new country exists and is active.
         """
         # Validate team exists
-        team = await self.team_repository.get_by_id(team_id, include_deleted=True)
+        team = await self.team_repository.get_by_id(team_id, include_deactivated=True)
         if team is None:
             raise TeamNotFoundError()
 
@@ -215,9 +215,9 @@ class TeamService:
                 raise InvalidCountryError("Country not found")
             raise
 
-    async def delete(self, team_id: UUID) -> None:
+    async def deactivate(self, team_id: UUID) -> None:
         """
-        Soft delete a team.
+        Deactivate a team.
 
         Args:
             team_id: UUID of the team to soft delete
@@ -226,14 +226,14 @@ class TeamService:
             TeamNotFoundError: If team not found
 
         Note:
-            Soft deleting a team preserves country relationship for historical tracking.
+            Deactivating a team preserves country relationship for historical tracking.
         """
         try:
-            await self.team_repository.soft_delete(team_id)
+            await self.team_repository.deactivate(team_id)
         except ValueError:
             raise TeamNotFoundError()
 
-    async def permanent_delete(self, team_id: UUID) -> None:
+    async def delete(self, team_id: UUID) -> None:
         """
         Permanently delete a team from database.
 
@@ -245,10 +245,10 @@ class TeamService:
 
         Warning:
             This is a hard delete - the team is removed from the database entirely.
-            Use delete() (soft delete) for most cases to preserve historical data.
+            Use deactivate() for most cases to preserve historical data.
             Only use this for data cleanup or GDPR compliance.
         """
         try:
-            await self.team_repository.permanent_delete(team_id)
+            await self.team_repository.delete(team_id)
         except ValueError:
             raise TeamNotFoundError()

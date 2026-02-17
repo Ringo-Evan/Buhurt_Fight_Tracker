@@ -46,7 +46,7 @@ class TestFighterServiceCreate:
             id=team_id,
             name="Team USA",
             country_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -54,7 +54,7 @@ class TestFighterServiceCreate:
             id=uuid4(),
             name="John Smith",
             team_id=team_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -69,7 +69,7 @@ class TestFighterServiceCreate:
         # Assert
         assert result.name == "John Smith"
         assert result.team_id == team_id
-        mock_team_repo.get_by_id.assert_awaited_once_with(team_id, include_deleted=False)
+        mock_team_repo.get_by_id.assert_awaited_once_with(team_id, include_deactivated=False)
         mock_fighter_repo.create.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -86,7 +86,7 @@ class TestFighterServiceCreate:
         mock_team_repo = AsyncMock(spec=TeamRepository)
 
         team_id = uuid4()
-        # Service checks twice: first with include_deleted=False, then with include_deleted=True
+        # Service checks twice: first with include_deactivated=False, then with include_deactivated=True
         mock_team_repo.get_by_id.side_effect = [None, None]  # Team doesn't exist at all
 
         service = FighterService(mock_fighter_repo, mock_team_repo)
@@ -101,9 +101,9 @@ class TestFighterServiceCreate:
     @pytest.mark.asyncio
     async def test_create_fighter_with_soft_deleted_team_raises_error(self):
         """
-        Test creating fighter with soft-deleted team raises InvalidTeamError.
+        Test creating fighter with deactivated team raises InvalidTeamError.
 
-        Arrange: Mock team repository returning None (filtered) but exists when include_deleted=True
+        Arrange: Mock team repository returning None (filtered) but exists when include_deactivated=True
         Act: Call service.create()
         Assert: InvalidTeamError raised with "Team is not active"
         """
@@ -116,11 +116,11 @@ class TestFighterServiceCreate:
             id=team_id,
             name="Defunct Team",
             country_id=uuid4(),
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
-        # First call (include_deleted=False) returns None, second call (include_deleted=True) returns deleted team
+        # First call (include_deactivated=False) returns None, second call (include_deactivated=True) returns deleted team
         mock_team_repo.get_by_id.side_effect = [None, deleted_team]
 
         service = FighterService(mock_fighter_repo, mock_team_repo)
@@ -195,7 +195,7 @@ class TestFighterServiceRetrieve:
             id=fighter_id,
             name="John Smith",
             team_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -208,7 +208,7 @@ class TestFighterServiceRetrieve:
 
         # Assert
         assert result.id == fighter_id
-        mock_fighter_repo.get_by_id.assert_awaited_once_with(fighter_id, include_deleted=False)
+        mock_fighter_repo.get_by_id.assert_awaited_once_with(fighter_id, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_get_by_id_raises_not_found_when_fighter_not_exists(self):
@@ -245,8 +245,8 @@ class TestFighterServiceRetrieve:
         mock_team_repo = AsyncMock(spec=TeamRepository)
 
         fighters = [
-            Fighter(id=uuid4(), name="John Smith", team_id=uuid4(), is_deleted=False, created_at=datetime.now(UTC)),
-            Fighter(id=uuid4(), name="Jane Doe", team_id=uuid4(), is_deleted=False, created_at=datetime.now(UTC))
+            Fighter(id=uuid4(), name="John Smith", team_id=uuid4(), is_deactivated=False, created_at=datetime.now(UTC)),
+            Fighter(id=uuid4(), name="Jane Doe", team_id=uuid4(), is_deactivated=False, created_at=datetime.now(UTC))
         ]
 
         mock_fighter_repo.list_all.return_value = fighters
@@ -258,7 +258,7 @@ class TestFighterServiceRetrieve:
 
         # Assert
         assert len(result) == 2
-        mock_fighter_repo.list_all.assert_awaited_once_with(include_deleted=False)
+        mock_fighter_repo.list_all.assert_awaited_once_with(include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_list_by_team_returns_team_fighters(self):
@@ -275,8 +275,8 @@ class TestFighterServiceRetrieve:
 
         team_id = uuid4()
         fighters = [
-            Fighter(id=uuid4(), name="John Smith", team_id=team_id, is_deleted=False, created_at=datetime.now(UTC)),
-            Fighter(id=uuid4(), name="Jane Doe", team_id=team_id, is_deleted=False, created_at=datetime.now(UTC))
+            Fighter(id=uuid4(), name="John Smith", team_id=team_id, is_deactivated=False, created_at=datetime.now(UTC)),
+            Fighter(id=uuid4(), name="Jane Doe", team_id=team_id, is_deactivated=False, created_at=datetime.now(UTC))
         ]
 
         mock_fighter_repo.list_by_team.return_value = fighters
@@ -289,7 +289,7 @@ class TestFighterServiceRetrieve:
         # Assert
         assert len(result) == 2
         assert all(f.team_id == team_id for f in result)
-        mock_fighter_repo.list_by_team.assert_awaited_once_with(team_id, include_deleted=False)
+        mock_fighter_repo.list_by_team.assert_awaited_once_with(team_id, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_list_by_country_returns_country_fighters(self):
@@ -306,8 +306,8 @@ class TestFighterServiceRetrieve:
 
         country_id = uuid4()
         fighters = [
-            Fighter(id=uuid4(), name="John Smith", team_id=uuid4(), is_deleted=False, created_at=datetime.now(UTC)),
-            Fighter(id=uuid4(), name="Jane Doe", team_id=uuid4(), is_deleted=False, created_at=datetime.now(UTC))
+            Fighter(id=uuid4(), name="John Smith", team_id=uuid4(), is_deactivated=False, created_at=datetime.now(UTC)),
+            Fighter(id=uuid4(), name="Jane Doe", team_id=uuid4(), is_deactivated=False, created_at=datetime.now(UTC))
         ]
 
         mock_fighter_repo.list_by_country.return_value = fighters
@@ -319,7 +319,7 @@ class TestFighterServiceRetrieve:
 
         # Assert
         assert len(result) == 2
-        mock_fighter_repo.list_by_country.assert_awaited_once_with(country_id, include_deleted=False)
+        mock_fighter_repo.list_by_country.assert_awaited_once_with(country_id, include_deactivated=False)
 
 
 class TestFighterServiceUpdate:
@@ -343,7 +343,7 @@ class TestFighterServiceUpdate:
             id=fighter_id,
             name="Jonathan Smith",
             team_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -378,7 +378,7 @@ class TestFighterServiceUpdate:
             id=new_team_id,
             name="New Team",
             country_id=uuid4(),
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -386,7 +386,7 @@ class TestFighterServiceUpdate:
             id=fighter_id,
             name="John Smith",
             team_id=new_team_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -400,7 +400,7 @@ class TestFighterServiceUpdate:
 
         # Assert
         assert result.team_id == new_team_id
-        mock_team_repo.get_by_id.assert_awaited_once_with(new_team_id, include_deleted=False)
+        mock_team_repo.get_by_id.assert_awaited_once_with(new_team_id, include_deactivated=False)
         mock_fighter_repo.update.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -430,9 +430,9 @@ class TestFighterServiceUpdate:
     @pytest.mark.asyncio
     async def test_update_fighter_team_to_soft_deleted_team_raises_error(self):
         """
-        Test that updating to soft-deleted team raises InvalidTeamError.
+        Test that updating to deactivated team raises InvalidTeamError.
 
-        Arrange: Mock team repository with soft-deleted team
+        Arrange: Mock team repository with deactivated team
         Act: Call service.update()
         Assert: InvalidTeamError raised
         """
@@ -445,7 +445,7 @@ class TestFighterServiceUpdate:
             id=new_team_id,
             name="Defunct Team",
             country_id=uuid4(),
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
@@ -512,7 +512,7 @@ class TestFighterServiceDelete:
 
         Arrange: Mock repository with existing fighter
         Act: Call service.delete()
-        Assert: Fighter soft deleted
+        Assert: Fighter deactivated
         """
         # Arrange
         mock_fighter_repo = AsyncMock(spec=FighterRepository)

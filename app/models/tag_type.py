@@ -29,7 +29,7 @@ class TagType(Base):
         is_parent: If True, can have child tags
         has_children: If True, has child tags
         display_order: Order for display purposes
-        is_deleted: Soft delete flag
+        is_deleted: Deactivated flag
         created_at: Timestamp of record creation
     """
 
@@ -65,7 +65,7 @@ class TagType(Base):
         default=0,
         nullable=False
     )
-    is_deleted: Mapped[bool] = mapped_column(
+    is_deactivated: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False

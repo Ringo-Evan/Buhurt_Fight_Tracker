@@ -33,27 +33,27 @@ class TagTypeRepository:
             await self.session.rollback()
             raise e
 
-    async def get_by_id(self, tag_type_id: UUID, include_deleted: bool = False) -> TagType | None:
+    async def get_by_id(self, tag_type_id: UUID, include_deactivated: bool = False) -> TagType | None:
         """Get tag type by ID."""
         query = select(TagType).where(TagType.id == tag_type_id)
-        if not include_deleted:
-            query = query.where(TagType.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(TagType.is_deactivated == False)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_name(self, name: str, include_deleted: bool = False) -> TagType | None:
+    async def get_by_name(self, name: str, include_deactivated: bool = False) -> TagType | None:
         """Get tag type by name."""
         query = select(TagType).where(TagType.name == name)
-        if not include_deleted:
-            query = query.where(TagType.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(TagType.is_deactivated == False)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def list_all(self, include_deleted: bool = False) -> list[TagType]:
+    async def list_all(self, include_deactivated: bool = False) -> list[TagType]:
         """List all tag types ordered by display_order."""
         query = select(TagType).order_by(TagType.display_order)
-        if not include_deleted:
-            query = query.where(TagType.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(TagType.is_deactivated == False)
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
@@ -72,10 +72,10 @@ class TagTypeRepository:
         await self.session.refresh(tag_type)
         return tag_type
 
-    async def soft_delete(self, tag_type_id: UUID) -> None:
+    async def deactivate(self, tag_type_id: UUID) -> None:
         """Soft delete a tag type."""
         tag_type = await self.get_by_id(tag_type_id)
         if tag_type is None:
             raise ValueError("Tag type not found")
-        tag_type.is_deleted = True
+        tag_type.is_deactivated = True
         await self.session.commit()

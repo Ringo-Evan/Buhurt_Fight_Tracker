@@ -61,13 +61,13 @@ class FighterService:
             team_id: UUID of the team
 
         Raises:
-            InvalidTeamError: If team doesn't exist or is soft-deleted
+            InvalidTeamError: If team doesn't exist or is deactivated
         """
-        team = await self.team_repository.get_by_id(team_id, include_deleted=False)
+        team = await self.team_repository.get_by_id(team_id, include_deactivated=False)
         if team is None:
-            # Check if team exists but is soft-deleted
-            deleted_team = await self.team_repository.get_by_id(team_id, include_deleted=True)
-            if deleted_team and deleted_team.is_deleted:
+            # Check if team exists but is deactivated
+            deleted_team = await self.team_repository.get_by_id(team_id, include_deactivated=True)
+            if deleted_team and deleted_team.is_deactivated:
                 raise InvalidTeamError("Team is not active")
             raise InvalidTeamError("Team not found")
 
@@ -104,7 +104,7 @@ class FighterService:
 
         Args:
             fighter_id: UUID of the fighter
-            include_deleted: If True, include soft-deleted fighters
+            include_deleted: If True, include deactivated fighters
 
         Returns:
             Fighter instance
@@ -112,7 +112,7 @@ class FighterService:
         Raises:
             FighterNotFoundError: If fighter not found
         """
-        fighter = await self.repository.get_by_id(fighter_id, include_deleted=include_deleted)
+        fighter = await self.repository.get_by_id(fighter_id, include_deactivated=include_deactivated)
         if fighter is None:
             raise FighterNotFoundError()
 
@@ -123,12 +123,12 @@ class FighterService:
         List all fighters.
 
         Args:
-            include_deleted: If True, include soft-deleted fighters
+            include_deleted: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances
         """
-        return await self.repository.list_all(include_deleted=include_deleted)
+        return await self.repository.list_all(include_deactivated=include_deactivated)
 
     async def list_by_team(self, team_id: UUID, include_deleted: bool = False) -> list[Fighter]:
         """
@@ -136,12 +136,12 @@ class FighterService:
 
         Args:
             team_id: UUID of the team
-            include_deleted: If True, include soft-deleted fighters
+            include_deleted: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances for the specified team
         """
-        return await self.repository.list_by_team(team_id, include_deleted=include_deleted)
+        return await self.repository.list_by_team(team_id, include_deactivated=include_deactivated)
 
     async def list_by_country(self, country_id: UUID, include_deleted: bool = False) -> list[Fighter]:
         """
@@ -149,16 +149,16 @@ class FighterService:
 
         Args:
             country_id: UUID of the country
-            include_deleted: If True, include soft-deleted fighters
+            include_deleted: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances from teams in the specified country
         """
-        return await self.repository.list_by_country(country_id, include_deleted=include_deleted)
+        return await self.repository.list_by_country(country_id, include_deactivated=include_deactivated)
 
     async def delete(self, fighter_id: UUID) -> None:
         """
-        Soft delete a fighter.
+        Deactivate a fighter.
 
         Args:
             fighter_id: UUID of the fighter to delete
@@ -167,7 +167,7 @@ class FighterService:
             FighterNotFoundError: If fighter not found
         """
         try:
-            await self.repository.soft_delete(fighter_id)
+            await self.repository.deactivate(fighter_id)
         except ValueError as e:
             raise FighterNotFoundError(str(e))
 

@@ -33,7 +33,7 @@ def upgrade() -> None:
     # Insert fight_format TagType
     op.execute(
         sa.text("""
-            INSERT INTO tag_types (id, name, is_privileged, is_parent, has_children, display_order, is_deleted, created_at)
+            INSERT INTO tag_types (id, name, is_privileged, is_parent, has_children, display_order, is_deactivated, created_at)
             VALUES (
                 :id,
                 'fight_format',

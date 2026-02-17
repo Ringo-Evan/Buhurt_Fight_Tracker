@@ -101,7 +101,7 @@ class TagTypeService:
 
     async def delete(self, tag_type_id: UUID) -> None:
         """
-        Soft delete a tag type.
+        Deactivate a tag type.
 
         Args:
             tag_type_id: ID of the tag type to delete
@@ -114,7 +114,7 @@ class TagTypeService:
         if not existing_tag_type:
             raise ValidationError(f"Tag type with ID {tag_type_id} not found")
 
-        await self.tag_type_repository.soft_delete(tag_type_id)
+        await self.tag_type_repository.deactivate(tag_type_id)
 
     ###Helper Methods###
 

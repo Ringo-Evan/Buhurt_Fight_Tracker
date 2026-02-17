@@ -51,7 +51,7 @@ class Fighter(Base):
         nullable=False
     )
 
-    is_deleted: Mapped[bool] = mapped_column(
+    is_deactivated: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False
@@ -86,10 +86,10 @@ class Fighter(Base):
 
         if 'id' not in kwargs:
             self.id = uuid4()
-        if 'is_deleted' not in kwargs:
-            self.is_deleted = False
+        if 'is_deactivated' not in kwargs:
+            self.is_deactivated = False
         if 'created_at' not in kwargs:
             self.created_at = datetime.now(UTC)
 
     def __repr__(self) -> str:
-        return f"<Fighter(id={self.id}, name='{self.name}', team_id={self.team_id}, is_deleted={self.is_deleted})>"
+        return f"<Fighter(id={self.id}, name='{self.name}', team_id={self.team_id}, is_deactivated={self.is_deactivated})>"

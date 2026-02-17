@@ -264,11 +264,11 @@ class TestTagTypeService:
     @pytest.mark.asyncio
     async def test_delete_tag_type(self):
         """
-        Test deleting a tag type (soft delete).
+        Test deleting a tag type (deactivate).
 
         Arrange: Mock repository
         Act: Call service.delete()
-        Assert: Repository soft_delete called
+        Assert: Repository deactivate called
         """
         # Arrange
         mock_tag_type_repository = AsyncMock(spec=TagTypeRepository)
@@ -283,4 +283,4 @@ class TestTagTypeService:
 
         # Assert
         mock_tag_type_repository.get_by_id.assert_called_once_with(tag_type_id)
-        mock_tag_type_repository.soft_delete.assert_called_once_with(tag_type_id)
+        mock_tag_type_repository.deactivate.assert_called_once_with(tag_type_id)

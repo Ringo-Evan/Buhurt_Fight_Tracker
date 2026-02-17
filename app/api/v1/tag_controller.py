@@ -114,7 +114,7 @@ async def update_tag(
     "/{tag_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a tag",
-    description="Soft delete a tag (sets is_deleted flag)",
+    description="Deactivate a tag (sets is_deactivated flag)",
     responses={
         404: {"description": "Tag not found"},
     },
@@ -123,7 +123,7 @@ async def delete_tag(
     tag_id: UUID,
     service: TagService = Depends(get_tag_service)
 ):
-    """Soft delete a tag."""
+    """Deactivate a tag."""
     try:
         await service.delete(tag_id)
     except ValueError:

@@ -201,8 +201,8 @@ class TestFightParticipationRepositorySoftDelete:
     """Test suite for participation soft delete."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_sets_is_deleted_flag(self):
-        """Test that soft_delete sets is_deleted to True."""
+    async def test_hard_delete_removes_participation(self):
+        """Test that hard delete removes participation record."""
         # Arrange
         participation_id = uuid4()
         participation = FightParticipation(

@@ -50,7 +50,7 @@ class TestTeamRepositoryCreate:
         # Verify the created team has expected attributes
         assert result.name == "Team USA"
         assert result.country_id == country_id
-        assert result.is_deleted is False
+        assert result.is_deactivated is False
         assert result.id is not None
         assert result.created_at is not None
 
@@ -110,7 +110,7 @@ class TestTeamRepositoryGetById:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -119,7 +119,7 @@ class TestTeamRepositoryGetById:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         expected_team.country = mock_country
@@ -168,19 +168,19 @@ class TestTeamRepositoryGetById:
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_get_by_id_filters_soft_deleted_teams(self):
+    async def test_get_by_id_filters_deactivated_teams(self):
         """
-        Test that get_by_id excludes soft-deleted teams.
+        Test that get_by_id excludes deactivated teams.
 
-        Arrange: Mock session that would return a soft-deleted team
+        Arrange: Mock session that would return a deactivated team
         Act: Call repository.get_by_id()
-        Assert: Returns None (soft-deleted filtered out)
+        Assert: Returns None (deactivated filtered out)
         """
         # Arrange
         mock_session = AsyncMock()
         team_id = uuid4()
 
-        # The query should filter is_deleted=False, so it returns None
+        # The query should filter is_deactivated=False, so it returns None
         mock_result = MagicMock()
         mock_result.unique.return_value.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
@@ -195,13 +195,13 @@ class TestTeamRepositoryGetById:
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_get_by_id_as_admin_returns_soft_deleted_team(self):
+    async def test_get_by_id_with_include_deactivated_returns_deactivated_team(self):
         """
-        Test that get_by_id with include_deleted=True returns soft-deleted teams.
+        Test that get_by_id with include_deactivated=True returns deactivated teams.
 
-        Arrange: Mock session returning a soft-deleted team
-        Act: Call repository.get_by_id(include_deleted=True)
-        Assert: Returns the soft-deleted team
+        Arrange: Mock session returning a deactivated team
+        Act: Call repository.get_by_id(include_deactivated=True)
+        Assert: Returns the deactivated team
         """
         # Arrange
         mock_session = AsyncMock()
@@ -212,7 +212,7 @@ class TestTeamRepositoryGetById:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -220,7 +220,7 @@ class TestTeamRepositoryGetById:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
         deleted_team.country = mock_country
@@ -232,11 +232,11 @@ class TestTeamRepositoryGetById:
         repository = TeamRepository(mock_session)
 
         # Act
-        result = await repository.get_by_id(team_id, include_deleted=True)
+        result = await repository.get_by_id(team_id, include_deactivated=True)
 
         # Assert
         assert result == deleted_team
-        assert result.is_deleted is True
+        assert result.is_deactivated is True
         assert result.country is not None
         mock_session.execute.assert_awaited_once()
 
@@ -245,9 +245,9 @@ class TestTeamRepositoryList:
     """Test suite for listing teams."""
 
     @pytest.mark.asyncio
-    async def test_list_all_excludes_soft_deleted_teams(self):
+    async def test_list_all_excludes_deactivated_teams(self):
         """
-        Test that list_all excludes soft-deleted entries.
+        Test that list_all excludes deactivated entries.
 
         Arrange: Mock session returning only active teams
         Act: Call repository.list_all()
@@ -261,7 +261,7 @@ class TestTeamRepositoryList:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -270,14 +270,14 @@ class TestTeamRepositoryList:
                 id=uuid4(),
                 name="Team USA",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Team(
                 id=uuid4(),
                 name="Team Poland",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -296,7 +296,7 @@ class TestTeamRepositoryList:
 
         # Assert
         assert len(result) == 2
-        assert all(not team.is_deleted for team in result)
+        assert all(not team.is_deactivated for team in result)
         assert all(team.country is not None for team in result)
         mock_session.execute.assert_awaited_once()
 
@@ -327,12 +327,12 @@ class TestTeamRepositoryList:
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_list_all_as_admin_includes_soft_deleted_teams(self):
+    async def test_list_all_with_include_deactivated_includes_deactivated_teams(self):
         """
-        Test that list_all with include_deleted=True includes soft-deleted teams.
+        Test that list_all with include_deactivated=True includes deactivated teams.
 
         Arrange: Mock session returning both active and deleted teams
-        Act: Call repository.list_all(include_deleted=True)
+        Act: Call repository.list_all(include_deactivated=True)
         Assert: Returns list with both active and deleted teams
         """
         # Arrange
@@ -343,7 +343,7 @@ class TestTeamRepositoryList:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -352,21 +352,21 @@ class TestTeamRepositoryList:
                 id=uuid4(),
                 name="Team USA",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Team(
                 id=uuid4(),
                 name="Team Poland",
                 country_id=country_id,
-                is_deleted=True,  # Soft-deleted
+                is_deactivated=True,  # Soft-deleted
                 created_at=datetime.now(UTC)
             ),
             Team(
                 id=uuid4(),
                 name="Team Germany",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -380,11 +380,11 @@ class TestTeamRepositoryList:
         repository = TeamRepository(mock_session)
 
         # Act
-        result = await repository.list_all(include_deleted=True)
+        result = await repository.list_all(include_deactivated=True)
 
         # Assert
         assert len(result) == 3
-        assert any(team.is_deleted for team in result)
+        assert any(team.is_deactivated for team in result)
         assert all(team.country is not None for team in result)
         mock_session.execute.assert_awaited_once()
 
@@ -410,7 +410,7 @@ class TestTeamRepositoryListByCountry:
             id=usa_country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -419,14 +419,14 @@ class TestTeamRepositoryListByCountry:
                 id=uuid4(),
                 name="Team USA 1",
                 country_id=usa_country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Team(
                 id=uuid4(),
                 name="Team USA 2",
                 country_id=usa_country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -445,13 +445,13 @@ class TestTeamRepositoryListByCountry:
         # Assert
         assert len(result) == 2
         assert all(team.country_id == usa_country_id for team in result)
-        assert all(not team.is_deleted for team in result)
+        assert all(not team.is_deactivated for team in result)
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_list_by_country_excludes_soft_deleted_teams(self):
+    async def test_list_by_country_excludes_deactivated_teams(self):
         """
-        Test that list_by_country excludes soft-deleted teams.
+        Test that list_by_country excludes deactivated teams.
 
         Arrange: Mock session returning only active teams for country
         Act: Call repository.list_by_country()
@@ -465,7 +465,7 @@ class TestTeamRepositoryListByCountry:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -474,7 +474,7 @@ class TestTeamRepositoryListByCountry:
                 id=uuid4(),
                 name="Team USA",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -492,7 +492,7 @@ class TestTeamRepositoryListByCountry:
 
         # Assert
         assert len(result) == 1
-        assert all(not team.is_deleted for team in result)
+        assert all(not team.is_deactivated for team in result)
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -523,12 +523,12 @@ class TestTeamRepositoryListByCountry:
         mock_session.execute.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_list_by_country_as_admin_includes_soft_deleted_teams(self):
+    async def test_list_by_country_with_include_deactivated_includes_deactivated_teams(self):
         """
-        Test that list_by_country with include_deleted=True includes soft-deleted teams.
+        Test that list_by_country with include_deactivated=True includes deactivated teams.
 
         Arrange: Mock session returning both active and deleted teams
-        Act: Call repository.list_by_country(include_deleted=True)
+        Act: Call repository.list_by_country(include_deactivated=True)
         Assert: Returns list with both active and deleted teams
         """
         # Arrange
@@ -539,7 +539,7 @@ class TestTeamRepositoryListByCountry:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -548,14 +548,14 @@ class TestTeamRepositoryListByCountry:
                 id=uuid4(),
                 name="Team USA 1",
                 country_id=country_id,
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Team(
                 id=uuid4(),
                 name="Team USA 2",
                 country_id=country_id,
-                is_deleted=True,  # Soft-deleted
+                is_deactivated=True,  # Soft-deleted
                 created_at=datetime.now(UTC)
             )
         ]
@@ -569,11 +569,11 @@ class TestTeamRepositoryListByCountry:
         repository = TeamRepository(mock_session)
 
         # Act
-        result = await repository.list_by_country(country_id, include_deleted=True)
+        result = await repository.list_by_country(country_id, include_deactivated=True)
 
         # Assert
         assert len(result) == 2
-        assert any(team.is_deleted for team in result)
+        assert any(team.is_deactivated for team in result)
         mock_session.execute.assert_awaited_once()
 
 
@@ -581,13 +581,13 @@ class TestTeamRepositorySoftDelete:
     """Test suite for soft deletion operations."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_sets_is_deleted_flag_to_true(self):
+    async def test_deactivate_sets_is_deactivated_flag_to_true(self):
         """
-        Test that soft delete updates is_deleted flag to True.
+        Test that deactivate updates is_deactivated flag to True.
 
         Arrange: Mock session and existing team
         Act: Call repository.soft_delete()
-        Assert: is_deleted flag set to True and changes committed
+        Assert: is_deactivated flag set to True and changes committed
         """
         # Arrange
         mock_session = AsyncMock()
@@ -598,7 +598,7 @@ class TestTeamRepositorySoftDelete:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -606,7 +606,7 @@ class TestTeamRepositorySoftDelete:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         team.country = mock_country
@@ -618,19 +618,19 @@ class TestTeamRepositorySoftDelete:
         repository = TeamRepository(mock_session)
 
         # Act
-        await repository.soft_delete(team_id)
+        await repository.deactivate(team_id)
 
         # Assert
-        assert team.is_deleted is True
+        assert team.is_deactivated is True
         mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_soft_delete_raises_error_for_non_existent_team(self):
+    async def test_deactivate_raises_error_for_non_existent_team(self):
         """
-        Test that soft delete raises error for non-existent team.
+        Test that deactivate raises error for non-existent team.
 
         Arrange: Mock session returning None for team lookup
-        Act: Attempt to soft delete non-existent team
+        Act: Attempt to deactivate non-existent team
         Assert: Raises appropriate exception
         """
         # Arrange
@@ -645,7 +645,7 @@ class TestTeamRepositorySoftDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Team not found"):
-            await repository.soft_delete(team_id)
+            await repository.deactivate(team_id)
 
         mock_session.commit.assert_not_awaited()
 
@@ -671,7 +671,7 @@ class TestTeamRepositoryUpdate:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -679,7 +679,7 @@ class TestTeamRepositoryUpdate:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         team.country = mock_country
@@ -720,7 +720,7 @@ class TestTeamRepositoryUpdate:
             id=old_country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -728,7 +728,7 @@ class TestTeamRepositoryUpdate:
             id=team_id,
             name="Team International",
             country_id=old_country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         team.country = mock_old_country
@@ -769,7 +769,7 @@ class TestTeamRepositoryUpdate:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -777,7 +777,7 @@ class TestTeamRepositoryUpdate:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
         team.country = mock_country
@@ -838,7 +838,7 @@ class TestTeamRepositoryPermanentDelete:
         """
         Test that permanent delete removes team from database.
 
-        Arrange: Mock session with soft-deleted team
+        Arrange: Mock session with deactivated team
         Act: Call repository.permanent_delete()
         Assert: session.delete() called and changes committed
         """
@@ -851,7 +851,7 @@ class TestTeamRepositoryPermanentDelete:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -859,7 +859,7 @@ class TestTeamRepositoryPermanentDelete:
             id=team_id,
             name="Team USA",
             country_id=country_id,
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
         team.country = mock_country
@@ -871,7 +871,7 @@ class TestTeamRepositoryPermanentDelete:
         repository = TeamRepository(mock_session)
 
         # Act
-        await repository.permanent_delete(team_id)
+        await repository.delete(team_id)
 
         # Assert
         mock_session.delete.assert_called_once_with(team)
@@ -898,7 +898,7 @@ class TestTeamRepositoryPermanentDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Team not found"):
-            await repository.permanent_delete(team_id)
+            await repository.delete(team_id)
 
         mock_session.delete.assert_not_called()
         mock_session.commit.assert_not_awaited()

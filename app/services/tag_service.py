@@ -111,9 +111,9 @@ class TagService:
 
     async def delete(self, tag_id: UUID) -> None:
         """
-        Soft delete a tag.
+        Deactivate a tag.
 
         Args:
             tag_id: UUID of the tag to delete
         """
-        await self.tag_repository.soft_delete(tag_id)
+        await self.tag_repository.deactivate(tag_id)

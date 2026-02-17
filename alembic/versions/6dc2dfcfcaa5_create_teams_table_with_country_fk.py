@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column('name', sa.String(length=100), nullable=False),
         sa.Column('country_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('false')),
+        sa.Column('is_deactivated', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
     )
 
@@ -41,12 +41,12 @@ def upgrade() -> None:
 
     # Create indexes for optimization
     op.create_index('ix_teams_country_id', 'teams', ['country_id'])
-    op.create_index('ix_teams_is_deleted', 'teams', ['is_deleted'])
+    op.create_index('ix_teams_is_deactivated', 'teams', ['is_deactivated'])
 
 
 def downgrade() -> None:
     """Drop teams table."""
-    op.drop_index('ix_teams_is_deleted', table_name='teams')
+    op.drop_index('ix_teams_is_deactivated', table_name='teams')
     op.drop_index('ix_teams_country_id', table_name='teams')
     op.drop_constraint('fk_teams_country_id', 'teams', type_='foreignkey')
     op.drop_table('teams')

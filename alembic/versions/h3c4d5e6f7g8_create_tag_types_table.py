@@ -29,7 +29,7 @@ def upgrade() -> None:
         sa.Column('is_parent', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('has_children', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('display_order', sa.Integer(), nullable=False, server_default=sa.text('0')),
-        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('false')),
+        sa.Column('is_deactivated', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
     )
 
@@ -41,11 +41,11 @@ def upgrade() -> None:
     )
 
     # Create index for soft delete filtering
-    op.create_index('ix_tag_types_is_deleted', 'tag_types', ['is_deleted'])
+    op.create_index('ix_tag_types_is_deactivated', 'tag_types', ['is_deactivated'])
 
 
 def downgrade() -> None:
     """Drop tag_types table."""
-    op.drop_index('ix_tag_types_is_deleted', table_name='tag_types')
+    op.drop_index('ix_tag_types_is_deactivated', table_name='tag_types')
     op.drop_constraint('uq_tag_types_name', 'tag_types', type_='unique')
     op.drop_table('tag_types')

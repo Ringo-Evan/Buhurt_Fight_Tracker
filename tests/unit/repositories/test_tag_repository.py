@@ -65,8 +65,8 @@ class TestTagRepositoryListAll:
         mock_session = AsyncMock()
         tag_type_id = uuid4()
 
-        tag1 = Tag(id=uuid4(), tag_type_id=tag_type_id, value='singles', is_deleted=False)
-        tag2 = Tag(id=uuid4(), tag_type_id=tag_type_id, value='melee', is_deleted=False)
+        tag1 = Tag(id=uuid4(), tag_type_id=tag_type_id, value='singles', is_deactivated=False)
+        tag2 = Tag(id=uuid4(), tag_type_id=tag_type_id, value='melee', is_deactivated=False)
 
         mock_result = MagicMock()
         mock_result.unique.return_value.scalars.return_value.all.return_value = [tag1, tag2]
@@ -101,7 +101,7 @@ class TestTagRepositoryUpdate:
         tag_id = uuid4()
         tag_type_id = uuid4()
 
-        existing_tag = Tag(id=tag_id, tag_type_id=tag_type_id, value='duel', is_deleted=False)
+        existing_tag = Tag(id=tag_id, tag_type_id=tag_type_id, value='duel', is_deactivated=False)
 
         mock_result = MagicMock()
         mock_result.unique.return_value.scalar_one_or_none.return_value = existing_tag

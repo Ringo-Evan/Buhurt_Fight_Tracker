@@ -1,7 +1,7 @@
 """
 SQLAlchemy ORM model for Team entity.
 
-Implements soft delete pattern with is_deleted flag.
+Implements soft delete pattern with is_deactivated flag.
 Uses UUID primary keys and foreign key relationship to Country.
 Follows same patterns as Country model for consistency.
 """
@@ -47,9 +47,9 @@ class Team(Base):
         - Default: is_deleted = False, created_at = now()
 
     Soft Delete Behavior:
-        - Soft deleted teams are filtered from default queries
+        - Deactivated teams are filtered from default queries
         - Country relationship preserved even when soft deleted
-        - Admin can retrieve soft deleted teams with include_deleted=True
+        - Admin can retrieve deactivated teams with include_deleted=True
 
     Example:
         ```python
@@ -85,7 +85,7 @@ class Team(Base):
         index=True  # Optimize filtering by country
     )
 
-    is_deleted: Mapped[bool] = mapped_column(
+    is_deactivated: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,
@@ -140,8 +140,8 @@ class Team(Base):
         # Database defaults (in mapped_column) will override these on insert
         if 'id' not in kwargs:
             self.id = uuid4()
-        if 'is_deleted' not in kwargs:
-            self.is_deleted = False
+        if 'is_deactivated' not in kwargs:
+            self.is_deactivated = False
         if 'created_at' not in kwargs:
             self.created_at = datetime.now(UTC)
 
@@ -154,5 +154,5 @@ class Team(Base):
         """
         return (
             f"<Team(id={self.id}, name='{self.name}', "
-            f"country_id={self.country_id}, is_deleted={self.is_deleted})>"
+            f"country_id={self.country_id}, is_deactivated={self.is_deactivated})>"
         )

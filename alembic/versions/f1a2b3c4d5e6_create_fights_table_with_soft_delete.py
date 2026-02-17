@@ -29,7 +29,7 @@ def upgrade() -> None:
         sa.Column('video_url', sa.String(length=500), nullable=True),
         sa.Column('winner_side', sa.Integer(), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
-        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default=sa.text('false')),
+        sa.Column('is_deactivated', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
     )
 
@@ -42,12 +42,12 @@ def upgrade() -> None:
 
     # Create indexes for optimization
     op.create_index('ix_fights_date', 'fights', ['date'])
-    op.create_index('ix_fights_is_deleted', 'fights', ['is_deleted'])
+    op.create_index('ix_fights_is_deactivated', 'fights', ['is_deactivated'])
 
 
 def downgrade() -> None:
     """Drop fights table."""
-    op.drop_index('ix_fights_is_deleted', table_name='fights')
+    op.drop_index('ix_fights_is_deactivated', table_name='fights')
     op.drop_index('ix_fights_date', table_name='fights')
     op.drop_constraint('ck_fights_winner_side', 'fights', type_='check')
     op.drop_table('fights')

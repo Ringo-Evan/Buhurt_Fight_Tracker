@@ -1,7 +1,7 @@
 """
 Repository for Fight entity data access.
 
-Implements data access layer with soft delete support.
+Implements data access layer with deactivate support.
 All queries filter out soft-deleted records by default.
 """
 
@@ -17,7 +17,7 @@ class FightRepository:
     """
     Data access layer for Fight entity.
 
-    Handles all database operations for fights with soft delete support.
+    Handles all database operations for fights with deactivate support.
     """
 
     def __init__(self, session: AsyncSession):
@@ -49,39 +49,39 @@ class FightRepository:
             await self.session.rollback()
             raise e
 
-    async def get_by_id(self, fight_id: UUID, include_deleted: bool = False) -> Fight | None:
+    async def get_by_id(self, fight_id: UUID, include_deactivated: bool = False) -> Fight | None:
         """
         Retrieve a fight by ID.
 
         Args:
             fight_id: UUID of the fight
-            include_deleted: If True, include soft-deleted fights
+            include_deleted: If True, include deactivated fights
 
         Returns:
             Fight instance or None if not found
         """
         query = select(Fight).where(Fight.id == fight_id)
 
-        if not include_deleted:
-            query = query.where(Fight.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Fight.is_deactivated == False)
 
         result = await self.session.execute(query)
         return result.unique().scalar_one_or_none()
     
-    async def list_all(self, include_deleted: bool = False) -> list[Fight]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Fight]:
         """
         List all fights.
 
         Args:
-            include_deleted: If True, include soft-deleted fights
+            include_deleted: If True, include deactivated fights
 
         Returns:
             List of Fight instances
         """
         query = select(Fight).order_by(Fight.date.desc())
 
-        if not include_deleted:
-            query = query.where(Fight.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Fight.is_deactivated == False)
 
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
@@ -90,7 +90,7 @@ class FightRepository:
         self,
         start_date: date,
         end_date: date,
-        include_deleted: bool = False
+        include_deactivated: bool = False
     ) -> list[Fight]:
         """
         List fights within a date range.
@@ -98,7 +98,7 @@ class FightRepository:
         Args:
             start_date: Start of date range (inclusive)
             end_date: End of date range (inclusive)
-            include_deleted: If True, include soft-deleted fights
+            include_deleted: If True, include deactivated fights
 
         Returns:
             List of Fight instances within the date range
@@ -108,15 +108,15 @@ class FightRepository:
             Fight.date <= end_date
         ).order_by(Fight.date.desc())
 
-        if not include_deleted:
-            query = query.where(Fight.is_deleted == False)
+        if not include_deactivated:
+            query = query.where(Fight.is_deactivated == False)
 
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
 
-    async def soft_delete(self, fight_id: UUID) -> None:
+    async def deactivate(self, fight_id: UUID) -> None:
         """
-        Soft delete a fight by setting is_deleted flag.
+        Deactivate a fight by setting is_deactivated flag.
 
         Args:
             fight_id: UUID of the fight to delete
@@ -124,11 +124,11 @@ class FightRepository:
         Raises:
             ValueError: If fight not found
         """
-        fight = await self.get_by_id(fight_id, include_deleted=False)
+        fight = await self.get_by_id(fight_id, include_deactivated=False)
         if fight is None:
             raise ValueError("Fight not found")
 
-        fight.is_deleted = True
+        fight.is_deactivated = True
         await self.session.commit()
 
     async def update(self, fight_id: UUID, update_data: Dict[str, Any]) -> Fight:
@@ -145,7 +145,7 @@ class FightRepository:
         Raises:
             ValueError: If fight not found
         """
-        fight = await self.get_by_id(fight_id, include_deleted=False)
+        fight = await self.get_by_id(fight_id, include_deactivated=False)
         if fight is None:
             raise ValueError("Fight not found")
 

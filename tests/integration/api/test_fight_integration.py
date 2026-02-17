@@ -481,18 +481,18 @@ class TestFightIntegration:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_list_all_fights_excludes_soft_deleted(self, db_session):
+    async def test_list_all_fights_excludes_deactivated(self, db_session):
         """
-        Scenario: List all fights excludes soft-deleted fights
+        Scenario: List all fights excludes deactivated fights
 
         Given multiple fights exist
-        And one fight is soft deleted
+        And one fight is deactivated
         When I list all fights
         Then only non-deleted fights are returned
 
         Verifies:
         - GET /fights endpoint
-        - Soft delete filtering
+        - Deactivate filtering
         - List operation working
         """
         # Arrange
@@ -550,7 +550,7 @@ class TestFightIntegration:
                 assert response2.status_code == 201
                 fight2_id = response2.json()['id']
 
-                # Soft delete fight2 via API
+                # Deactivate fight2 via API
                 delete_response = await client.delete(f"/api/v1/fights/{fight2_id}")
                 assert delete_response.status_code == 204
 
