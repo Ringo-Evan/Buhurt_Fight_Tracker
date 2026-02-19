@@ -235,6 +235,15 @@ Without tags, Fight can't properly validate participant counts.
 - [ ] Add integration tests for other entities (Country, Team, Fighter, Tag, TagType)
 - [ ] Set up branch protection rules requiring CI pass
 
+### Phase 2D: Change soft delete to deactivate and add permanent delete In progress
+
+**Scope** Remove all soft delted calls, replace with Deactivate. Create a delete call that does a normal hard delete.
+
+**Progress** Replaced soft delete. Implemented delte in tag type.
+
+
+
+
 ---
 
 ### Phase 3: Tag Expansion 📋 PLANNED
@@ -583,23 +592,22 @@ Types: feat, fix, test, docs, refactor
 
 ## Next Actions
 
-### Immediate (Next Session) - Begin Phase 3: Tag Expansion
-1. [ ] **Review Phase 3 requirements** (30 min)
-   - Review `docs/tag-rules.md` for full tag system design
-   - Review Phase 3 scope in this document
-   - Identify which tag types to implement first
+### Immediate (Next Session) - Begin Phase 2D: Replace Soft Delete
+1. [ ] **Review Phase 2D requirements** 
+   - Review `docs/002-deactivated-flag.md`
+   - Review Phase 2D scope in this document
+   - Identify which models to implement first
 2. [ ] **Plan implementation approach** (30 min)
    - Decide on incremental vs all-at-once approach
-   - Write BDD scenarios for tag hierarchy
-   - Map out tag type dependencies
-3. [ ] **Begin tag hierarchy implementation** (TDD)
-   - Test parent_tag_id relationship
-   - Validate child tags require valid parent
-   - Test cascading soft delete
-4. [ ] **Add new tag types** (category, gender, weapon, league, custom)
-   - Follow strict TDD workflow
-   - One tag type at a time
-   - Write integration tests for each
+   - Write BDD scenarios
+   - Consider cascading delete issues
+3. [ ] **Begin Delete implementation** (TDD)
+   - write integration test from controller layer in BDD style
+   - Write test for first method
+   - Make test pass
+   - repeat till BDD test can pass
+   - Move on to next controller
+4. [ ] **Review work**
 
 ### This Week
 - [x] Create Alembic migration for TagType and Tag tables ✅
@@ -608,15 +616,15 @@ Types: feat, fix, test, docs, refactor
 - [x] Set up GitHub Actions CI/CD pipeline ✅
 - [x] Write Fight integration tests ✅
 - [x] Push and verify CI/CD pipeline ✅
-- [ ] Begin Phase 3 (Tag Expansion)
+- [ ] Begin Phase 2C (Tag Expansion)
 
 ### This Month (January 2026)
 - [x] Complete Phase 2A (Tag Foundation) ✅
 - [x] Complete Phase 2B Core (Fight + FightParticipation validation) ✅
 - [x] Complete Phase 2C (CI/CD pipeline + integration tests) ✅
-- [ ] Begin Phase 3 (Tag Expansion)
 
 ### Next Month (February 2026)
+- [ ] Complete Phase 2D
 - [ ] Complete Phase 3 (Tag Expansion)
 - [ ] Complete Phase 4A (Deployment)
 - [ ] Project "Portfolio Ready" milestone

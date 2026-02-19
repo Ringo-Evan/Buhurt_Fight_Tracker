@@ -6,7 +6,7 @@ from app.models.tag_type import TagType
 from app.repositories.tag_repository import TagRepository
 from app.repositories.tag_type_repository import TagTypeRepository
 
-from app.exceptions import ValidationError
+from app.exceptions import ValidationError, TagNotFoundError
 
 
 class TagService:
@@ -117,3 +117,18 @@ class TagService:
             tag_id: UUID of the tag to deactivate
         """
         await self.tag_repository.deactivate(tag_id)
+
+    async def delete(self, tag_id: UUID) -> None:
+        """
+        Permanently delete a tag from the database.
+
+        Args:
+            tag_id: UUID of the tag to delete
+
+        Raises:
+            TagNotFoundError: If tag not found
+        """
+        try:
+            await self.tag_repository.delete(tag_id)
+        except ValueError as e:
+            raise TagNotFoundError(str(e))

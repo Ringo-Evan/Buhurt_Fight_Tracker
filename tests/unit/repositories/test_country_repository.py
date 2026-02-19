@@ -694,6 +694,39 @@ class TestCountryRepositoryPermanentDelete:
         mock_session.commit.assert_not_awaited()
 
     @pytest.mark.asyncio
+    async def test_permanent_delete_method_delegates_to_delete(self):
+        """
+        Test that permanent_delete calls the same logic as delete.
+
+        Arrange: Mock session with existing country
+        Act: Call repository.permanent_delete()
+        Assert: session.delete() called and changes committed
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        country_id = uuid4()
+        country = Country(
+            id=country_id,
+            name="Czech Republic",
+            code="CZE",
+            is_deactivated=True,
+            created_at=datetime.now(UTC)
+        )
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = country
+        mock_session.execute.return_value = mock_result
+
+        repository = CountryRepository(mock_session)
+
+        # Act
+        await repository.permanent_delete(country_id)
+
+        # Assert
+        mock_session.delete.assert_called_once_with(country)
+        mock_session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_count_relationships_returns_correct_count(self):
         """
         Test that count_relationships returns the number of related entities.

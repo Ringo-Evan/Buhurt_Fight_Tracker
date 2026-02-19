@@ -102,6 +102,23 @@ class TagRepository:
         tag.is_deactivated = True
         await self.session.commit()
 
+    async def delete(self, tag_id: UUID) -> None:
+        """
+        Permanently delete a tag from the database.
+
+        Args:
+            tag_id: UUID of the tag to delete
+
+        Raises:
+            ValueError: If tag not found
+        """
+        tag = await self.get_by_id(tag_id, include_deactivated=True)
+        if tag is None:
+            raise ValueError("Tag not found")
+
+        self.session.delete(tag)
+        await self.session.commit()
+
     async def cascade_deactivate_children(self, parent_tag_id: UUID) -> int:
         """Soft delete all child tags of a parent tag."""
         query = select(Tag).where(

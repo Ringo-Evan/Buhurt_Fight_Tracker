@@ -156,6 +156,23 @@ class FightRepository:
         await self.session.refresh(fight)
         return fight
 
+    async def delete(self, fight_id: UUID) -> None:
+        """
+        Permanently delete a fight from the database.
+
+        Args:
+            fight_id: UUID of the fight to delete
+
+        Raises:
+            ValueError: If fight not found
+        """
+        fight = await self.get_by_id(fight_id, include_deactivated=True)
+        if fight is None:
+            raise ValueError("Fight not found")
+
+        self.session.delete(fight)
+        await self.session.commit()
+
     async def refresh_session(self, fight: Fight) -> None:
         """
         Refresh the fight instance from the database.

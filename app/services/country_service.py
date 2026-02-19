@@ -189,13 +189,7 @@ class CountryService:
         Raises:
             CountryNotFoundError: If country not found
             ValidationError: If country has relationships
-            NotImplementedError: Team entity not yet implemented
         """
-        # Validate country exists
-        country = await self.repository.get_by_id(country_id, include_deactivated=True)
-        if country is None:
-            raise CountryNotFoundError("Country not found")
-
         # Check for team relationships
         relationship_count = await self.repository.count_relationships(country_id)
         if relationship_count > 0:
@@ -205,7 +199,7 @@ class CountryService:
 
         # Permanently delete country
         try:
-            await self.repository.delete(country_id)
+            await self.repository.permanent_delete(country_id)
         except ValueError as e:
             raise CountryNotFoundError(str(e))
 

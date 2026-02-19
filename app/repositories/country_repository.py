@@ -168,6 +168,18 @@ class CountryRepository:
         await self.session.delete(country)  # delete() is synchronous
         await self.session.commit()
 
+    async def permanent_delete(self, country_id: UUID) -> None:
+        """
+        Permanently delete a country from database.
+
+        Args:
+            country_id: UUID of the country to delete
+
+        Raises:
+            ValueError: If country not found
+        """
+        await self.delete(country_id)
+
     async def count_relationships(self, country_id: UUID) -> int:
         """
         Count the number of relationships (teams) associated with a country.

@@ -188,3 +188,20 @@ class FighterRepository:
         await self.session.commit()
         await self.session.refresh(fighter)
         return fighter
+
+    async def delete(self, fighter_id: UUID) -> None:
+        """
+        Permanently delete a fighter from the database.
+
+        Args:
+            fighter_id: UUID of the fighter to delete
+
+        Raises:
+            ValueError: If fighter not found
+        """
+        fighter = await self.get_by_id(fighter_id, include_deactivated=True)
+        if fighter is None:
+            raise ValueError("Fighter not found")
+
+        self.session.delete(fighter)
+        await self.session.commit()

@@ -206,3 +206,18 @@ class FighterService:
             raise FighterNotFoundError(str(e))
         except IntegrityError:
             raise InvalidTeamError("Team not found")
+
+    async def delete(self, fighter_id: UUID) -> None:
+        """
+        Permanently delete a fighter from the database.
+
+        Args:
+            fighter_id: UUID of the fighter to delete
+
+        Raises:
+            FighterNotFoundError: If fighter not found
+        """
+        try:
+            await self.repository.delete(fighter_id)
+        except ValueError as e:
+            raise FighterNotFoundError(str(e))

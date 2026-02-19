@@ -171,12 +171,38 @@ async def update_country(
         )
 
 
+@router.patch(
+    "/{country_id}/deactivate",
+    response_model=CountryResponse,
+    summary="Deactivate a country",
+    description="Deactivate a country (sets is_deactivated flag). Record is preserved.",
+    responses={
+        404: {"description": "Country not found"},
+    },
+)
+async def deactivate_country(
+    country_id: UUID,
+    service: CountryService = Depends(get_country_service),
+) -> CountryResponse:
+    """Deactivate a country (soft delete)."""
+    try:
+        await service.deactivate(country_id)
+        country = await service.get_by_id(country_id, include_deactivated=True)
+        return CountryResponse.model_validate(country)
+    except CountryNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Country with ID {country_id} not found",
+        )
+
+
 @router.delete(
     "/{country_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Soft delete a country",
-    description="Soft delete a country (sets is_deactivated flag).",
+    summary="Permanently delete a country",
+    description="Permanently delete a country from the database. Fails if the country has relationships.",
     responses={
+        400: {"description": "Country has existing relationships"},
         404: {"description": "Country not found"},
     },
 )
@@ -184,11 +210,16 @@ async def delete_country(
     country_id: UUID,
     service: CountryService = Depends(get_country_service),
 ) -> None:
-    """Soft delete a country."""
+    """Permanently delete a country."""
     try:
-        await service.deactivate(country_id)
+        await service.permanent_delete(country_id)
     except CountryNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Country with ID {country_id} not found",
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )

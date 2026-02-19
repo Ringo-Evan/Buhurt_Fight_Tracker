@@ -115,3 +115,61 @@ class TestTagRepositoryUpdate:
         # Assert
         assert result.value == 'profight'
         mock_session.commit.assert_awaited_once()
+
+
+class TestTagRepositoryPermanentDelete:
+    """Test suite for permanent (hard) deletion operations."""
+
+    @pytest.mark.asyncio
+    async def test_delete_removes_tag_from_database(self):
+        """
+        Test that delete permanently removes tag from database.
+
+        Arrange: Mock session with existing tag
+        Act: Call repository.delete()
+        Assert: session.delete() called and changes committed
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        tag_id = uuid4()
+        tag = Tag(id=tag_id, tag_type_id=uuid4(), value='singles', is_deactivated=False)
+
+        mock_result = MagicMock()
+        mock_result.unique.return_value.scalar_one_or_none.return_value = tag
+        mock_session.execute.return_value = mock_result
+        mock_session.delete = MagicMock()
+
+        repository = TagRepository(mock_session)
+
+        # Act
+        await repository.delete(tag_id)
+
+        # Assert
+        mock_session.delete.assert_called_once_with(tag)
+        mock_session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_raises_error_for_non_existent_tag(self):
+        """
+        Test that delete raises ValueError for non-existent tag.
+
+        Arrange: Mock session returning None
+        Act: Call repository.delete() with non-existent ID
+        Assert: ValueError raised
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        tag_id = uuid4()
+
+        mock_result = MagicMock()
+        mock_result.unique.return_value.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
+
+        repository = TagRepository(mock_session)
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="Tag not found"):
+            await repository.delete(tag_id)
+
+        mock_session.delete.assert_not_called()
+        mock_session.commit.assert_not_awaited()

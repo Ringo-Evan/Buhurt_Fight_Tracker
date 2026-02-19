@@ -549,3 +549,50 @@ class TestFighterServiceDeactivate:
         # Act & Assert
         with pytest.raises(FighterNotFoundError):
             await service.deactivate(uuid4())
+
+
+class TestFighterServicePermanentDelete:
+    """Test suite for fighter permanent delete business logic."""
+
+    @pytest.mark.asyncio
+    async def test_delete_fighter_delegates_to_repository(self):
+        """
+        Test that delete calls repository.delete() and succeeds.
+
+        Arrange: Mock repository returning None (no error)
+        Act: Call service.delete()
+        Assert: Repository delete called with correct ID
+        """
+        # Arrange
+        mock_fighter_repo = AsyncMock(spec=FighterRepository)
+        mock_team_repo = AsyncMock(spec=TeamRepository)
+        mock_fighter_repo.delete.return_value = None
+
+        service = FighterService(mock_fighter_repo, mock_team_repo)
+        fighter_id = uuid4()
+
+        # Act
+        await service.delete(fighter_id)
+
+        # Assert
+        mock_fighter_repo.delete.assert_awaited_once_with(fighter_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_non_existent_fighter_raises_error(self):
+        """
+        Test that deleting non-existent fighter raises FighterNotFoundError.
+
+        Arrange: Mock repository raising ValueError
+        Act: Call service.delete()
+        Assert: FighterNotFoundError raised
+        """
+        # Arrange
+        mock_fighter_repo = AsyncMock(spec=FighterRepository)
+        mock_team_repo = AsyncMock(spec=TeamRepository)
+        mock_fighter_repo.delete.side_effect = ValueError("Fighter not found")
+
+        service = FighterService(mock_fighter_repo, mock_team_repo)
+
+        # Act & Assert
+        with pytest.raises(FighterNotFoundError):
+            await service.delete(uuid4())

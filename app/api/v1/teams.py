@@ -168,11 +168,36 @@ async def update_team(
         )
 
 
+@router.patch(
+    "/{team_id}/deactivate",
+    response_model=TeamWithCountryResponse,
+    summary="Deactivate a team",
+    description="Deactivate a team (sets is_deactivated flag). Record is preserved.",
+    responses={
+        404: {"description": "Team not found"},
+    },
+)
+async def deactivate_team(
+    team_id: UUID,
+    service: TeamService = Depends(get_team_service),
+) -> TeamWithCountryResponse:
+    """Deactivate a team (soft delete)."""
+    try:
+        await service.deactivate(team_id)
+        team = await service.get_by_id(team_id, include_deactivated=True)
+        return TeamWithCountryResponse.model_validate(team)
+    except TeamNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Team with ID {team_id} not found",
+        )
+
+
 @router.delete(
     "/{team_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Deactivate a team",
-    description="Deactivate a team (sets is_deactivated flag).",
+    summary="Permanently delete a team",
+    description="Permanently delete a team from the database.",
     responses={
         404: {"description": "Team not found"},
     },
@@ -181,9 +206,9 @@ async def delete_team(
     team_id: UUID,
     service: TeamService = Depends(get_team_service),
 ) -> None:
-    """Deactivate a team."""
+    """Permanently delete a team."""
     try:
-        await service.deactivate(team_id)
+        await service.delete(team_id)
     except TeamNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

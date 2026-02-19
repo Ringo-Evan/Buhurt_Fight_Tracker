@@ -247,3 +247,57 @@ class TestTagServiceDeactivate:
 
         # Assert
         mock_tag_repo.deactivate.assert_called_once_with(tag_id)
+
+
+class TestTagServicePermanentDelete:
+    """Test suite for Tag permanent delete business logic."""
+
+    @pytest.mark.asyncio
+    async def test_delete_tag_delegates_to_repository(self):
+        """
+        Test that delete calls repository.delete() and succeeds.
+
+        Arrange: Mock repository returning None (no error)
+        Act: Call service.delete()
+        Assert: Repository delete called with correct ID
+        """
+        # Arrange
+        mock_tag_repo = AsyncMock(spec=TagRepository)
+        mock_tag_type_repo = AsyncMock(spec=TagTypeRepository)
+        mock_tag_repo.delete.return_value = None
+
+        service = TagService(
+            tag_repository=mock_tag_repo,
+            tag_type_repository=mock_tag_type_repo
+        )
+        tag_id = uuid4()
+
+        # Act
+        await service.delete(tag_id)
+
+        # Assert
+        mock_tag_repo.delete.assert_awaited_once_with(tag_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_non_existent_tag_raises_error(self):
+        """
+        Test that deleting non-existent tag raises an appropriate error.
+
+        Arrange: Mock repository raising ValueError
+        Act: Call service.delete()
+        Assert: ValueError propagated (or custom exception raised)
+        """
+        # Arrange
+        from app.exceptions import TagNotFoundError
+        mock_tag_repo = AsyncMock(spec=TagRepository)
+        mock_tag_type_repo = AsyncMock(spec=TagTypeRepository)
+        mock_tag_repo.delete.side_effect = ValueError("Tag not found")
+
+        service = TagService(
+            tag_repository=mock_tag_repo,
+            tag_type_repository=mock_tag_type_repo
+        )
+
+        # Act & Assert
+        with pytest.raises(TagNotFoundError):
+            await service.delete(uuid4())

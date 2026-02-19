@@ -13,7 +13,7 @@ from app.repositories.tag_repository import TagRepository
 from app.repositories.tag_type_repository import TagTypeRepository
 from app.services.tag_service import TagService
 from app.schemas.tag_schema import TagCreate, TagUpdate, TagResponse
-from app.exceptions import ValidationError
+from app.exceptions import ValidationError, TagNotFoundError
 
 router = APIRouter(prefix="/tags", tags=["Tags"])
 
@@ -135,8 +135,8 @@ async def deactivate_tag(
 @router.delete(
     "/{tag_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a tag",
-    description="Deactivate a tag (sets is_deactivated flag)",
+    summary="Permanently delete a tag",
+    description="Permanently delete a tag from the database.",
     responses={
         404: {"description": "Tag not found"},
     },
@@ -145,10 +145,10 @@ async def delete_tag(
     tag_id: UUID,
     service: TagService = Depends(get_tag_service)
 ):
-    """Deactivate a tag."""
+    """Permanently delete a tag."""
     try:
-        await service.deactivate(tag_id)
-    except ValueError:
+        await service.delete(tag_id)
+    except TagNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Tag with ID {tag_id} not found"

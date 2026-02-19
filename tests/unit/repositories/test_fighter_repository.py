@@ -550,3 +550,67 @@ class TestFighterRepositoryUpdate:
         # Act & Assert
         with pytest.raises(IntegrityError):
             await repository.update(fighter_id, {"team_id": uuid4()})
+
+
+class TestFighterRepositoryPermanentDelete:
+    """Test suite for permanent (hard) deletion operations."""
+
+    @pytest.mark.asyncio
+    async def test_delete_removes_fighter_from_database(self):
+        """
+        Test that delete permanently removes fighter from database.
+
+        Arrange: Mock session with existing fighter
+        Act: Call repository.delete()
+        Assert: session.delete() called and changes committed
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        fighter_id = uuid4()
+        fighter = Fighter(
+            id=fighter_id,
+            name="Hans Mueller",
+            team_id=uuid4(),
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+
+        mock_result = MagicMock()
+        mock_result.unique.return_value.scalar_one_or_none.return_value = fighter
+        mock_session.execute.return_value = mock_result
+        mock_session.delete = MagicMock()
+
+        repository = FighterRepository(mock_session)
+
+        # Act
+        await repository.delete(fighter_id)
+
+        # Assert
+        mock_session.delete.assert_called_once_with(fighter)
+        mock_session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_raises_error_for_non_existent_fighter(self):
+        """
+        Test that delete raises ValueError for non-existent fighter.
+
+        Arrange: Mock session returning None
+        Act: Call repository.delete() with non-existent ID
+        Assert: ValueError raised
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        fighter_id = uuid4()
+
+        mock_result = MagicMock()
+        mock_result.unique.return_value.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
+
+        repository = FighterRepository(mock_session)
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="Fighter not found"):
+            await repository.delete(fighter_id)
+
+        mock_session.delete.assert_not_called()
+        mock_session.commit.assert_not_awaited()

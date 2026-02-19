@@ -162,11 +162,36 @@ async def update_fight(
         )
 
 
+@router.patch(
+    "/{fight_id}/deactivate",
+    response_model=FightResponse,
+    summary="Deactivate a fight",
+    description="Deactivate a fight (sets is_deactivated flag). Record is preserved.",
+    responses={
+        404: {"description": "Fight not found"},
+    },
+)
+async def deactivate_fight(
+    fight_id: UUID,
+    service: FightService = Depends(get_fight_service),
+) -> FightResponse:
+    """Deactivate a fight (soft delete)."""
+    try:
+        await service.deactivate(fight_id)
+        fight = await service.get_by_id(fight_id, include_deactivated=True)
+        return FightResponse.model_validate(fight)
+    except FightNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fight with ID {fight_id} not found",
+        )
+
+
 @router.delete(
     "/{fight_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Deactivate a fight",
-    description="Deactivate a fight (sets is_deactivated flag).",
+    summary="Permanently delete a fight",
+    description="Permanently delete a fight from the database.",
     responses={
         404: {"description": "Fight not found"},
     },
@@ -175,9 +200,9 @@ async def delete_fight(
     fight_id: UUID,
     service: FightService = Depends(get_fight_service),
 ) -> None:
-    """Deactivate a fight."""
+    """Permanently delete a fight."""
     try:
-        await service.deactivate(fight_id)
+        await service.delete(fight_id)
     except FightNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

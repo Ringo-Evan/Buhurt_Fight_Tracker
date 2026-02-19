@@ -851,3 +851,64 @@ class TestFightServiceCreateWithParticipants:
             await service.create_with_participants(fight_data, fight_format, participations_data)
 
         mock_fight_repo.create.assert_not_awaited()
+
+
+class TestFightServicePermanentDelete:
+    """Test suite for Fight permanent delete business logic."""
+
+    @pytest.mark.asyncio
+    async def test_delete_fight_delegates_to_repository(self):
+        """
+        Test that delete calls repository.delete() and succeeds.
+
+        Arrange: Mock repository returning None (no error)
+        Act: Call service.delete()
+        Assert: Repository delete called with correct ID
+        """
+        # Arrange
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_participation_repo = AsyncMock(spec=FightParticipationRepository)
+        mock_fighter_repo = AsyncMock(spec=FighterRepository)
+        mock_fight_repo.delete.return_value = None
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=mock_participation_repo,
+            fighter_repository=mock_fighter_repo
+        )
+        fight_id = uuid4()
+
+        # Act
+        await service.delete(fight_id)
+
+        # Assert
+        mock_fight_repo.delete.assert_awaited_once_with(fight_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_non_existent_fight_raises_error(self):
+        """
+        Test that deleting non-existent fight raises FightNotFoundError.
+
+        Arrange: Mock repository raising ValueError
+        Act: Call service.delete()
+        Assert: FightNotFoundError raised
+        """
+        # Arrange
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_participation_repo = AsyncMock(spec=FightParticipationRepository)
+        mock_fighter_repo = AsyncMock(spec=FighterRepository)
+        mock_fight_repo.delete.side_effect = ValueError("Fight not found")
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=mock_participation_repo,
+            fighter_repository=mock_fighter_repo
+        )
+
+        # Act & Assert
+        with pytest.raises(FightNotFoundError):
+            await service.delete(uuid4())

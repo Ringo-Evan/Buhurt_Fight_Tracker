@@ -290,3 +290,18 @@ class FightService:
             await self.fight_repository.deactivate(fight_id)
         except ValueError:
             raise FightNotFoundError(f"Fight with ID {fight_id} not found")
+
+    async def delete(self, fight_id: UUID) -> None:
+        """
+        Permanently delete a fight from the database.
+
+        Args:
+            fight_id: UUID of the fight to delete
+
+        Raises:
+            FightNotFoundError: If fight not found
+        """
+        try:
+            await self.fight_repository.delete(fight_id)
+        except ValueError:
+            raise FightNotFoundError(f"Fight with ID {fight_id} not found")

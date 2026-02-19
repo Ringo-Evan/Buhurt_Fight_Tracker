@@ -184,11 +184,36 @@ async def update_fighter(
         )
 
 
+@router.patch(
+    "/{fighter_id}/deactivate",
+    response_model=FighterFullResponse,
+    summary="Deactivate a fighter",
+    description="Deactivate a fighter (sets is_deactivated flag). Record is preserved.",
+    responses={
+        404: {"description": "Fighter not found"},
+    },
+)
+async def deactivate_fighter(
+    fighter_id: UUID,
+    service: FighterService = Depends(get_fighter_service),
+) -> FighterFullResponse:
+    """Deactivate a fighter (soft delete)."""
+    try:
+        await service.deactivate(fighter_id)
+        fighter = await service.get_by_id(fighter_id, include_deactivated=True)
+        return FighterFullResponse.model_validate(fighter)
+    except FighterNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fighter with ID {fighter_id} not found",
+        )
+
+
 @router.delete(
     "/{fighter_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Deactivate a fighter",
-    description="Deactivate a fighter (sets is_deactivated flag).",
+    summary="Permanently delete a fighter",
+    description="Permanently delete a fighter from the database.",
     responses={
         404: {"description": "Fighter not found"},
     },
@@ -197,7 +222,7 @@ async def delete_fighter(
     fighter_id: UUID,
     service: FighterService = Depends(get_fighter_service),
 ) -> None:
-    """Deactivate a fighter."""
+    """Permanently delete a fighter."""
     try:
         await service.delete(fighter_id)
     except FighterNotFoundError:
