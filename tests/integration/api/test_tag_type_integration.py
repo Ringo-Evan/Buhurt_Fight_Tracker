@@ -46,11 +46,11 @@ class TestTagTypeIntegration:
         app.dependency_overrides[get_db] = get_db_override
 
         tag_type_data = {
-            'name': 'fight_format',
+            'name': 'test_format',
             'is_privileged': True,
             'is_parent': False,
             'has_children': False,
-            'display_order': 1
+            'display_order': 99
         }
 
         try:
@@ -64,17 +64,18 @@ class TestTagTypeIntegration:
             # Assert: Verify response
             assert response.status_code == 201
             response_data = response.json()
-            assert response_data['name'] == 'fight_format'
+            assert response_data['name'] == 'test_format'
             assert response_data['is_privileged'] == True
-            assert response_data['display_order'] == 1
+            assert response_data['display_order'] == 99
             assert 'id' in response_data
 
             # Verify the tag type was actually persisted in the database
+            # (4 seeded TagTypes + 1 newly created = 5 total)
             from app.repositories.tag_type_repository import TagTypeRepository
             repo = TagTypeRepository(db_session)
             tag_types = await repo.list_all()
-            assert len(tag_types) == 1
-            assert tag_types[0].name == 'fight_format'
+            names = [tt.name for tt in tag_types]
+            assert 'test_format' in names
 
         finally:
             # Cleanup: Remove the dependency override
@@ -100,9 +101,9 @@ class TestTagTypeIntegration:
         app.dependency_overrides[get_db] = get_db_override
 
         tag_type_data = {
-            'name': 'category',
+            'name': 'test_category',
             'is_privileged': True,
-            'display_order': 1
+            'display_order': 99
         }
 
         try:
@@ -190,9 +191,9 @@ class TestTagTypeIntegration:
         from app.repositories.tag_type_repository import TagTypeRepository
         repo = TagTypeRepository(db_session)
 
-        await repo.create({'name': 'fight_format', 'is_privileged': True, 'is_parent': False, 'has_children': False, 'display_order': 1})
-        await repo.create({'name': 'category', 'is_privileged': True, 'is_parent': True, 'has_children': False, 'display_order': 2})
-        await repo.create({'name': 'weapon', 'is_privileged': True, 'is_parent': False, 'has_children': False, 'display_order': 3})
+        await repo.create({'name': 'test_format', 'is_privileged': True, 'is_parent': False, 'has_children': False, 'display_order': 97})
+        await repo.create({'name': 'test_category2', 'is_privileged': True, 'is_parent': True, 'has_children': False, 'display_order': 98})
+        await repo.create({'name': 'weapon', 'is_privileged': True, 'is_parent': False, 'has_children': False, 'display_order': 99})
         await db_session.commit()
 
         try:
@@ -207,20 +208,17 @@ class TestTagTypeIntegration:
             assert response.status_code == 200
             tag_types = response.json()
 
-            assert len(tag_types) == 3
+            # Verify the test tag types are present and ordered correctly relative to each other
+            names = [tt['name'] for tt in tag_types]
+            assert 'test_format' in names
+            assert 'test_category2' in names
+            assert 'weapon' in names
 
-            # Verify order by display_order
-            assert tag_types[0]['name'] == 'fight_format'
-            assert tag_types[0]['is_privileged'] == True
-            assert tag_types[0]['display_order'] == 1
-
-            assert tag_types[1]['name'] == 'category'
-            assert tag_types[1]['is_privileged'] == True
-            assert tag_types[1]['display_order'] == 2
-
-            assert tag_types[2]['name'] == 'weapon'
-            assert tag_types[2]['is_privileged'] == True
-            assert tag_types[2]['display_order'] == 3
+            # Verify display_order ordering (test_format < test_category2 < weapon)
+            idx_format = names.index('test_format')
+            idx_category2 = names.index('test_category2')
+            idx_weapon = names.index('weapon')
+            assert idx_format < idx_category2 < idx_weapon
 
         finally:
             app.dependency_overrides.clear()
@@ -248,12 +246,12 @@ class TestTagTypeIntegration:
         # Create the tag type
         from app.repositories.tag_type_repository import TagTypeRepository
         repo = TagTypeRepository(db_session)
-        category = await repo.create({
-            'name': 'category',
+        test_type = await repo.create({
+            'name': 'test_retrieve_type',
             'is_privileged': True,
             'is_parent': True,
             'has_children': False,
-            'display_order': 2
+            'display_order': 99
         })
         await db_session.commit()
 
@@ -263,15 +261,15 @@ class TestTagTypeIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                response = await client.get(f"/api/v1/tag-types/{category.id}")
+                response = await client.get(f"/api/v1/tag-types/{test_type.id}")
 
             # Assert
             assert response.status_code == 200
             tag_type = response.json()
 
-            assert tag_type['name'] == 'category'
+            assert tag_type['name'] == 'test_retrieve_type'
             assert tag_type['is_privileged'] == True
-            assert tag_type['id'] == str(category.id)
+            assert tag_type['id'] == str(test_type.id)
 
         finally:
             app.dependency_overrides.clear()
@@ -414,12 +412,12 @@ class TestTagTypeIntegration:
         # Create the tag type
         from app.repositories.tag_type_repository import TagTypeRepository
         repo = TagTypeRepository(db_session)
-        category = await repo.create({
-            'name': 'category',
+        test_delete_type = await repo.create({
+            'name': 'test_delete_type',
             'is_privileged': True,
             'is_parent': True,
             'has_children': False,
-            'display_order': 2
+            'display_order': 99
         })
         await db_session.commit()
 
@@ -429,17 +427,17 @@ class TestTagTypeIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                delete_response = await client.delete(f"/api/v1/tag-types/{category.id}")
+                delete_response = await client.delete(f"/api/v1/tag-types/{test_delete_type.id}")
                 assert delete_response.status_code == 204
 
                 # Then: Verify not in list
                 list_response = await client.get("/api/v1/tag-types")
                 tag_types = list_response.json()
                 names = [tt['name'] for tt in tag_types]
-                assert 'category' not in names
+                assert 'test_delete_type' not in names
 
             # Does not exists in database with even with is_deactivated=True
-            deactivated_tag_type = await repo.get_by_id(category.id, include_deactivated=True)
+            deactivated_tag_type = await repo.get_by_id(test_delete_type.id, include_deactivated=True)
             assert deactivated_tag_type is None
 
         finally:
