@@ -9,6 +9,7 @@ from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import Date
+from app.schemas.tag_schema import TagResponse
 
 
 class ParticipationCreate(BaseModel):
@@ -79,7 +80,7 @@ class FightCreate(BaseModel):
     """
     date: datetime.date = Field(..., description="Date of the fight (cannot be in the future)")
     location: str = Field(..., min_length=1, max_length=200, description="Event name or location")
-    fight_format: str = Field(..., pattern="^(singles|melee)$", description="Fight format: 'singles' or 'melee'")
+    supercategory: str = Field(..., pattern="^(singles|melee)$", description="Supercategory: 'singles' or 'melee'")
     video_url: str | None = Field(None, max_length=500, description="URL to fight video recording")
     winner_side: int | None = Field(None, description="Winning side (1, 2, or null for draw/unknown)")
     notes: str | None = Field(None, description="Additional notes about the fight")
@@ -98,7 +99,7 @@ class FightCreate(BaseModel):
             "examples": [{
                 "date": "2025-06-15",
                 "location": "Battle of the Nations 2025",
-                "fight_format": "melee",
+                "supercategory": "melee",
                 "video_url": "https://example.com/fight-video",
                 "winner_side": 1,
                 "notes": "Semi-final round"
@@ -157,6 +158,7 @@ class FightResponse(BaseModel):
     is_deactivated: bool = Field(..., description="Whether this record has been soft-deleted")
     created_at: datetime.datetime = Field(..., description="Timestamp of record creation")
     participations: Optional[list[ParticipationResponse]] = Field(None, description="List of fighter participations")
+    tags: list[TagResponse] = Field(default_factory=list, description="Tags associated with this fight")
 
     model_config = {
         "from_attributes": True

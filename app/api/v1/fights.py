@@ -59,13 +59,13 @@ async def create_fight(
     try:
         # Extract participations from request
         participations = fight_data.participations
-        fight_dict = fight_data.model_dump(exclude={"participations", "fight_format"})
-        fight_format = fight_data.fight_format
+        fight_dict = fight_data.model_dump(exclude={"participations", "supercategory"})
+        supercategory = fight_data.supercategory
 
         if participations:
             # Create fight with participations atomically
             participations_data = [p.model_dump() for p in participations]
-            fight = await service.create_with_participants(fight_data=fight_dict, fight_format=str(fight_format), participations_data=participations_data)
+            fight = await service.create_with_participants(fight_data=fight_dict, supercategory=str(supercategory), participations_data=participations_data)
         else:
             # Create fight without participations
             fight = await service.create(fight_dict)

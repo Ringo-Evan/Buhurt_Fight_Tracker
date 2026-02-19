@@ -97,7 +97,7 @@ class FightService:
     async def _validate_participations(
         self,
         participations_data: List[Dict[str, Any]],
-        fight_format: Optional[str] = None
+        supercategory: Optional[str] = None
     ) -> None:
         """
         Validate participation data before creating fight.
@@ -139,30 +139,30 @@ class FightService:
                     raise ValidationError(f"Fighter with ID {participation['fighter_id']} not found")
 
         # Format-dependent validation
-        if fight_format:
+        if supercategory:
             # Count fighters (not alternates/coaches) per side
             side_1_fighters = [p for p in participations_data if p["side"] == 1 and p.get("role") == "fighter"]
             side_2_fighters = [p for p in participations_data if p["side"] == 2 and p.get("role") == "fighter"]
 
-            if fight_format == "singles":
+            if supercategory == "singles":
                 if len(side_1_fighters) != 1 or len(side_2_fighters) != 1:
                     raise ValidationError("Singles fights require exactly 1 fighter per side")
-            elif fight_format == "melee":
+            elif supercategory == "melee":
                 if len(side_1_fighters) < 5 or len(side_2_fighters) < 5:
                     raise ValidationError("Melee fights require at least 5 fighters per side")
 
     async def create_with_participants(
         self,
         fight_data: Dict[str, Any],
-        fight_format: str,
+        supercategory: str,
         participations_data: List[Dict[str, Any]]
     ) -> Fight:
         """
-        Create a fight with participants and fight_format tag atomically.
+        Create a fight with participants and supercategory tag atomically.
 
         Args:
             fight_data: Dictionary with fight fields
-            fight_format: Format of the fight ("singles" or "melee")
+            supercategory: Supercategory of the fight ("singles" or "melee")
             participations_data: List of participation dictionaries
 
         Returns:
@@ -172,20 +172,21 @@ class FightService:
             ValidationError: If validation fails
         """
         self._validate_fight_data(fight_data, is_update=False)
-        await self._validate_participations(participations_data, fight_format)
+        await self._validate_participations(participations_data, supercategory)
 
         # Create the fight first
         fight = await self.fight_repository.create(fight_data)
 
-        # Create fight_format tag
+        # Create supercategory tag linked to this fight
         if self.tag_repository and self.tag_type_repository:
-            fight_format_tag_type = await self.tag_type_repository.get_by_name("fight_format")
-            if not fight_format_tag_type:
-                raise ValidationError("fight_format TagType not found")
+            supercategory_tag_type = await self.tag_type_repository.get_by_name("supercategory")
+            if not supercategory_tag_type:
+                raise ValidationError("supercategory TagType not found")
 
             await self.tag_repository.create({
-                "tag_type_id": fight_format_tag_type.id,
-                "value": fight_format
+                "fight_id": fight.id,
+                "tag_type_id": supercategory_tag_type.id,
+                "value": supercategory
             })
 
         # Create each participation

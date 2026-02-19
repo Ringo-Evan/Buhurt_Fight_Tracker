@@ -657,11 +657,11 @@ class TestFightServiceCreateWithParticipants:
         mock_fight_repo.create.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_create_fight_creates_fight_format_tag(self):
+    async def test_create_fight_creates_supercategory_tag(self):
         """
-        Test that creating a fight also creates the fight_format tag.
+        Test that creating a fight also creates the supercategory tag linked to the fight.
 
-        Scenario: Fight must have exactly one fight_format tag (DD-002)
+        Scenario: Fight must have exactly one supercategory tag (DD-007)
         """
         # Arrange
         from app.repositories.fight_participation_repository import FightParticipationRepository
@@ -680,22 +680,22 @@ class TestFightServiceCreateWithParticipants:
         fight_id = uuid4()
         fighter1_id = uuid4()
         fighter2_id = uuid4()
-        fight_format_tag_type_id = uuid4()
+        supercategory_tag_type_id = uuid4()
 
         # Mock fighter lookups
         fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deactivated=False, created_at=datetime.now(UTC))
         fighter2 = Fighter(id=fighter2_id, name="Jane Doe", is_deactivated=False, created_at=datetime.now(UTC))
         mock_fighter_repo.get_by_id.side_effect = lambda fid: fighter1 if fid == fighter1_id else fighter2
 
-        # Mock fight_format TagType lookup
-        fight_format_tag_type = TagType(
-            id=fight_format_tag_type_id,
-            name="fight_format",
+        # Mock supercategory TagType lookup
+        supercategory_tag_type = TagType(
+            id=supercategory_tag_type_id,
+            name="supercategory",
             is_privileged=True,
             is_deactivated=False,
             created_at=datetime.now(UTC)
         )
-        mock_tag_type_repo.get_by_name.return_value = fight_format_tag_type
+        mock_tag_type_repo.get_by_name.return_value = supercategory_tag_type
 
         # Mock fight creation
         fight = Fight(
@@ -720,22 +720,23 @@ class TestFightServiceCreateWithParticipants:
             "date": date(2025, 6, 15),
             "location": "Battle Arena Denver"
         }
-        fight_format = "singles"
+        supercategory = "singles"
         participations_data = [
             {"fighter_id": fighter1_id, "side": 1, "role": "fighter"},
             {"fighter_id": fighter2_id, "side": 2, "role": "fighter"}
         ]
 
         # Act
-        result = await service.create_with_participants(fight_data, fight_format, participations_data)
+        result = await service.create_with_participants(fight_data, supercategory, participations_data)
 
         # Assert
         assert result.id == fight_id
         mock_fight_repo.create.assert_awaited_once()
         mock_tag_repo.create.assert_awaited_once()
-        # Verify tag created with correct data
+        # Verify tag created with correct data including fight_id (DD-008)
         tag_call_args = mock_tag_repo.create.call_args[0][0]
-        assert tag_call_args["tag_type_id"] == fight_format_tag_type_id
+        assert tag_call_args["fight_id"] == fight_id
+        assert tag_call_args["tag_type_id"] == supercategory_tag_type_id
         assert tag_call_args["value"] == "singles"
 
     @pytest.mark.asyncio
