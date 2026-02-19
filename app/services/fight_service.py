@@ -201,13 +201,13 @@ class FightService:
         await self.fight_repository.refresh_session(fight)
         return fight
 
-    async def get_by_id(self, fight_id: UUID, include_deleted: bool = False) -> Fight:
+    async def get_by_id(self, fight_id: UUID, include_deactivated: bool = False) -> Fight:
         """
         Get a fight by ID.
 
         Args:
             fight_id: UUID of the fight
-            include_deleted: If True, include deactivated fights
+            include_deactivated: If True, include deactivated fights
 
         Returns:
             Fight instance
@@ -220,12 +220,12 @@ class FightService:
             raise FightNotFoundError(f"Fight with ID {fight_id} not found")
         return fight
 
-    async def list_all(self, include_deleted: bool = False) -> list[Fight]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Fight]:
         """
         List all fights.
 
         Args:
-            include_deleted: If True, include deactivated fights
+            include_deactivated: If True, include deactivated fights
 
         Returns:
             List of Fight instances
@@ -236,7 +236,7 @@ class FightService:
         self,
         start_date: date,
         end_date: date,
-        include_deleted: bool = False
+        include_deactivated: bool = False
     ) -> list[Fight]:
         """
         List fights within a date range.
@@ -244,7 +244,7 @@ class FightService:
         Args:
             start_date: Start of date range
             end_date: End of date range
-            include_deleted: If True, include deactivated fights
+            include_deactivated: If True, include deactivated fights
 
         Returns:
             List of Fight instances
@@ -276,12 +276,12 @@ class FightService:
         self._validate_fight_data(update_data, is_update=True)
         return await self.fight_repository.update(fight_id, update_data)
 
-    async def delete(self, fight_id: UUID) -> None:
+    async def deactivate(self, fight_id: UUID) -> None:
         """
         Deactivate a fight.
 
         Args:
-            fight_id: UUID of the fight to delete
+            fight_id: UUID of the fight to deactivate
 
         Raises:
             FightNotFoundError: If fight not found

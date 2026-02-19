@@ -51,7 +51,7 @@ class TagChangeRequestRepository:
             joinedload(TagChangeRequest.tag_type)
         ).where(
             TagChangeRequest.status == RequestStatus.PENDING.value,
-            TagChangeRequest.is_deleted == False
+            TagChangeRequest.is_deactivated == False
         )
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
@@ -62,7 +62,7 @@ class TagChangeRequestRepository:
             joinedload(TagChangeRequest.tag_type)
         ).where(
             TagChangeRequest.fight_id == fight_id,
-            TagChangeRequest.is_deleted == False
+            TagChangeRequest.is_deactivated == False
         )
         result = await self.session.execute(query)
         return list(result.unique().scalars().all())
@@ -77,7 +77,7 @@ class TagChangeRequestRepository:
             TagChangeRequest.fight_id == fight_id,
             TagChangeRequest.tag_type_id == tag_type_id,
             TagChangeRequest.status == RequestStatus.PENDING.value,
-            TagChangeRequest.is_deleted == False
+            TagChangeRequest.is_deactivated == False
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()

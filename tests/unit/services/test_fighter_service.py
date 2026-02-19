@@ -502,16 +502,16 @@ class TestFighterServiceUpdate:
             await service.update(uuid4(), {"name": "New Name"})
 
 
-class TestFighterServiceDelete:
-    """Test suite for fighter deletion operations."""
+class TestFighterServiceDeactivate:
+    """Test suite for fighter deactivation operations."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_fighter_succeeds(self):
+    async def test_deactivate_fighter_succeeds(self):
         """
-        Test that soft deleting fighter succeeds.
+        Test that deactivating fighter succeeds.
 
         Arrange: Mock repository with existing fighter
-        Act: Call service.delete()
+        Act: Call service.deactivate()
         Assert: Fighter deactivated
         """
         # Arrange
@@ -519,33 +519,33 @@ class TestFighterServiceDelete:
         mock_team_repo = AsyncMock(spec=TeamRepository)
 
         fighter_id = uuid4()
-        mock_fighter_repo.soft_delete.return_value = None
+        mock_fighter_repo.deactivate.return_value = None
 
         service = FighterService(mock_fighter_repo, mock_team_repo)
 
         # Act
-        await service.delete(fighter_id)
+        await service.deactivate(fighter_id)
 
         # Assert
-        mock_fighter_repo.soft_delete.assert_awaited_once_with(fighter_id)
+        mock_fighter_repo.deactivate.assert_awaited_once_with(fighter_id)
 
     @pytest.mark.asyncio
-    async def test_soft_delete_non_existent_fighter_raises_error(self):
+    async def test_deactivate_non_existent_fighter_raises_error(self):
         """
-        Test that soft deleting non-existent fighter raises FighterNotFoundError.
+        Test that deactivating non-existent fighter raises FighterNotFoundError.
 
         Arrange: Mock repository raising ValueError
-        Act: Call service.delete()
+        Act: Call service.deactivate()
         Assert: FighterNotFoundError raised
         """
         # Arrange
         mock_fighter_repo = AsyncMock(spec=FighterRepository)
         mock_team_repo = AsyncMock(spec=TeamRepository)
 
-        mock_fighter_repo.soft_delete.side_effect = ValueError("Fighter not found")
+        mock_fighter_repo.deactivate.side_effect = ValueError("Fighter not found")
 
         service = FighterService(mock_fighter_repo, mock_team_repo)
 
         # Act & Assert
         with pytest.raises(FighterNotFoundError):
-            await service.delete(uuid4())
+            await service.deactivate(uuid4())

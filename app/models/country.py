@@ -1,7 +1,7 @@
 """
 SQLAlchemy ORM model for Country entity.
 
-Implements soft delete pattern with is_deleted flag.
+Implements soft delete pattern with is_deactivated flag.
 Uses UUID primary keys and SQLAlchemy 2.0 mapped_column style.
 """
 
@@ -29,7 +29,7 @@ class Country(Base):
         id: UUID primary key (auto-generated)
         name: Country name (max 100 characters)
         code: ISO 3166-1 alpha-3 country code (3 uppercase letters)
-        is_deleted: Soft delete flag (defaults to False)
+        is_deactivated: Soft delete flag (defaults to False)
         created_at: Timestamp of creation (auto-generated)
 
         teams: Relationship to Team entities (lazy loaded)

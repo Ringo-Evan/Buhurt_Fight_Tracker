@@ -90,9 +90,9 @@ class TagTypeResponse(TagTypeBase):
         is_parent: If True, can have child tags
         has_children: If True, has child tags
         display_order: Order for display purposes
-        is_deleted: Soft delete flag
+        is_deactivated: Soft delete flag
         created_at: Timestamp of record creation
     """
     id: UUID = Field(..., description="Tag type UUID")
-    is_deleted: bool = Field(..., description="Whether this record has been soft-deleted")
+    is_deactivated: bool = Field(..., description="Whether this record has been soft-deleted")
     created_at: datetime = Field(..., description="Timestamp of record creation")

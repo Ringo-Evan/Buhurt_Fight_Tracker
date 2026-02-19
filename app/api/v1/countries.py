@@ -67,11 +67,11 @@ async def create_country(
     description="Retrieve a list of all active countries.",
 )
 async def list_countries(
-    include_deleted: bool = Query(False, description="Include soft-deleted countries (admin only)"),
+    include_deactivate: bool = Query(False, description="Include soft-deleted countries (admin only)"),
     service: CountryService = Depends(get_country_service),
 ) -> list[CountryResponse]:
     """List all countries, optionally including deleted ones."""
-    countries = await service.list_all(include_deleted=include_deleted)
+    countries = await service.list_all(include_deactivated=include_deactivate)
     return [CountryResponse.model_validate(c) for c in countries]
 
 
@@ -86,12 +86,12 @@ async def list_countries(
 )
 async def get_country(
     country_id: UUID,
-    include_deleted: bool = Query(False, description="Include soft-deleted countries (admin only)"),
+    include_deactivate: bool = Query(False, description="Include soft-deleted countries (admin only)"),
     service: CountryService = Depends(get_country_service),
 ) -> CountryResponse:
     """Get a country by its UUID."""
     try:
-        country = await service.get_by_id(country_id, include_deleted=include_deleted)
+        country = await service.get_by_id(country_id, include_deactivated=include_deactivate)
         return CountryResponse.model_validate(country)
     except CountryNotFoundError:
         raise HTTPException(
@@ -111,7 +111,7 @@ async def get_country(
 )
 async def get_country_by_code(
     code: str,
-    include_deleted: bool = Query(False, description="Include soft-deleted countries (admin only)"),
+    include_deactivate: bool = Query(False, description="Include soft-deleted countries (admin only)"),
     service: CountryService = Depends(get_country_service),
 ) -> CountryResponse:
     """Get a country by its ISO code."""
@@ -145,14 +145,14 @@ async def update_country(
     """Update a country's attributes."""
     try:
         # Filter out None values
-        update_data = {k: v for k, v in country_data.model_dump(exclude={"include_deleted"}).items() if v is not None}
-        is_deleted = country_data.include_deleted
+        update_data = {k: v for k, v in country_data.model_dump(exclude={"include_deactivate"}).items() if v is not None}
+        is_deactivated = country_data.include_deactivate
         if not update_data:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No valid fields provided for update",
             )
-        country = await service.update(country_id, update_data, include_deleted=is_deleted)
+        country = await service.update(country_id, update_data, include_deactivated=is_deactivated)
         return CountryResponse.model_validate(country)
     except CountryNotFoundError:
         raise HTTPException(
@@ -175,7 +175,7 @@ async def update_country(
     "/{country_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft delete a country",
-    description="Soft delete a country (sets is_deleted flag).",
+    description="Soft delete a country (sets is_deactivated flag).",
     responses={
         404: {"description": "Country not found"},
     },

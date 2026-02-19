@@ -82,7 +82,7 @@ class CountryService:
 
         # Check for duplicate code (only among active countries)
         code = country_data.get('code')
-        existing_country = await self.repository.get_by_code(code, include_deleted=False)
+        existing_country = await self.repository.get_by_code(code, include_deactivated=False)
         if existing_country:
             raise DuplicateCountryCodeError(code)
 
@@ -92,13 +92,13 @@ class CountryService:
         except IntegrityError:
             raise DuplicateCountryCodeError(code)
 
-    async def get_by_id(self, country_id: UUID, include_deleted: bool = False) -> Country:
+    async def get_by_id(self, country_id: UUID, include_deactivated: bool = False) -> Country:
         """
         Retrieve a country by ID.
 
         Args:
             country_id: UUID of the country
-            include_deleted: If True, include soft-deleted countries
+            include_deactivated: If True, include soft-deleted countries
 
         Returns:
             Country instance
@@ -106,13 +106,13 @@ class CountryService:
         Raises:
             CountryNotFoundError: If country not found
         """
-        country = await self.repository.get_by_id(country_id, include_deactivated=include_deleted)
+        country = await self.repository.get_by_id(country_id, include_deactivated=include_deactivated)
         if country is None:
             raise CountryNotFoundError()
 
         return country
 
-    async def get_by_code(self, code: str, include_deleted: bool = False) -> Country | None:
+    async def get_by_code(self, code: str, include_deactivated: bool = False) -> Country | None:
         """
         Retrieve a country by ISO code.
 
@@ -122,19 +122,19 @@ class CountryService:
         Returns:
             Country instance or None if not found
         """
-        return await self.repository.get_by_code(code, include_deleted=include_deleted)
+        return await self.repository.get_by_code(code, include_deactivated=include_deactivated)
 
-    async def list_all(self, include_deleted: bool = False) -> list[Country]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Country]:
         """
         List all countries.
 
         Args:
-            include_deleted: If True, include soft-deleted countries
+            include_deactivated: If True, include soft-deleted countries
 
         Returns:
             List of Country instances
         """
-        return await self.repository.list_all(include_deactivated=include_deleted)
+        return await self.repository.list_all(include_deactivated=include_deactivated)
 
     async def delete(self, country_id: UUID) -> None:
         """
@@ -151,7 +151,7 @@ class CountryService:
         except ValueError as e:
             raise CountryNotFoundError(str(e))
 
-    async def update(self, country_id: UUID, update_data: Dict[str, Any], include_deleted: bool = False) -> Country:
+    async def update(self, country_id: UUID, update_data: Dict[str, Any], include_deactivated: bool = False) -> Country:
         """
         Update a country with validation.
 
@@ -172,7 +172,7 @@ class CountryService:
 
         # Update country
         try:
-            return await self.repository.update(country_id, update_data, include_deleted=include_deleted)
+            return await self.repository.update(country_id, update_data, include_deactivated=include_deactivated)
         except ValueError as e:
             raise CountryNotFoundError(str(e))
         except IntegrityError:

@@ -55,7 +55,7 @@ class FightRepository:
 
         Args:
             fight_id: UUID of the fight
-            include_deleted: If True, include deactivated fights
+            include_deactivate: If True, include deactivated fights
 
         Returns:
             Fight instance or None if not found
@@ -73,7 +73,7 @@ class FightRepository:
         List all fights.
 
         Args:
-            include_deleted: If True, include deactivated fights
+            include_deactivate: If True, include deactivated fights
 
         Returns:
             List of Fight instances
@@ -98,7 +98,7 @@ class FightRepository:
         Args:
             start_date: Start of date range (inclusive)
             end_date: End of date range (inclusive)
-            include_deleted: If True, include deactivated fights
+            include_deactivate: If True, include deactivated fights
 
         Returns:
             List of Fight instances within the date range

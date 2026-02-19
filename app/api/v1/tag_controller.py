@@ -125,7 +125,7 @@ async def delete_tag(
 ):
     """Deactivate a tag."""
     try:
-        await service.delete(tag_id)
+        await service.deactivate(tag_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

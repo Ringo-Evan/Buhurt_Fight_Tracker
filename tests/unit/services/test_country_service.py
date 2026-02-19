@@ -46,7 +46,7 @@ class TestCountryServiceCreate:
             id=uuid4(),
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -60,7 +60,7 @@ class TestCountryServiceCreate:
         assert result == expected_country
         assert result.name == "Czech Republic"
         assert result.code == "CZE"
-        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deleted=False)
+        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deactivated=False)
         mock_repository.create.assert_awaited_once_with(country_data)
 
     @pytest.mark.asyncio
@@ -85,7 +85,7 @@ class TestCountryServiceCreate:
             id=uuid4(),
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -95,7 +95,7 @@ class TestCountryServiceCreate:
         with pytest.raises(DuplicateCountryCodeError, match="Country with code CZE already exists"):
             await service.create(country_data)
 
-        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deleted=False)
+        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deactivated=False)
         mock_repository.create.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -120,7 +120,7 @@ class TestCountryServiceCreate:
             id=uuid4(),
             name="Czechia",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -216,7 +216,7 @@ class TestCountryServiceRetrieve:
             id=country_id,
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -228,7 +228,7 @@ class TestCountryServiceRetrieve:
         # Assert
         assert result == expected_country
         assert result.id == country_id
-        mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deleted=False)
+        mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_get_by_id_raises_not_found_error_when_not_exists(self):
@@ -250,7 +250,7 @@ class TestCountryServiceRetrieve:
         with pytest.raises(CountryNotFoundError, match="Country not found"):
             await service.get_by_id(country_id)
 
-        mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deleted=False)
+        mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_get_by_code_returns_country_when_exists(self):
@@ -269,7 +269,7 @@ class TestCountryServiceRetrieve:
             id=uuid4(),
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -281,7 +281,7 @@ class TestCountryServiceRetrieve:
         # Assert
         assert result == expected_country
         assert result.code == "CZE"
-        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deleted=False)
+        mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deactivated=False)
 
 
 class TestCountryServiceDelete:
@@ -355,7 +355,7 @@ class TestCountryServiceUpdate:
             id=country_id,
             name="Czechia",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -367,7 +367,7 @@ class TestCountryServiceUpdate:
         # Assert
         assert result == updated_country
         assert result.name == "Czechia"
-        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deleted=False)
+        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_update_country_code_validates_format(self):
@@ -418,7 +418,7 @@ class TestCountryServiceUpdate:
         with pytest.raises(DuplicateCountryCodeError, match="Country with code POL already exists"):
             await service.update(country_id, update_data)
 
-        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deleted=False)
+        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deactivated=False)
 
     @pytest.mark.asyncio
     async def test_update_country_rejects_empty_name(self):
@@ -464,19 +464,19 @@ class TestCountryServiceUpdate:
         with pytest.raises(CountryNotFoundError, match="Country not found"):
             await service.update(country_id, update_data)
 
-        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deleted=False)
+        mock_repository.update.assert_awaited_once_with(country_id, update_data, include_deactivated=False)
 
 
 class TestCountryServiceAdminAccess:
     """Test suite for admin-specific country operations."""
 
     @pytest.mark.asyncio
-    async def test_get_by_id_as_admin_returns_deleted_country(self):
+    async def test_get_by_id_as_admin_returns_deactivate_country(self):
         """
-        Test that admin can retrieve soft-deleted countries.
+        Test that admin can retrieve soft-deactivated countries.
 
-        Arrange: Mock repository with include_deleted flag
-        Act: Call service.get_by_id(include_deleted=True)
+        Arrange: Mock repository with include_deactivated flag
+        Act: Call service.get_by_id(include_deactivated=True)
         Assert: Returns deleted country
         """
         # Arrange
@@ -488,28 +488,28 @@ class TestCountryServiceAdminAccess:
             id=country_id,
             name="Czech Republic",
             code="CZE",
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
         mock_repository.get_by_id.return_value = deleted_country
 
         # Act
-        result = await service.get_by_id(country_id, include_deleted=True)
+        result = await service.get_by_id(country_id, include_deactivated=True)
 
         # Assert
         assert result == deleted_country
         assert result.is_deactivated is True
-        mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deleted=True)
+        mock_repository.get_by_id.assert_awaited_once_with(country_id, include_deactivated=True)
 
     @pytest.mark.asyncio
-    async def test_list_all_as_admin_includes_deleted_countries(self):
+    async def test_list_all_as_admin_includes_deactivate_countries(self):
         """
-        Test that admin can list all countries including deleted ones.
+        Test that admin can list all countries including deactivated ones.
 
-        Arrange: Mock repository returning active and deleted countries
-        Act: Call service.list_all(include_deleted=True)
-        Assert: Returns all countries including deleted
+        Arrange: Mock repository returning active and deactivated countries
+        Act: Call service.list_all(include_deactivated=True)
+        Assert: Returns all countries including deactivated
         """
         # Arrange
         mock_repository = AsyncMock(spec=CountryRepository)
@@ -520,14 +520,14 @@ class TestCountryServiceAdminAccess:
                 id=uuid4(),
                 name="Czech Republic",
                 code="CZE",
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Country(
                 id=uuid4(),
                 name="Poland",
                 code="POL",
-                is_deleted=True,
+                is_deactivated=True,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -535,12 +535,12 @@ class TestCountryServiceAdminAccess:
         mock_repository.list_all.return_value = all_countries
 
         # Act
-        result = await service.list_all(include_deleted=True)
+        result = await service.list_all(include_deactivated=True)
 
         # Assert
         assert len(result) == 2
         assert any(c.is_deactivated for c in result)
-        mock_repository.list_all.assert_awaited_once_with(include_deleted=True)
+        mock_repository.list_all.assert_awaited_once_with(include_deactivated=True)
 
 
 class TestCountryServicePermanentDelete:

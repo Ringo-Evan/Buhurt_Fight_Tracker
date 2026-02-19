@@ -362,7 +362,7 @@ class TestTeamRepositoryIntegrationSoftDelete:
         - Can include deleted with flag
 
         Arrange: Create 3 teams, deactivate 1
-        Act: Call list_all() with and without include_deleted
+        Act: Call list_all() with and without include_deactivate
         Assert: Default returns 2, with flag returns 3
         """
         # Arrange
@@ -403,7 +403,7 @@ class TestTeamRepositoryIntegrationSoftDelete:
         - Can include deleted teams with flag
 
         Arrange: Create country with 3 teams, deactivate 1
-        Act: Call list_by_country() with and without include_deleted
+        Act: Call list_by_country() with and without include_deactivate
         Assert: Default returns 2, with flag returns 3
         """
         # Arrange
@@ -570,7 +570,7 @@ class TestTeamRepositoryIntegrationPermanentDelete:
         # Act
         await team_repository.delete(team_id)
 
-        # Assert - cannot retrieve even with include_deleted
+        # Assert - cannot retrieve even with include_deactivate
         retrieved = await team_repository.get_by_id(team_id, include_deactivated=True)
         assert retrieved is None
 

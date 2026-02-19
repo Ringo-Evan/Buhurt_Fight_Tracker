@@ -43,7 +43,7 @@ Feature: TagType CRUD Operations
         Given the tag type "weapon" exists
         When I delete the tag type "weapon"
         Then the tag type "weapon" should not appear in the list
-        But the tag type "weapon" should still exist in the database with is_deleted true
+        But the tag type "weapon" should still exist in the database with is_deactivated true
 
     Scenario: Prevent duplicate tag type names
         Given the tag type "category" exists

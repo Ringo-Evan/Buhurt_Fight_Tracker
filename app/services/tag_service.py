@@ -109,11 +109,11 @@ class TagService:
         """
         return await self.tag_repository.update(tag_id, update_data)
 
-    async def delete(self, tag_id: UUID) -> None:
+    async def deactivate(self, tag_id: UUID) -> None:
         """
         Deactivate a tag.
 
         Args:
-            tag_id: UUID of the tag to delete
+            tag_id: UUID of the tag to deactivate
         """
         await self.tag_repository.deactivate(tag_id)

@@ -169,7 +169,7 @@ async def test_deactivate_fighter_preserves_team_relationship(db_session):
     # Act: Deactivate
     await fighter_repo.deactivate(fighter.id)
 
-    # Assert: Can still retrieve with include_deleted
+    # Assert: Can still retrieve with include_deactivate
     deleted_fighter = await fighter_repo.get_by_id(fighter.id, include_deactivated=True)
     assert deleted_fighter is not None
     assert deleted_fighter.is_deactivated is True

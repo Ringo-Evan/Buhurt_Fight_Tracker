@@ -607,14 +607,14 @@ def country_has_code(expected_code, context):
 
 @then('the country is not deleted')
 def country_is_not_deleted(context):
-    """Assert country is_deleted flag is False."""
+    """Assert country is_deactivated flag is False."""
     country = context['result']
     assert country.is_deactivated is False
 
 
 @then('the country is marked as deleted')
 def country_is_marked_deleted(context):
-    """Assert country is_deleted flag is True."""
+    """Assert country is_deactivated flag is True."""
     country = context['result']
     assert country.is_deactivated is True
 

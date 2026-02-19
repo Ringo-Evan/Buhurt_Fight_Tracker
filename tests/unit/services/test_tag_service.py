@@ -211,22 +211,24 @@ class TestTagServiceUpdate:
 
         # Act
         result = await service.update(tag_id, {'value': 'profight'})
+        if result is None:
+            pytest.fail("Expected updated tag, got None")
 
         # Assert
         assert result.value == 'profight'
         mock_tag_repo.update.assert_called_once_with(tag_id, {'value': 'profight'})
 
 
-class TestTagServiceDelete:
-    """Test suite for deleting tags."""
+class TestTagServiceDeactivate:
+    """Test suite for deactivating tags."""
 
     @pytest.mark.asyncio
-    async def test_delete_tag_calls_repository(self):
+    async def test_deactivate_tag_calls_repository(self):
         """
-        Test that delete calls repository deactivate.
+        Test that deactivate calls repository deactivate.
 
         Arrange: Mock repository
-        Act: Call service.delete()
+        Act: Call service.deactivate()
         Assert: Repository deactivate called
         """
         # Arrange
@@ -241,7 +243,7 @@ class TestTagServiceDelete:
         )
 
         # Act
-        await service.delete(tag_id)
+        await service.deactivate(tag_id)
 
         # Assert
         mock_tag_repo.deactivate.assert_called_once_with(tag_id)

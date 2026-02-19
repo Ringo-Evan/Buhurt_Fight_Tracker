@@ -86,7 +86,7 @@ class TagChangeRequest(Base):
         default=0,
         nullable=False
     )
-    is_deleted: Mapped[bool] = mapped_column(
+    is_deactivated: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False

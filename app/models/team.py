@@ -32,7 +32,7 @@ class Team(Base):
         id: UUID primary key (auto-generated)
         name: Team name (max 100 characters, required)
         country_id: Foreign key to countries table (UUID, required)
-        is_deleted: Soft delete flag (defaults to False)
+        is_deactivated: Soft delete flag (defaults to False)
         created_at: Timestamp of creation (auto-generated, UTC)
 
         country: Relationship to Country entity (eager loaded by default)
@@ -44,12 +44,12 @@ class Team(Base):
     Database Constraints:
         - FK: country_id references countries.id (CASCADE on update, RESTRICT on delete)
         - NOT NULL: name, country_id must be provided
-        - Default: is_deleted = False, created_at = now()
+        - Default: is_deactivated = False, created_at = now()
 
     Soft Delete Behavior:
         - Deactivated teams are filtered from default queries
         - Country relationship preserved even when soft deleted
-        - Admin can retrieve deactivated teams with include_deleted=True
+        - Admin can retrieve deactivated teams with include_deactivated=True
 
     Example:
         ```python
@@ -131,7 +131,7 @@ class Team(Base):
             ```python
             team = Team(name="Team USA", country_id=usa_id)
             assert team.id is not None  # Auto-generated
-            assert team.is_deleted is False  # Python default applied
+            assert team.is_deactivated is False  # Python default applied
             ```
         """
         super().__init__(**kwargs)

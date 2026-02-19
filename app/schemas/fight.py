@@ -144,7 +144,7 @@ class FightResponse(BaseModel):
         video_url: URL to fight video (if any)
         winner_side: Which side won (1, 2, or None)
         notes: Optional notes about the fight
-        is_deleted: Soft delete flag
+        is_deactivated: Soft delete flag
         created_at: Timestamp of creation
         participations: List of participations (if loaded)
     """
@@ -154,7 +154,7 @@ class FightResponse(BaseModel):
     video_url: str | None = Field(None, description="URL to fight video recording")
     winner_side: int | None = Field(None, description="Winning side (1, 2, or null for draw/unknown)")
     notes: str | None = Field(None, description="Additional notes about the fight")
-    is_deleted: bool = Field(..., description="Whether this record has been soft-deleted")
+    is_deactivated: bool = Field(..., description="Whether this record has been soft-deleted")
     created_at: datetime.datetime = Field(..., description="Timestamp of record creation")
     participations: Optional[list[ParticipationResponse]] = Field(None, description="List of fighter participations")
 

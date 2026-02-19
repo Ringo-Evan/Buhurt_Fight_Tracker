@@ -74,11 +74,11 @@ async def create_team(
     description="Retrieve a list of all active teams with their countries.",
 )
 async def list_teams(
-    include_deleted: bool = Query(False, description="Include deactivated teams (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated teams (admin only)"),
     service: TeamService = Depends(get_team_service),
 ) -> list[TeamWithCountryResponse]:
     """List all teams, optionally including deleted ones."""
-    teams = await service.list_all(include_deleted=include_deleted)
+    teams = await service.list_all(include_deactivated=include_deactivate)
     return [TeamWithCountryResponse.model_validate(t) for t in teams]
 
 
@@ -90,11 +90,11 @@ async def list_teams(
 )
 async def list_teams_by_country(
     country_id: UUID,
-    include_deleted: bool = Query(False, description="Include deactivated teams (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated teams (admin only)"),
     service: TeamService = Depends(get_team_service),
 ) -> list[TeamWithCountryResponse]:
     """List all teams for a specific country."""
-    teams = await service.list_by_country(country_id, include_deleted=include_deleted)
+    teams = await service.list_by_country(country_id, include_deactivated=include_deactivate)
     return [TeamWithCountryResponse.model_validate(t) for t in teams]
 
 
@@ -109,12 +109,12 @@ async def list_teams_by_country(
 )
 async def get_team(
     team_id: UUID,
-    include_deleted: bool = Query(False, description="Include deactivated teams (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated teams (admin only)"),
     service: TeamService = Depends(get_team_service),
 ) -> TeamWithCountryResponse:
     """Get a team by its UUID."""
     try:
-        team = await service.get_by_id(team_id, include_deactivated=include_deleted)
+        team = await service.get_by_id(team_id, include_deactivated=include_deactivate)
         return TeamWithCountryResponse.model_validate(team)
     except TeamNotFoundError:
         raise HTTPException(

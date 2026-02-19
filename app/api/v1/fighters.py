@@ -73,11 +73,11 @@ async def create_fighter(
     description="Retrieve a list of all active fighters with team and country details.",
 )
 async def list_fighters(
-    include_deleted: bool = Query(False, description="Include deactivated fighters (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated fighters (admin only)"),
     service: FighterService = Depends(get_fighter_service),
 ) -> list[FighterFullResponse]:
     """List all fighters, optionally including deleted ones."""
-    fighters = await service.list_all(include_deleted=include_deleted)
+    fighters = await service.list_all(include_deactivated=include_deactivate)
     return [FighterFullResponse.model_validate(f) for f in fighters]
 
 
@@ -89,11 +89,11 @@ async def list_fighters(
 )
 async def list_fighters_by_team(
     team_id: UUID,
-    include_deleted: bool = Query(False, description="Include deactivated fighters (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated fighters (admin only)"),
     service: FighterService = Depends(get_fighter_service),
 ) -> list[FighterFullResponse]:
     """List all fighters for a specific team."""
-    fighters = await service.list_by_team(team_id, include_deleted=include_deleted)
+    fighters = await service.list_by_team(team_id, include_deactivated=include_deactivate)
     return [FighterFullResponse.model_validate(f) for f in fighters]
 
 
@@ -105,11 +105,11 @@ async def list_fighters_by_team(
 )
 async def list_fighters_by_country(
     country_id: UUID,
-    include_deleted: bool = Query(False, description="Include deactivated fighters (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated fighters (admin only)"),
     service: FighterService = Depends(get_fighter_service),
 ) -> list[FighterFullResponse]:
     """List all fighters for teams in a specific country."""
-    fighters = await service.list_by_country(country_id, include_deleted=include_deleted)
+    fighters = await service.list_by_country(country_id, include_deactivated=include_deactivate)
     return [FighterFullResponse.model_validate(f) for f in fighters]
 
 
@@ -124,12 +124,12 @@ async def list_fighters_by_country(
 )
 async def get_fighter(
     fighter_id: UUID,
-    include_deleted: bool = Query(False, description="Include deactivated fighters (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated fighters (admin only)"),
     service: FighterService = Depends(get_fighter_service),
 ) -> FighterFullResponse:
     """Get a fighter by its UUID."""
     try:
-        fighter = await service.get_by_id(fighter_id, include_deleted=include_deleted)
+        fighter = await service.get_by_id(fighter_id, include_deactivated=include_deactivate)
         return FighterFullResponse.model_validate(fighter)
     except FighterNotFoundError:
         raise HTTPException(

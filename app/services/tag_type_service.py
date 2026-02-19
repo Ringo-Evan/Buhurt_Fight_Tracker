@@ -99,12 +99,12 @@ class TagTypeService:
 
         return await self.tag_type_repository.update(tag_type_id, update_data)
 
-    async def delete(self, tag_type_id: UUID) -> None:
+    async def deactivate(self, tag_type_id: UUID) -> None:
         """
         Deactivate a tag type.
 
         Args:
-            tag_type_id: ID of the tag type to delete
+            tag_type_id: ID of the tag type to deactivate
 
         Raises:
             ValidationError: If tag type not found

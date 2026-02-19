@@ -31,7 +31,7 @@ class TestCountryRepositoryIntegrationCreate:
         Verifies:
         - Country is inserted into database
         - UUID is generated automatically
-        - Default values (is_deleted=False, created_at) are set by model
+        - Default values (is_deactivated=False, created_at) are set by model
         - Can be retrieved after creation
 
         Arrange: Create repository with real database session
@@ -274,7 +274,7 @@ class TestCountryRepositoryIntegrationSoftDelete:
         - Can include deleted with flag
 
         Arrange: Create 3 countries, soft delete 1
-        Act: Call list_all() with and without include_deleted
+        Act: Call list_all() with and without include_deactivate
         Assert: Default returns 2, with flag returns 3
         """
         # Arrange
@@ -367,7 +367,7 @@ class TestCountryRepositoryIntegrationPermanentDelete:
 
         Verifies:
         - Country removed from database
-        - Not retrievable even with include_deleted=True
+        - Not retrievable even with include_deactivated=True
 
         Arrange: Create country
         Act: Permanently delete it
@@ -381,7 +381,7 @@ class TestCountryRepositoryIntegrationPermanentDelete:
         # Act
         await repository.permanent_delete(country_id)
 
-        # Assert - cannot retrieve even with include_deleted
+        # Assert - cannot retrieve even with include_deactivate
         retrieved = await repository.get_by_id(country_id, include_deactivated=True)
         assert retrieved is None
 

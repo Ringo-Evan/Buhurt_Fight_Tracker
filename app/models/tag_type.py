@@ -29,7 +29,7 @@ class TagType(Base):
         is_parent: If True, can have child tags
         has_children: If True, has child tags
         display_order: Order for display purposes
-        is_deleted: Deactivated flag
+        is_deactivated: Deactivated flag
         created_at: Timestamp of record creation
     """
 

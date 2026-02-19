@@ -342,7 +342,7 @@ class TestTagTypeIntegration:
         Given the tag type "weapon" exists
         When I delete the tag type "weapon"
         Then the tag type "weapon" should not appear in the list
-        But the tag type "weapon" should still exist in the database with is_deleted true
+        But the tag type "weapon" should still exist in the database with is_deactivated true
 
         Verifies:
         - DELETE /tag-types/{id} deactivates tag type

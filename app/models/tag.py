@@ -30,7 +30,7 @@ class Tag(Base):
         tag_type_id: FK to tag_types table
         value: The tag value (e.g., "Singles", "Longsword")
         parent_tag_id: Optional FK to parent tag (for hierarchy)
-        is_deleted: Deactivated flag
+        is_deactivated: Deactivated flag
         created_at: Timestamp of record creation
     """
 

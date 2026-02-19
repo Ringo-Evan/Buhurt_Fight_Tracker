@@ -61,7 +61,7 @@ class FighterRepository:
 
         Args:
             fighter_id: UUID of the fighter
-            include_deleted: If True, include deactivated fighters
+            include_deactivate: If True, include deactivated fighters
 
         Returns:
             Fighter instance or None if not found
@@ -83,7 +83,7 @@ class FighterRepository:
         List all fighters with eager-loaded relationships.
 
         Args:
-            include_deleted: If True, include deactivated fighters
+            include_deactivate: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances
@@ -105,7 +105,7 @@ class FighterRepository:
 
         Args:
             team_id: UUID of the team
-            include_deleted: If True, include deactivated fighters
+            include_deactivate: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances for the specified team
@@ -128,7 +128,7 @@ class FighterRepository:
 
         Args:
             country_id: UUID of the country
-            include_deleted: If True, include deactivated fighters
+            include_deactivate: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances from teams in the specified country

@@ -378,7 +378,7 @@ class TestFighterRepositorySoftDelete:
 
         Arrange: Mock session with active fighter
         Act: Call repository.soft_delete()
-        Assert: Fighter is_deleted set to True, commit called
+        Assert: Fighter is_deactivated set to True, commit called
         """
         # Arrange
         mock_session = AsyncMock()

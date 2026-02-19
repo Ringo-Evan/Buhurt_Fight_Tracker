@@ -54,7 +54,7 @@ Feature: Tag Management
         Given a tag exists with tag_type "weapon" and value "sword"
         When I delete the tag
         Then the tag should not appear in the list
-        But the tag should still exist in the database with is_deleted true
+        But the tag should still exist in the database with is_deactivated true
 
     Scenario: Validate tag value is required
         When I attempt to create a tag with empty value

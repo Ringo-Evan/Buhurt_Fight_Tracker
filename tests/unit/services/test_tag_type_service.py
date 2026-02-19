@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from app.repositories.tag_type_repository import TagTypeRepository
 from app.services.tag_type_service import TagTypeService
@@ -248,7 +248,7 @@ class TestTagTypeService:
         mock_tag_type_repository = AsyncMock(spec=TagTypeRepository)
         tag_type_service = TagTypeService(tag_type_repository=mock_tag_type_repository)
 
-        tag_type_id = '123e4567-e89b-12d3-a456-426614174000'
+        tag_type_id = UUID('123e4567-e89b-12d3-a456-426614174000')
         mock_tag_type_repository.get_by_id.return_value = None
 
         update_data = {'display_order': 10}
@@ -262,24 +262,24 @@ class TestTagTypeService:
         mock_tag_type_repository.update.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_delete_tag_type(self):
+    async def test_deactivate_tag_type(self):
         """
-        Test deleting a tag type (deactivate).
+        Test deactivating a tag type.
 
         Arrange: Mock repository
-        Act: Call service.delete()
+        Act: Call service.deactivate()
         Assert: Repository deactivate called
         """
         # Arrange
         mock_tag_type_repository = AsyncMock(spec=TagTypeRepository)
         tag_type_service = TagTypeService(tag_type_repository=mock_tag_type_repository)
 
-        tag_type_id = '123e4567-e89b-12d3-a456-426614174000'
+        tag_type_id = UUID('123e4567-e89b-12d3-a456-426614174000')
         existing_tag_type = TagType(id=tag_type_id, name='league')
         mock_tag_type_repository.get_by_id.return_value = existing_tag_type
 
         # Act
-        await tag_type_service.delete(tag_type_id)
+        await tag_type_service.deactivate(tag_type_id)
 
         # Assert
         mock_tag_type_repository.get_by_id.assert_called_once_with(tag_type_id)

@@ -57,7 +57,7 @@ class TagResponse(BaseModel):
         value: The tag value
         parent_tag_id: Parent tag UUID if hierarchical
         fight_id: Fight UUID if attached to a fight
-        is_deleted: Soft delete flag
+        is_deactivated: Soft delete flag
         created_at: Timestamp of record creation
     """
     id: UUID = Field(..., description="Tag UUID")
@@ -65,7 +65,7 @@ class TagResponse(BaseModel):
     value: str = Field(..., description="The tag value")
     parent_tag_id: UUID | None = Field(None, description="Parent tag UUID (for hierarchical tags)")
     fight_id: UUID | None = Field(None, description="Fight UUID this tag is attached to")
-    is_deleted: bool = Field(..., description="Whether this record has been soft-deleted")
+    is_deactivated: bool = Field(..., description="Whether this record has been soft-deleted")
     created_at: datetime = Field(..., description="Timestamp of record creation")
 
     model_config = {

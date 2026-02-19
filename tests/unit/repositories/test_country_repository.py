@@ -105,7 +105,7 @@ class TestCountryRepositoryGetById:
             id=country_id,
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -163,7 +163,7 @@ class TestCountryRepositoryGetById:
         mock_session = AsyncMock()
         country_id = uuid4()
 
-        # The query should filter is_deleted=False, so it returns None
+        # The query should filter is_deactivated=False, so it returns None
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
@@ -180,10 +180,10 @@ class TestCountryRepositoryGetById:
     @pytest.mark.asyncio
     async def test_get_by_id_with_include_deactivate_returns_deactivated_country(self):
         """
-        Test that get_by_id with include_deleted=True returns soft-deleted countries.
+        Test that get_by_id with include_deactivated=True returns soft-deleted countries.
 
         Arrange: Mock session returning a soft-deleted country
-        Act: Call repository.get_by_id(include_deleted=True)
+        Act: Call repository.get_by_id(include_deactivated=True)
         Assert: Returns the soft-deleted country
         """
         # Arrange
@@ -193,7 +193,7 @@ class TestCountryRepositoryGetById:
             id=country_id,
             name="Czech Republic",
             code="CZE",
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
@@ -234,7 +234,7 @@ class TestCountryRepositoryGetByCode:
             id=uuid4(),
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -289,7 +289,7 @@ class TestCountryRepositoryGetByCode:
         # Arrange
         mock_session = AsyncMock()
 
-        # The query should filter is_deleted=False, so it returns None
+        # The query should filter is_deactivated=False, so it returns None
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
@@ -323,14 +323,14 @@ class TestCountryRepositoryList:
                 id=uuid4(),
                 name="Czech Republic",
                 code="CZE",
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Country(
                 id=uuid4(),
                 name="Poland",
                 code="POL",
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -378,10 +378,10 @@ class TestCountryRepositoryList:
     @pytest.mark.asyncio
     async def test_list_all_as_admin_includes_soft_deleted_countries(self):
         """
-        Test that list_all with include_deleted=True includes soft-deleted countries.
+        Test that list_all with include_deactivated=True includes soft-deleted countries.
 
         Arrange: Mock session returning both active and deleted countries
-        Act: Call repository.list_all(include_deleted=True)
+        Act: Call repository.list_all(include_deactivated=True)
         Assert: Returns list with both active and deleted countries
         """
         # Arrange
@@ -391,21 +391,21 @@ class TestCountryRepositoryList:
                 id=uuid4(),
                 name="Czech Republic",
                 code="CZE",
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             ),
             Country(
                 id=uuid4(),
                 name="Poland",
                 code="POL",
-                is_deleted=True,  # Soft-deleted
+                is_deactivated=True,  # Soft-deleted
                 created_at=datetime.now(UTC)
             ),
             Country(
                 id=uuid4(),
                 name="Germany",
                 code="DEU",
-                is_deleted=False,
+                is_deactivated=False,
                 created_at=datetime.now(UTC)
             )
         ]
@@ -429,13 +429,13 @@ class TestCountryRepositorySoftDelete:
     """Test suite for soft deletion operations."""
 
     @pytest.mark.asyncio
-    async def test_soft_delete_sets_is_deleted_flag_to_true(self):
+    async def test_soft_delete_sets_is_deactivated_flag_to_true(self):
         """
-        Test that soft delete updates is_deleted flag to True.
+        Test that soft delete updates is_deactivated flag to True.
 
         Arrange: Mock session and existing country
         Act: Call repository.soft_delete()
-        Assert: is_deleted flag set to True and changes committed
+        Assert: is_deactivated flag set to True and changes committed
         """
         # Arrange
         mock_session = AsyncMock()
@@ -444,7 +444,7 @@ class TestCountryRepositorySoftDelete:
             id=country_id,
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -506,7 +506,7 @@ class TestCountryRepositoryUpdate:
             id=country_id,
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -543,7 +543,7 @@ class TestCountryRepositoryUpdate:
             id=country_id,
             name="Czechia",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -580,7 +580,7 @@ class TestCountryRepositoryUpdate:
             id=country_id,
             name="Czech Republic",
             code="CZE",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -650,7 +650,7 @@ class TestCountryRepositoryPermanentDelete:
             id=country_id,
             name="Czech Republic",
             code="CZE",
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
@@ -709,7 +709,7 @@ class TestCountryRepositoryPermanentDelete:
             id=country_id,
             name="United States",
             code="USA",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -748,7 +748,7 @@ class TestCountryRepositoryPermanentDelete:
             id=country_id,
             name="Test Country",
             code="TST",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -793,7 +793,7 @@ class TestCountryRepositoryReplace:
             id=old_country_id,
             name="Soviet Union",
             code="SUN",
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 
@@ -801,7 +801,7 @@ class TestCountryRepositoryReplace:
             id=new_country_id,
             name="Russia",
             code="RUS",
-            is_deleted=False,
+            is_deactivated=False,
             created_at=datetime.now(UTC)
         )
 
@@ -868,7 +868,7 @@ class TestCountryRepositoryReplace:
             id=old_country_id,
             name="Soviet Union",
             code="SUN",
-            is_deleted=True,
+            is_deactivated=True,
             created_at=datetime.now(UTC)
         )
 

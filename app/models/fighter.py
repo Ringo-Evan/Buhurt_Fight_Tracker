@@ -1,7 +1,7 @@
 """
 SQLAlchemy ORM model for Fighter entity.
 
-Implements soft delete pattern with is_deleted flag.
+Implements soft delete pattern with is_deactivated flag.
 Uses UUID primary keys and foreign key relationship to Team.
 Eager loads team → country for 3-level hierarchy without N+1 queries.
 """
@@ -27,7 +27,7 @@ class Fighter(Base):
         id: UUID primary key (auto-generated)
         name: Fighter name (max 100 characters)
         team_id: Foreign key to teams table (UUID)
-        is_deleted: Soft delete flag (defaults to False)
+        is_deactivated: Soft delete flag (defaults to False)
         created_at: Timestamp of creation (auto-generated, UTC)
 
         team: Relationship to Team entity (eager loaded with country)

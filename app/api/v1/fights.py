@@ -87,14 +87,14 @@ async def create_fight(
 async def list_fights(
     start_date: date | None = Query(None, description="Filter fights from this date"),
     end_date: date | None = Query(None, description="Filter fights until this date"),
-    include_deleted: bool = Query(False, description="Include deactivated fights (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated fights (admin only)"),
     service: FightService = Depends(get_fight_service),
 ) -> list[FightResponse]:
     """List all fights, optionally filtered by date range."""
     if start_date and end_date:
-        fights = await service.list_by_date_range(start_date, end_date, include_deleted)
+        fights = await service.list_by_date_range(start_date, end_date, include_deactivate)
     else:
-        fights = await service.list_all(include_deleted=include_deleted)
+        fights = await service.list_all(include_deactivated=include_deactivate)
     return [FightResponse.model_validate(f) for f in fights]
 
 
@@ -109,12 +109,12 @@ async def list_fights(
 )
 async def get_fight(
     fight_id: UUID,
-    include_deleted: bool = Query(False, description="Include deactivated fights (admin only)"),
+    include_deactivate: bool = Query(False, description="Include deactivated fights (admin only)"),
     service: FightService = Depends(get_fight_service),
 ) -> FightResponse:
     """Get a fight by its UUID."""
     try:
-        fight = await service.get_by_id(fight_id, include_deleted=include_deleted)
+        fight = await service.get_by_id(fight_id, include_deactivated=include_deactivate)
         return FightResponse.model_validate(fight)
     except FightNotFoundError:
         raise HTTPException(
@@ -177,7 +177,7 @@ async def delete_fight(
 ) -> None:
     """Deactivate a fight."""
     try:
-        await service.delete(fight_id)
+        await service.deactivate(fight_id)
     except FightNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

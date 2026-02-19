@@ -365,7 +365,7 @@ class TestTeamServiceRetrieve:
         """
         Test that admin can retrieve deactivated teams.
 
-        Arrange: Mock repository with include_deleted flag
+        Arrange: Mock repository with include_deactivate flag
         Act: Call service.get_by_id(include_deactivated=True)
         Assert: Returns deleted team
         """
@@ -915,12 +915,12 @@ class TestTeamServiceDeactivate:
         mock_team_repository.deactivate.assert_awaited_once_with(team_id)
 
     @pytest.mark.asyncio
-    async def test_delete_team_handles_non_existent_team(self):
+    async def test_deactivate_team_handles_non_existent_team(self):
         """
-        Test that delete raises error for non-existent team.
+        Test that deactivate raises error for non-existent team.
 
         Arrange: Mock repository raising ValueError
-        Act: Call service.delete() with non-existent ID
+        Act: Call service.deactivate() with non-existent ID
         Assert: TeamNotFoundError raised
         """
         # Arrange
@@ -938,17 +938,17 @@ class TestTeamServiceDeactivate:
         mock_team_repository.deactivate.assert_awaited_once_with(team_id)
 
 
-class TestTeamServicePermanentDelete:
-    """Test suite for permanent deletion business logic."""
+class TestTeamServiceDelete:
+    """Test suite for  deletion business logic."""
 
     @pytest.mark.asyncio
-    async def test_permanent_delete_succeeds(self):
+    async def test_delete_succeeds(self):
         """
-        Test that permanent delete succeeds.
+        Test that delete succeeds.
 
         Arrange: Mock repository
-        Act: Call service.permanent_delete()
-        Assert: Repository permanent_delete called
+        Act: Call service.delete()
+        Assert: Repository delete called
         """
         # Arrange
         mock_team_repository = AsyncMock(spec=TeamRepository)
@@ -956,21 +956,21 @@ class TestTeamServicePermanentDelete:
         service = TeamService(mock_team_repository, mock_country_repository)
 
         team_id = uuid4()
-        mock_team_repository.permanent_delete.return_value = None
+        mock_team_repository.delete.return_value = None
 
         # Act
         await service.delete(team_id)
 
         # Assert
-        mock_team_repository.permanent_delete.assert_awaited_once_with(team_id)
+        mock_team_repository.delete.assert_awaited_once_with(team_id)
 
     @pytest.mark.asyncio
-    async def test_permanent_delete_handles_non_existent_team(self):
+    async def test_delete_handles_non_existent_team(self):
         """
-        Test that permanent delete raises error for non-existent team.
+        Test that delete raises error for non-existent team.
 
         Arrange: Mock repository raising ValueError
-        Act: Attempt to permanently delete non-existent team
+        Act: Attempt to delete non-existent team
         Assert: TeamNotFoundError raised
         """
         # Arrange
@@ -979,10 +979,10 @@ class TestTeamServicePermanentDelete:
         service = TeamService(mock_team_repository, mock_country_repository)
 
         team_id = uuid4()
-        mock_team_repository.permanent_delete.side_effect = ValueError("Team not found")
+        mock_team_repository.delete.side_effect = ValueError("Team not found")
 
         # Act & Assert
         with pytest.raises(TeamNotFoundError, match="Team not found"):
             await service.delete(team_id)
 
-        mock_team_repository.permanent_delete.assert_awaited_once_with(team_id)
+        mock_team_repository.delete.assert_awaited_once_with(team_id)

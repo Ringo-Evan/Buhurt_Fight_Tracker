@@ -10,5 +10,9 @@ meant to limit it to renaming. But a little more than that happened.
 
 Still think most of the logic needs to be implemented
 Tried to run as a docker in docker dev container but couldn't install my libraries. probably want custom image.
-Claude broke a good 
+Claude broke a good number of tests. I'm fixing by hand to understand what happened.
 
+Ran into issue where Country init checked for is_deleted and if not there applied defualt to is_deactivated.
+Meant was always setting that cause is_deleted was no longer being used on create.
+
+Next session, possibly later today. Fix more tests. Add perm delete, reactivate, and     deactivate logic

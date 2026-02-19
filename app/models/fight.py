@@ -1,7 +1,7 @@
 """
 SQLAlchemy ORM model for Fight entity.
 
-Implements soft delete pattern with is_deleted flag.
+Implements soft delete pattern with is_deactivated flag.
 Uses UUID primary keys and one-to-many relationship to FightParticipation.
 Eager loads participations to prevent N+1 queries.
 """
@@ -30,7 +30,7 @@ class Fight(Base):
         video_url: Optional URL to fight video recording
         winner_side: Optional side that won (1 or 2, null for draw/undecided)
         notes: Optional notes about the fight
-        is_deleted: Deactivated flag (defaults to False)
+        is_deactivated: Deactivated flag (defaults to False)
         created_at: Timestamp of creation (auto-generated, UTC)
 
         participations: Relationship to FightParticipation entities (eager loaded)

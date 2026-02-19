@@ -122,7 +122,7 @@ class TestTagTypeRepositoryGetById:
         Test that get_by_id filters out deactivated tag types by default.
 
         Arrange: Mock session, verify query filters is_deactivated=False
-        Act: Call repository.get_by_id() without include_deleted
+        Act: Call repository.get_by_id() without include_deactivate
         Assert: Query includes deactivate filter
         """
         # Arrange
@@ -266,7 +266,7 @@ class TestTagTypeRepositoryListAll:
         Test that list_all filters out deactivated tag types by default.
 
         Arrange: Mock session
-        Act: Call repository.list_all() without include_deleted
+        Act: Call repository.list_all() without include_deactivate
         Assert: Query filters deactivated records
         """
         # Arrange

@@ -90,7 +90,12 @@ class FighterService:
 
         # Validate team reference
         team_id = fighter_data.get('team_id')
-        await self._validate_team_reference(team_id)
+        if team_id is not None:
+            team_id_uuid: UUID = team_id if isinstance(team_id, UUID) else UUID(team_id)
+            await self._validate_team_reference(team_id_uuid)
+        else:
+            # We should never get here because get_team_id should throw
+            raise ValidationError("team_id is required")
 
         # Create fighter
         try:
@@ -98,13 +103,13 @@ class FighterService:
         except IntegrityError:
             raise InvalidTeamError("Team not found")
 
-    async def get_by_id(self, fighter_id: UUID, include_deleted: bool = False) -> Fighter:
+    async def get_by_id(self, fighter_id: UUID, include_deactivated: bool = False) -> Fighter:
         """
         Retrieve a fighter by ID.
 
         Args:
             fighter_id: UUID of the fighter
-            include_deleted: If True, include deactivated fighters
+            include_deactivated: If True, include deactivated fighters
 
         Returns:
             Fighter instance
@@ -118,50 +123,50 @@ class FighterService:
 
         return fighter
 
-    async def list_all(self, include_deleted: bool = False) -> list[Fighter]:
+    async def list_all(self, include_deactivated: bool = False) -> list[Fighter]:
         """
         List all fighters.
 
         Args:
-            include_deleted: If True, include deactivated fighters
+            include_deactivated: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances
         """
         return await self.repository.list_all(include_deactivated=include_deactivated)
 
-    async def list_by_team(self, team_id: UUID, include_deleted: bool = False) -> list[Fighter]:
+    async def list_by_team(self, team_id: UUID, include_deactivated: bool = False) -> list[Fighter]:
         """
         List fighters filtered by team.
 
         Args:
             team_id: UUID of the team
-            include_deleted: If True, include deactivated fighters
+            include_deactivated: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances for the specified team
         """
         return await self.repository.list_by_team(team_id, include_deactivated=include_deactivated)
 
-    async def list_by_country(self, country_id: UUID, include_deleted: bool = False) -> list[Fighter]:
+    async def list_by_country(self, country_id: UUID, include_deactivated: bool = False) -> list[Fighter]:
         """
         List fighters filtered by country (via team relationship).
 
         Args:
             country_id: UUID of the country
-            include_deleted: If True, include deactivated fighters
+            include_deactivated: If True, include deactivated fighters
 
         Returns:
             List of Fighter instances from teams in the specified country
         """
         return await self.repository.list_by_country(country_id, include_deactivated=include_deactivated)
 
-    async def delete(self, fighter_id: UUID) -> None:
+    async def deactivate(self, fighter_id: UUID) -> None:
         """
         Deactivate a fighter.
 
         Args:
-            fighter_id: UUID of the fighter to delete
+            fighter_id: UUID of the fighter to deactivate
 
         Raises:
             FighterNotFoundError: If fighter not found

@@ -58,7 +58,7 @@ class CountryRepository:
 
         Args:
             country_id: UUID of the country
-            include_deleted: If True, include soft-deleted countries
+            include_deactivated: If True, include soft-deleted countries
 
         Returns:
             Country instance or None if not found
@@ -71,20 +71,20 @@ class CountryRepository:
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_code(self, code: str, include_deleted: bool = False) -> Country | None:
+    async def get_by_code(self, code: str, include_deactivated: bool = False) -> Country | None:
         """
         Retrieve a country by ISO code.
 
         Args:
             code: ISO 3166-1 alpha-3 country code
-            include_deleted: If True, include soft-deleted countries
+            include_deactivated: If True, include soft-deleted countries
 
         Returns:
             Country instance or None if not found
         """
         query = select(Country).where(Country.code == code)
 
-        if not include_deleted:
+        if not include_deactivated:
             query = query.where(Country.is_deactivated == False)
 
         result = await self.session.execute(query)
@@ -95,7 +95,7 @@ class CountryRepository:
         List all countries.
 
         Args:
-            include_deleted: If True, include soft-deleted countries
+            include_deactivated: If True, include soft-deleted countries
 
         Returns:
             List of Country instances
@@ -110,7 +110,7 @@ class CountryRepository:
 
     async def deactivate(self, country_id: UUID) -> None:
         """
-        Soft delete a country by setting is_deleted flag.
+        Soft delete a country by setting is_deactivated flag.
 
         Args:
             country_id: UUID of the country to delete
@@ -125,7 +125,7 @@ class CountryRepository:
         country.is_deactivated = True
         await self.session.commit()
 
-    async def update(self, country_id: UUID, update_data: Dict[str, Any], include_deleted: bool = False) -> Country:
+    async def update(self, country_id: UUID, update_data: Dict[str, Any], include_deactivated: bool = False) -> Country:
         """
         Update a country's attributes.
 
@@ -140,7 +140,7 @@ class CountryRepository:
             ValueError: If country not found
             IntegrityError: If update violates unique constraint
         """
-        country = await self.get_by_id(country_id, include_deactivated=include_deleted)
+        country = await self.get_by_id(country_id, include_deactivated=include_deactivated)
         if country is None:
             raise ValueError("Country not found")
 

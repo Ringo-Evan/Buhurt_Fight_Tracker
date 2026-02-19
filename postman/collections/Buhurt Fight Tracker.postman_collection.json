@@ -33,7 +33,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/countries/:country_id?include_deleted=true",
+                          "raw": "{{baseUrl}}/api/v1/countries/:country_id?include_deactivated=true",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -45,7 +45,7 @@
                           ],
                           "query": [
                             {
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "true",
                               "description": "Include soft-deleted countries (admin only)",
                               "uuid": "d7241847-2890-44ff-ba3c-3211ceea7876"
@@ -73,7 +73,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/countries/:country_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/countries/:country_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -86,7 +86,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted countries (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -117,7 +117,7 @@
                             "method": "GET",
                             "header": [],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/countries/:country_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/countries/:country_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -130,7 +130,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted countries (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -161,7 +161,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/countries/:country_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/countries/:country_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -174,7 +174,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted countries (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -220,7 +220,7 @@
                         ],
                         "body": {
                           "mode": "raw",
-                          "raw": "{\n    \"id\": \"cd37de2b-8662-41f8-aef1-5056a576dc85\",\n    \"name\": \"string\",\n    \"code\": \"CAN\",\n    \"created_at\": \"2025-02-01T14:10:38.327353Z\",\n    \"is_deleted\": \"true\"\n}",
+                          "raw": "{\n    \"id\": \"cd37de2b-8662-41f8-aef1-5056a576dc85\",\n    \"name\": \"string\",\n    \"code\": \"CAN\",\n    \"created_at\": \"2025-02-01T14:10:38.327353Z\",\n    \"is_deactivated\": \"true\"\n}",
                           "options": {
                             "raw": {
                               "headerFamily": "json",
@@ -527,7 +527,7 @@
                             }
                           ]
                         },
-                        "description": "Soft delete a country (sets is_deleted flag)."
+                        "description": "Soft delete a country (sets is_deactivated flag)."
                       },
                       "response": [
                         {
@@ -998,7 +998,7 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/api/v1/countries?include_deleted=true",
+                      "raw": "{{baseUrl}}/api/v1/countries?include_deactivated=true",
                       "host": [
                         "{{baseUrl}}"
                       ],
@@ -1009,7 +1009,7 @@
                       ],
                       "query": [
                         {
-                          "key": "include_deleted",
+                          "key": "include_deactivate",
                           "value": "true",
                           "description": "Include soft-deleted countries (admin only)",
                           "uuid": "f0349862-a221-4190-bcaf-4c0d56a6ac35"
@@ -1031,7 +1031,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/countries?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/countries?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -1043,7 +1043,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted countries (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ]
@@ -1073,7 +1073,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/countries?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/countries?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -1085,7 +1085,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted countries (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ]
@@ -1132,7 +1132,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/teams/by-country/:country_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/teams/by-country/:country_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -1146,7 +1146,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted teams (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -1172,7 +1172,7 @@
                                   }
                                 ],
                                 "url": {
-                                  "raw": "{{baseUrl}}/api/v1/teams/by-country/:country_id?include_deleted=false",
+                                  "raw": "{{baseUrl}}/api/v1/teams/by-country/:country_id?include_deactivated=false",
                                   "host": [
                                     "{{baseUrl}}"
                                   ],
@@ -1186,7 +1186,7 @@
                                   "query": [
                                     {
                                       "description": "Include soft-deleted teams (admin only)",
-                                      "key": "include_deleted",
+                                      "key": "include_deactivate",
                                       "value": "false"
                                     }
                                   ],
@@ -1222,7 +1222,7 @@
                                   }
                                 ],
                                 "url": {
-                                  "raw": "{{baseUrl}}/api/v1/teams/by-country/:country_id?include_deleted=false",
+                                  "raw": "{{baseUrl}}/api/v1/teams/by-country/:country_id?include_deactivated=false",
                                   "host": [
                                     "{{baseUrl}}"
                                   ],
@@ -1236,7 +1236,7 @@
                                   "query": [
                                     {
                                       "description": "Include soft-deleted teams (admin only)",
-                                      "key": "include_deleted",
+                                      "key": "include_deactivate",
                                       "value": "false"
                                     }
                                   ],
@@ -1286,7 +1286,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/teams/:team_id?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/teams/:team_id?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -1299,7 +1299,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted teams (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ],
@@ -1325,7 +1325,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/teams/:team_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/teams/:team_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -1338,7 +1338,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted teams (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -1369,7 +1369,7 @@
                             "method": "GET",
                             "header": [],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/teams/:team_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/teams/:team_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -1382,7 +1382,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted teams (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -1413,7 +1413,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/teams/:team_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/teams/:team_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -1426,7 +1426,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted teams (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -1732,7 +1732,7 @@
                             }
                           ]
                         },
-                        "description": "Soft delete a team (sets is_deleted flag)."
+                        "description": "Soft delete a team (sets is_deactivated flag)."
                       },
                       "response": [
                         {
@@ -1994,7 +1994,7 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/api/v1/teams?include_deleted=false",
+                      "raw": "{{baseUrl}}/api/v1/teams?include_deactivated=false",
                       "host": [
                         "{{baseUrl}}"
                       ],
@@ -2006,7 +2006,7 @@
                       "query": [
                         {
                           "description": "Include soft-deleted teams (admin only)",
-                          "key": "include_deleted",
+                          "key": "include_deactivate",
                           "value": "false"
                         }
                       ]
@@ -2026,7 +2026,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/teams?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/teams?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -2038,7 +2038,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted teams (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ]
@@ -2068,7 +2068,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/teams?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/teams?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -2080,7 +2080,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted teams (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ]
@@ -2127,7 +2127,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/fighters/by-team/:team_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/fighters/by-team/:team_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -2141,7 +2141,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted fighters (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -2167,7 +2167,7 @@
                                   }
                                 ],
                                 "url": {
-                                  "raw": "{{baseUrl}}/api/v1/fighters/by-team/:team_id?include_deleted=false",
+                                  "raw": "{{baseUrl}}/api/v1/fighters/by-team/:team_id?include_deactivated=false",
                                   "host": [
                                     "{{baseUrl}}"
                                   ],
@@ -2181,7 +2181,7 @@
                                   "query": [
                                     {
                                       "description": "Include soft-deleted fighters (admin only)",
-                                      "key": "include_deleted",
+                                      "key": "include_deactivate",
                                       "value": "false"
                                     }
                                   ],
@@ -2217,7 +2217,7 @@
                                   }
                                 ],
                                 "url": {
-                                  "raw": "{{baseUrl}}/api/v1/fighters/by-team/:team_id?include_deleted=false",
+                                  "raw": "{{baseUrl}}/api/v1/fighters/by-team/:team_id?include_deactivated=false",
                                   "host": [
                                     "{{baseUrl}}"
                                   ],
@@ -2231,7 +2231,7 @@
                                   "query": [
                                     {
                                       "description": "Include soft-deleted fighters (admin only)",
-                                      "key": "include_deleted",
+                                      "key": "include_deactivate",
                                       "value": "false"
                                     }
                                   ],
@@ -2284,7 +2284,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/fighters/by-country/:country_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/fighters/by-country/:country_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -2298,7 +2298,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted fighters (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -2324,7 +2324,7 @@
                                   }
                                 ],
                                 "url": {
-                                  "raw": "{{baseUrl}}/api/v1/fighters/by-country/:country_id?include_deleted=false",
+                                  "raw": "{{baseUrl}}/api/v1/fighters/by-country/:country_id?include_deactivated=false",
                                   "host": [
                                     "{{baseUrl}}"
                                   ],
@@ -2338,7 +2338,7 @@
                                   "query": [
                                     {
                                       "description": "Include soft-deleted fighters (admin only)",
-                                      "key": "include_deleted",
+                                      "key": "include_deactivate",
                                       "value": "false"
                                     }
                                   ],
@@ -2374,7 +2374,7 @@
                                   }
                                 ],
                                 "url": {
-                                  "raw": "{{baseUrl}}/api/v1/fighters/by-country/:country_id?include_deleted=false",
+                                  "raw": "{{baseUrl}}/api/v1/fighters/by-country/:country_id?include_deactivated=false",
                                   "host": [
                                     "{{baseUrl}}"
                                   ],
@@ -2388,7 +2388,7 @@
                                   "query": [
                                     {
                                       "description": "Include soft-deleted fighters (admin only)",
-                                      "key": "include_deleted",
+                                      "key": "include_deactivate",
                                       "value": "false"
                                     }
                                   ],
@@ -2438,7 +2438,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/fighters/:fighter_id?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/fighters/:fighter_id?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -2451,7 +2451,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted fighters (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ],
@@ -2477,7 +2477,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/fighters/:fighter_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/fighters/:fighter_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -2490,7 +2490,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted fighters (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -2521,7 +2521,7 @@
                             "method": "GET",
                             "header": [],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/fighters/:fighter_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/fighters/:fighter_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -2534,7 +2534,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted fighters (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -2565,7 +2565,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/fighters/:fighter_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/fighters/:fighter_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -2578,7 +2578,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted fighters (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -2884,7 +2884,7 @@
                             }
                           ]
                         },
-                        "description": "Soft delete a fighter (sets is_deleted flag)."
+                        "description": "Soft delete a fighter (sets is_deactivated flag)."
                       },
                       "response": [
                         {
@@ -3146,7 +3146,7 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/api/v1/fighters?include_deleted=false",
+                      "raw": "{{baseUrl}}/api/v1/fighters?include_deactivated=false",
                       "host": [
                         "{{baseUrl}}"
                       ],
@@ -3158,7 +3158,7 @@
                       "query": [
                         {
                           "description": "Include soft-deleted fighters (admin only)",
-                          "key": "include_deleted",
+                          "key": "include_deactivate",
                           "value": "false"
                         }
                       ]
@@ -3178,7 +3178,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/fighters?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/fighters?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -3190,7 +3190,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted fighters (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ]
@@ -3220,7 +3220,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/fighters?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/fighters?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -3232,7 +3232,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted fighters (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ]
@@ -3276,7 +3276,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/fights/:fight_id?include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/fights/:fight_id?include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -3289,7 +3289,7 @@
                           "query": [
                             {
                               "description": "Include soft-deleted fights (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ],
@@ -3315,7 +3315,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/fights/:fight_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/fights/:fight_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -3328,7 +3328,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted fights (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -3350,7 +3350,7 @@
                             }
                           ],
                           "cookie": [],
-                          "body": "{\n  \"id\": \"61b23343-f8a2-4f64-c917-b697bba714d8\",\n  \"date\": \"2014-01-04\",\n  \"location\": \"string\",\n  \"is_deleted\": false,\n  \"created_at\": \"1976-09-25T13:01:16.285Z\",\n  \"video_url\": \"string\",\n  \"winner_side\": 4183,\n  \"notes\": \"string\",\n  \"participations\": [\n    {\n      \"id\": \"baf007e5-4826-ae40-6ffa-b7102ddc6a92\",\n      \"fight_id\": \"acffe4e1-53a8-235d-6186-c66ad3574acd\",\n      \"fighter_id\": \"0058e97e-2643-39c5-2345-840c922b4cbb\",\n      \"side\": 3781,\n      \"role\": \"string\",\n      \"created_at\": \"1965-10-04T08:33:50.625Z\"\n    },\n    {\n      \"id\": \"0f752f05-4578-21e5-90fa-8773ca3cfb2e\",\n      \"fight_id\": \"8da9228c-3598-72f0-c7dc-9b2ea90ab9f4\",\n      \"fighter_id\": \"46a43274-b25b-141e-b9b1-c28e3915deca\",\n      \"side\": 7258,\n      \"role\": \"string\",\n      \"created_at\": \"1988-10-25T11:16:06.145Z\"\n    }\n  ]\n}"
+                          "body": "{\n  \"id\": \"61b23343-f8a2-4f64-c917-b697bba714d8\",\n  \"date\": \"2014-01-04\",\n  \"location\": \"string\",\n  \"is_deactivated\": false,\n  \"created_at\": \"1976-09-25T13:01:16.285Z\",\n  \"video_url\": \"string\",\n  \"winner_side\": 4183,\n  \"notes\": \"string\",\n  \"participations\": [\n    {\n      \"id\": \"baf007e5-4826-ae40-6ffa-b7102ddc6a92\",\n      \"fight_id\": \"acffe4e1-53a8-235d-6186-c66ad3574acd\",\n      \"fighter_id\": \"0058e97e-2643-39c5-2345-840c922b4cbb\",\n      \"side\": 3781,\n      \"role\": \"string\",\n      \"created_at\": \"1965-10-04T08:33:50.625Z\"\n    },\n    {\n      \"id\": \"0f752f05-4578-21e5-90fa-8773ca3cfb2e\",\n      \"fight_id\": \"8da9228c-3598-72f0-c7dc-9b2ea90ab9f4\",\n      \"fighter_id\": \"46a43274-b25b-141e-b9b1-c28e3915deca\",\n      \"side\": 7258,\n      \"role\": \"string\",\n      \"created_at\": \"1988-10-25T11:16:06.145Z\"\n    }\n  ]\n}"
                         },
                         {
                           "id": "240e81a6-f211-4dcc-b65c-ddcc630e8c78",
@@ -3359,7 +3359,7 @@
                             "method": "GET",
                             "header": [],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/fights/:fight_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/fights/:fight_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -3372,7 +3372,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted fights (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -3403,7 +3403,7 @@
                               }
                             ],
                             "url": {
-                              "raw": "{{baseUrl}}/api/v1/fights/:fight_id?include_deleted=false",
+                              "raw": "{{baseUrl}}/api/v1/fights/:fight_id?include_deactivated=false",
                               "host": [
                                 "{{baseUrl}}"
                               ],
@@ -3416,7 +3416,7 @@
                               "query": [
                                 {
                                   "description": "Include soft-deleted fights (admin only)",
-                                  "key": "include_deleted",
+                                  "key": "include_deactivate",
                                   "value": "false"
                                 }
                               ],
@@ -3545,7 +3545,7 @@
                             }
                           ],
                           "cookie": [],
-                          "body": "{\n  \"id\": \"61b23343-f8a2-4f64-c917-b697bba714d8\",\n  \"date\": \"2014-01-04\",\n  \"location\": \"string\",\n  \"is_deleted\": false,\n  \"created_at\": \"1976-09-25T13:01:16.285Z\",\n  \"video_url\": \"string\",\n  \"winner_side\": 4183,\n  \"notes\": \"string\",\n  \"participations\": [\n    {\n      \"id\": \"baf007e5-4826-ae40-6ffa-b7102ddc6a92\",\n      \"fight_id\": \"acffe4e1-53a8-235d-6186-c66ad3574acd\",\n      \"fighter_id\": \"0058e97e-2643-39c5-2345-840c922b4cbb\",\n      \"side\": 3781,\n      \"role\": \"string\",\n      \"created_at\": \"1965-10-04T08:33:50.625Z\"\n    },\n    {\n      \"id\": \"0f752f05-4578-21e5-90fa-8773ca3cfb2e\",\n      \"fight_id\": \"8da9228c-3598-72f0-c7dc-9b2ea90ab9f4\",\n      \"fighter_id\": \"46a43274-b25b-141e-b9b1-c28e3915deca\",\n      \"side\": 7258,\n      \"role\": \"string\",\n      \"created_at\": \"1988-10-25T11:16:06.145Z\"\n    }\n  ]\n}"
+                          "body": "{\n  \"id\": \"61b23343-f8a2-4f64-c917-b697bba714d8\",\n  \"date\": \"2014-01-04\",\n  \"location\": \"string\",\n  \"is_deactivated\": false,\n  \"created_at\": \"1976-09-25T13:01:16.285Z\",\n  \"video_url\": \"string\",\n  \"winner_side\": 4183,\n  \"notes\": \"string\",\n  \"participations\": [\n    {\n      \"id\": \"baf007e5-4826-ae40-6ffa-b7102ddc6a92\",\n      \"fight_id\": \"acffe4e1-53a8-235d-6186-c66ad3574acd\",\n      \"fighter_id\": \"0058e97e-2643-39c5-2345-840c922b4cbb\",\n      \"side\": 3781,\n      \"role\": \"string\",\n      \"created_at\": \"1965-10-04T08:33:50.625Z\"\n    },\n    {\n      \"id\": \"0f752f05-4578-21e5-90fa-8773ca3cfb2e\",\n      \"fight_id\": \"8da9228c-3598-72f0-c7dc-9b2ea90ab9f4\",\n      \"fighter_id\": \"46a43274-b25b-141e-b9b1-c28e3915deca\",\n      \"side\": 7258,\n      \"role\": \"string\",\n      \"created_at\": \"1988-10-25T11:16:06.145Z\"\n    }\n  ]\n}"
                         },
                         {
                           "id": "3018ce5b-9629-4482-b23f-1b0f8e6f63b2",
@@ -3722,7 +3722,7 @@
                             }
                           ]
                         },
-                        "description": "Soft delete a fight (sets is_deleted flag)."
+                        "description": "Soft delete a fight (sets is_deactivated flag)."
                       },
                       "response": [
                         {
@@ -3925,7 +3925,7 @@
                         }
                       ],
                       "cookie": [],
-                      "body": "{\n  \"id\": \"94b99e79-7e53-cab1-a263-bc829c5e46a4\",\n  \"date\": \"2014-11-21\",\n  \"location\": \"string\",\n  \"is_deleted\": true,\n  \"created_at\": \"1962-12-18T05:46:13.500Z\",\n  \"video_url\": \"string\",\n  \"winner_side\": null,\n  \"notes\": \"string\",\n  \"participations\": [\n    {\n      \"id\": \"fd68b5e7-2b68-514d-3c49-9e32db51453a\",\n      \"fight_id\": \"d6b70c32-4965-ba26-e91e-077d16d3f45b\",\n      \"fighter_id\": \"cba1e467-62f9-3a3b-d84a-b3955b4d7724\",\n      \"side\": 1300,\n      \"role\": \"string\",\n      \"created_at\": \"1955-05-10T10:41:30.688Z\"\n    },\n    {\n      \"id\": \"f429723f-c68a-cd9c-b464-843620a8a0cc\",\n      \"fight_id\": \"afa0fb19-23d4-472c-df0b-32730c426f6f\",\n      \"fighter_id\": \"3eaa112c-2138-7763-a4e0-e11843e240dd\",\n      \"side\": 1770,\n      \"role\": \"string\",\n      \"created_at\": \"2007-06-26T10:18:50.209Z\"\n    }\n  ]\n}"
+                      "body": "{\n  \"id\": \"94b99e79-7e53-cab1-a263-bc829c5e46a4\",\n  \"date\": \"2014-11-21\",\n  \"location\": \"string\",\n  \"is_deactivated\": true,\n  \"created_at\": \"1962-12-18T05:46:13.500Z\",\n  \"video_url\": \"string\",\n  \"winner_side\": null,\n  \"notes\": \"string\",\n  \"participations\": [\n    {\n      \"id\": \"fd68b5e7-2b68-514d-3c49-9e32db51453a\",\n      \"fight_id\": \"d6b70c32-4965-ba26-e91e-077d16d3f45b\",\n      \"fighter_id\": \"cba1e467-62f9-3a3b-d84a-b3955b4d7724\",\n      \"side\": 1300,\n      \"role\": \"string\",\n      \"created_at\": \"1955-05-10T10:41:30.688Z\"\n    },\n    {\n      \"id\": \"f429723f-c68a-cd9c-b464-843620a8a0cc\",\n      \"fight_id\": \"afa0fb19-23d4-472c-df0b-32730c426f6f\",\n      \"fighter_id\": \"3eaa112c-2138-7763-a4e0-e11843e240dd\",\n      \"side\": 1770,\n      \"role\": \"string\",\n      \"created_at\": \"2007-06-26T10:18:50.209Z\"\n    }\n  ]\n}"
                     },
                     {
                       "id": "f1bde657-9c3e-4bde-942a-3724a650591c",
@@ -3984,7 +3984,7 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/api/v1/fights?start_date=2007-03-01&end_date=2007-03-01&include_deleted=false",
+                      "raw": "{{baseUrl}}/api/v1/fights?start_date=2007-03-01&end_date=2007-03-01&include_deactivated=false",
                       "host": [
                         "{{baseUrl}}"
                       ],
@@ -4006,7 +4006,7 @@
                         },
                         {
                           "description": "Include soft-deleted fights (admin only)",
-                          "key": "include_deleted",
+                          "key": "include_deactivate",
                           "value": "false"
                         }
                       ]
@@ -4026,7 +4026,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/fights?start_date=2007-03-01&end_date=2007-03-01&include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/fights?start_date=2007-03-01&end_date=2007-03-01&include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -4048,7 +4048,7 @@
                             },
                             {
                               "description": "Include soft-deleted fights (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ]
@@ -4064,7 +4064,7 @@
                         }
                       ],
                       "cookie": [],
-                      "body": "[\n  {\n    \"id\": \"dcd42c9e-6d8e-1c6b-337c-fb0d80c451a2\",\n    \"date\": \"2017-08-29\",\n    \"location\": \"string\",\n    \"is_deleted\": true,\n    \"created_at\": \"1957-08-30T03:49:06.492Z\",\n    \"video_url\": \"string\",\n    \"winner_side\": 5835,\n    \"notes\": \"string\",\n    \"participations\": [\n      {\n        \"id\": \"6e53d8e5-2fcd-4d3a-5384-a78c99b65918\",\n        \"fight_id\": \"5483bcd6-891c-a876-5c5c-844ea455a2e5\",\n        \"fighter_id\": \"114c72cb-52eb-6132-be47-938b11e816a3\",\n        \"side\": 1467,\n        \"role\": \"string\",\n        \"created_at\": \"1990-03-07T02:15:14.555Z\"\n      },\n      {\n        \"id\": \"a9d49f3b-085a-1c67-e2ac-484e5f27744b\",\n        \"fight_id\": \"50aaa20e-9fa6-11e8-c39a-804b2193102f\",\n        \"fighter_id\": \"d8676580-f6a9-97f2-85f2-281ea396cdef\",\n        \"side\": 7853,\n        \"role\": \"string\",\n        \"created_at\": \"1958-11-04T15:25:39.317Z\"\n      }\n    ]\n  },\n  {\n    \"id\": \"6cd36726-dfd0-d209-7f99-091eaf76dfbc\",\n    \"date\": \"1973-12-08\",\n    \"location\": \"string\",\n    \"is_deleted\": false,\n    \"created_at\": \"1955-03-26T11:07:46.561Z\",\n    \"video_url\": \"string\",\n    \"winner_side\": 4550,\n    \"notes\": \"string\",\n    \"participations\": [\n      {\n        \"id\": \"d93fea79-1049-f0cf-b432-c9d19e00bf1b\",\n        \"fight_id\": \"30c1bd58-75c7-6a1b-b0a5-c568fda7dc8c\",\n        \"fighter_id\": \"d4392ac8-c3b1-9099-f957-8501b4dc94c0\",\n        \"side\": 1075,\n        \"role\": \"string\",\n        \"created_at\": \"1962-10-15T21:11:01.019Z\"\n      },\n      {\n        \"id\": \"9bde319c-7733-bedd-a43c-88369aedc9bd\",\n        \"fight_id\": \"2c170d04-c9bc-03b0-3d07-ecfc1952a323\",\n        \"fighter_id\": \"44c3e418-aa6d-2db2-ef2d-9a4df1b4ff7a\",\n        \"side\": 3168,\n        \"role\": \"string\",\n        \"created_at\": \"1988-07-03T00:23:40.357Z\"\n      }\n    ]\n  }\n]"
+                      "body": "[\n  {\n    \"id\": \"dcd42c9e-6d8e-1c6b-337c-fb0d80c451a2\",\n    \"date\": \"2017-08-29\",\n    \"location\": \"string\",\n    \"is_deactivated\": true,\n    \"created_at\": \"1957-08-30T03:49:06.492Z\",\n    \"video_url\": \"string\",\n    \"winner_side\": 5835,\n    \"notes\": \"string\",\n    \"participations\": [\n      {\n        \"id\": \"6e53d8e5-2fcd-4d3a-5384-a78c99b65918\",\n        \"fight_id\": \"5483bcd6-891c-a876-5c5c-844ea455a2e5\",\n        \"fighter_id\": \"114c72cb-52eb-6132-be47-938b11e816a3\",\n        \"side\": 1467,\n        \"role\": \"string\",\n        \"created_at\": \"1990-03-07T02:15:14.555Z\"\n      },\n      {\n        \"id\": \"a9d49f3b-085a-1c67-e2ac-484e5f27744b\",\n        \"fight_id\": \"50aaa20e-9fa6-11e8-c39a-804b2193102f\",\n        \"fighter_id\": \"d8676580-f6a9-97f2-85f2-281ea396cdef\",\n        \"side\": 7853,\n        \"role\": \"string\",\n        \"created_at\": \"1958-11-04T15:25:39.317Z\"\n      }\n    ]\n  },\n  {\n    \"id\": \"6cd36726-dfd0-d209-7f99-091eaf76dfbc\",\n    \"date\": \"1973-12-08\",\n    \"location\": \"string\",\n    \"is_deactivated\": false,\n    \"created_at\": \"1955-03-26T11:07:46.561Z\",\n    \"video_url\": \"string\",\n    \"winner_side\": 4550,\n    \"notes\": \"string\",\n    \"participations\": [\n      {\n        \"id\": \"d93fea79-1049-f0cf-b432-c9d19e00bf1b\",\n        \"fight_id\": \"30c1bd58-75c7-6a1b-b0a5-c568fda7dc8c\",\n        \"fighter_id\": \"d4392ac8-c3b1-9099-f957-8501b4dc94c0\",\n        \"side\": 1075,\n        \"role\": \"string\",\n        \"created_at\": \"1962-10-15T21:11:01.019Z\"\n      },\n      {\n        \"id\": \"9bde319c-7733-bedd-a43c-88369aedc9bd\",\n        \"fight_id\": \"2c170d04-c9bc-03b0-3d07-ecfc1952a323\",\n        \"fighter_id\": \"44c3e418-aa6d-2db2-ef2d-9a4df1b4ff7a\",\n        \"side\": 3168,\n        \"role\": \"string\",\n        \"created_at\": \"1988-07-03T00:23:40.357Z\"\n      }\n    ]\n  }\n]"
                     },
                     {
                       "id": "f823d00c-2dc5-435d-93da-7418f8fd23ad",
@@ -4078,7 +4078,7 @@
                           }
                         ],
                         "url": {
-                          "raw": "{{baseUrl}}/api/v1/fights?start_date=2007-03-01&end_date=2007-03-01&include_deleted=false",
+                          "raw": "{{baseUrl}}/api/v1/fights?start_date=2007-03-01&end_date=2007-03-01&include_deactivated=false",
                           "host": [
                             "{{baseUrl}}"
                           ],
@@ -4100,7 +4100,7 @@
                             },
                             {
                               "description": "Include soft-deleted fights (admin only)",
-                              "key": "include_deleted",
+                              "key": "include_deactivate",
                               "value": "false"
                             }
                           ]
@@ -4204,7 +4204,7 @@
                             }
                           ],
                           "cookie": [],
-                          "body": "{\n  \"name\": \"string\",\n  \"is_privileged\": true,\n  \"is_parent\": true,\n  \"has_children\": false,\n  \"display_order\": 4653,\n  \"id\": \"027ac059-8d58-73f6-97ae-e38603dbe8ec\",\n  \"is_deleted\": false,\n  \"created_at\": \"1991-02-08T00:57:10.976Z\"\n}"
+                          "body": "{\n  \"name\": \"string\",\n  \"is_privileged\": true,\n  \"is_parent\": true,\n  \"has_children\": false,\n  \"display_order\": 4653,\n  \"id\": \"027ac059-8d58-73f6-97ae-e38603dbe8ec\",\n  \"is_deactivated\": false,\n  \"created_at\": \"1991-02-08T00:57:10.976Z\"\n}"
                         },
                         {
                           "id": "7c77a61b-633a-42ea-a5a2-e01b3f5f74c5",
@@ -4385,7 +4385,7 @@
                             }
                           ],
                           "cookie": [],
-                          "body": "{\n  \"name\": \"string\",\n  \"is_privileged\": true,\n  \"is_parent\": true,\n  \"has_children\": false,\n  \"display_order\": 4653,\n  \"id\": \"027ac059-8d58-73f6-97ae-e38603dbe8ec\",\n  \"is_deleted\": false,\n  \"created_at\": \"1991-02-08T00:57:10.976Z\"\n}"
+                          "body": "{\n  \"name\": \"string\",\n  \"is_privileged\": true,\n  \"is_parent\": true,\n  \"has_children\": false,\n  \"display_order\": 4653,\n  \"id\": \"027ac059-8d58-73f6-97ae-e38603dbe8ec\",\n  \"is_deactivated\": false,\n  \"created_at\": \"1991-02-08T00:57:10.976Z\"\n}"
                         },
                         {
                           "id": "062cd723-28bd-44fa-b04c-8374a4e15d98",
@@ -4524,7 +4524,7 @@
                             }
                           ]
                         },
-                        "description": "Soft delete a tag type (sets is_deleted flag)"
+                        "description": "Soft delete a tag type (sets is_deactivated flag)"
                       },
                       "response": [
                         {
@@ -4699,7 +4699,7 @@
                         }
                       ],
                       "cookie": [],
-                      "body": "[\n  {\n    \"name\": \"string\",\n    \"is_privileged\": true,\n    \"is_parent\": true,\n    \"has_children\": true,\n    \"display_order\": 7045,\n    \"id\": \"ae42738b-476e-45ee-4fb0-a7b08f920942\",\n    \"is_deleted\": true,\n    \"created_at\": \"1955-04-14T08:37:38.735Z\"\n  },\n  {\n    \"name\": \"string\",\n    \"is_privileged\": true,\n    \"is_parent\": false,\n    \"has_children\": true,\n    \"display_order\": 3943,\n    \"id\": \"7382dddd-6871-e79e-ce62-e70c4681b7a9\",\n    \"is_deleted\": true,\n    \"created_at\": \"1968-11-16T03:16:58.670Z\"\n  }\n]"
+                      "body": "[\n  {\n    \"name\": \"string\",\n    \"is_privileged\": true,\n    \"is_parent\": true,\n    \"has_children\": true,\n    \"display_order\": 7045,\n    \"id\": \"ae42738b-476e-45ee-4fb0-a7b08f920942\",\n    \"is_deactivated\": true,\n    \"created_at\": \"1955-04-14T08:37:38.735Z\"\n  },\n  {\n    \"name\": \"string\",\n    \"is_privileged\": true,\n    \"is_parent\": false,\n    \"has_children\": true,\n    \"display_order\": 3943,\n    \"id\": \"7382dddd-6871-e79e-ce62-e70c4681b7a9\",\n    \"is_deactivated\": true,\n    \"created_at\": \"1968-11-16T03:16:58.670Z\"\n  }\n]"
                     }
                   ]
                 },
@@ -4792,7 +4792,7 @@
                         }
                       ],
                       "cookie": [],
-                      "body": "{\n  \"name\": \"string\",\n  \"is_privileged\": true,\n  \"is_parent\": true,\n  \"has_children\": false,\n  \"display_order\": 4653,\n  \"id\": \"027ac059-8d58-73f6-97ae-e38603dbe8ec\",\n  \"is_deleted\": false,\n  \"created_at\": \"1991-02-08T00:57:10.976Z\"\n}"
+                      "body": "{\n  \"name\": \"string\",\n  \"is_privileged\": true,\n  \"is_parent\": true,\n  \"has_children\": false,\n  \"display_order\": 4653,\n  \"id\": \"027ac059-8d58-73f6-97ae-e38603dbe8ec\",\n  \"is_deactivated\": false,\n  \"created_at\": \"1991-02-08T00:57:10.976Z\"\n}"
                     },
                     {
                       "id": "0a5b0935-baf1-484f-895f-fd10506b5485",
@@ -4969,7 +4969,7 @@
                             }
                           ],
                           "cookie": [],
-                          "body": "{\n  \"id\": \"00241f82-81ab-9cc9-ba0c-8a8d1d348db2\",\n  \"tag_type_id\": \"b34b454a-5256-0a26-ea94-3aa0ba61884c\",\n  \"value\": \"string\",\n  \"is_deleted\": true,\n  \"created_at\": \"1976-08-17T16:47:00.073Z\",\n  \"parent_tag_id\": \"86063a4f-8b51-782d-3d18-2f0d880b339d\",\n  \"fight_id\": \"4c45b123-f6c6-f4ea-7023-02af673883ef\"\n}"
+                          "body": "{\n  \"id\": \"00241f82-81ab-9cc9-ba0c-8a8d1d348db2\",\n  \"tag_type_id\": \"b34b454a-5256-0a26-ea94-3aa0ba61884c\",\n  \"value\": \"string\",\n  \"is_deactivated\": true,\n  \"created_at\": \"1976-08-17T16:47:00.073Z\",\n  \"parent_tag_id\": \"86063a4f-8b51-782d-3d18-2f0d880b339d\",\n  \"fight_id\": \"4c45b123-f6c6-f4ea-7023-02af673883ef\"\n}"
                         },
                         {
                           "id": "ce941a31-9ee5-46fd-9b78-473b4cb077bf",
@@ -5150,7 +5150,7 @@
                             }
                           ],
                           "cookie": [],
-                          "body": "{\n  \"id\": \"00241f82-81ab-9cc9-ba0c-8a8d1d348db2\",\n  \"tag_type_id\": \"b34b454a-5256-0a26-ea94-3aa0ba61884c\",\n  \"value\": \"string\",\n  \"is_deleted\": true,\n  \"created_at\": \"1976-08-17T16:47:00.073Z\",\n  \"parent_tag_id\": \"86063a4f-8b51-782d-3d18-2f0d880b339d\",\n  \"fight_id\": \"4c45b123-f6c6-f4ea-7023-02af673883ef\"\n}"
+                          "body": "{\n  \"id\": \"00241f82-81ab-9cc9-ba0c-8a8d1d348db2\",\n  \"tag_type_id\": \"b34b454a-5256-0a26-ea94-3aa0ba61884c\",\n  \"value\": \"string\",\n  \"is_deactivated\": true,\n  \"created_at\": \"1976-08-17T16:47:00.073Z\",\n  \"parent_tag_id\": \"86063a4f-8b51-782d-3d18-2f0d880b339d\",\n  \"fight_id\": \"4c45b123-f6c6-f4ea-7023-02af673883ef\"\n}"
                         },
                         {
                           "id": "d59b8f20-fb3d-4dd9-8ad8-3d05048535ae",
@@ -5289,7 +5289,7 @@
                             }
                           ]
                         },
-                        "description": "Soft delete a tag (sets is_deleted flag)"
+                        "description": "Soft delete a tag (sets is_deactivated flag)"
                       },
                       "response": [
                         {
@@ -5464,7 +5464,7 @@
                         }
                       ],
                       "cookie": [],
-                      "body": "[\n  {\n    \"id\": \"91893e52-a5f8-031f-96a7-097d5c7d5d1f\",\n    \"tag_type_id\": \"a568fe35-2d12-a65f-e477-2347816d25ee\",\n    \"value\": \"string\",\n    \"is_deleted\": true,\n    \"created_at\": \"2016-10-19T21:38:54.972Z\",\n    \"parent_tag_id\": \"f3ee841a-c260-7406-fc10-8f8b7cc1e957\",\n    \"fight_id\": \"65c6cb15-6f11-e313-6acf-6c900c52190b\"\n  },\n  {\n    \"id\": \"7732ae46-3c9c-e32c-26df-29a3eee0f127\",\n    \"tag_type_id\": \"2c18b561-6849-5792-4ba3-6ab560c47e3f\",\n    \"value\": \"string\",\n    \"is_deleted\": false,\n    \"created_at\": \"1978-07-25T19:29:00.585Z\",\n    \"parent_tag_id\": \"de8495dd-7549-e8ee-e8c0-7fe65b171753\",\n    \"fight_id\": \"3b4583f4-b250-ec78-c5f4-3f28ca5f2d03\"\n  }\n]"
+                      "body": "[\n  {\n    \"id\": \"91893e52-a5f8-031f-96a7-097d5c7d5d1f\",\n    \"tag_type_id\": \"a568fe35-2d12-a65f-e477-2347816d25ee\",\n    \"value\": \"string\",\n    \"is_deactivated\": true,\n    \"created_at\": \"2016-10-19T21:38:54.972Z\",\n    \"parent_tag_id\": \"f3ee841a-c260-7406-fc10-8f8b7cc1e957\",\n    \"fight_id\": \"65c6cb15-6f11-e313-6acf-6c900c52190b\"\n  },\n  {\n    \"id\": \"7732ae46-3c9c-e32c-26df-29a3eee0f127\",\n    \"tag_type_id\": \"2c18b561-6849-5792-4ba3-6ab560c47e3f\",\n    \"value\": \"string\",\n    \"is_deactivated\": false,\n    \"created_at\": \"1978-07-25T19:29:00.585Z\",\n    \"parent_tag_id\": \"de8495dd-7549-e8ee-e8c0-7fe65b171753\",\n    \"fight_id\": \"3b4583f4-b250-ec78-c5f4-3f28ca5f2d03\"\n  }\n]"
                     }
                   ]
                 },
@@ -5557,7 +5557,7 @@
                         }
                       ],
                       "cookie": [],
-                      "body": "{\n  \"id\": \"00241f82-81ab-9cc9-ba0c-8a8d1d348db2\",\n  \"tag_type_id\": \"b34b454a-5256-0a26-ea94-3aa0ba61884c\",\n  \"value\": \"string\",\n  \"is_deleted\": true,\n  \"created_at\": \"1976-08-17T16:47:00.073Z\",\n  \"parent_tag_id\": \"86063a4f-8b51-782d-3d18-2f0d880b339d\",\n  \"fight_id\": \"4c45b123-f6c6-f4ea-7023-02af673883ef\"\n}"
+                      "body": "{\n  \"id\": \"00241f82-81ab-9cc9-ba0c-8a8d1d348db2\",\n  \"tag_type_id\": \"b34b454a-5256-0a26-ea94-3aa0ba61884c\",\n  \"value\": \"string\",\n  \"is_deactivated\": true,\n  \"created_at\": \"1976-08-17T16:47:00.073Z\",\n  \"parent_tag_id\": \"86063a4f-8b51-782d-3d18-2f0d880b339d\",\n  \"fight_id\": \"4c45b123-f6c6-f4ea-7023-02af673883ef\"\n}"
                     },
                     {
                       "id": "6c675a17-cae8-4b7c-871b-30c249aca52f",

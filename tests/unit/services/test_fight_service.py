@@ -320,13 +320,13 @@ class TestFightServiceUpdate:
             await service.update(uuid4(), {"location": "New"})
 
 
-class TestFightServiceDelete:
-    """Test suite for fight delete operations."""
+class TestFightServiceDeactivate:
+    """Test suite for fight deactivate operations."""
 
     @pytest.mark.asyncio
     async def test_deactivate_fight_succeeds(self):
         """
-        Test that soft deleting a fight succeeds.
+        Test that deactivating a fight succeeds.
         """
         # Arrange
         fight_id = uuid4()
@@ -335,7 +335,7 @@ class TestFightServiceDelete:
         service = FightService(mock_repository)
 
         # Act
-        await service.delete(fight_id)
+        await service.deactivate(fight_id)
 
         # Assert
         mock_repository.deactivate.assert_awaited_once_with(fight_id)
@@ -353,7 +353,7 @@ class TestFightServiceDelete:
 
         # Act & Assert
         with pytest.raises(FightNotFoundError):
-            await service.delete(uuid4())
+            await service.deactivate(uuid4())
 
 
 class TestFightServiceCreateWithParticipants:

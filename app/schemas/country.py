@@ -46,7 +46,7 @@ class CountryUpdate(BaseModel):
     """
     name: str | None = Field(None, min_length=1, max_length=100, description="Updated country name")
     code: str | None = Field(None, min_length=3, max_length=3, description="Updated ISO 3166-1 alpha-3 country code")
-    include_deleted: bool = Field(False, description="Whether to allow updates on soft-deleted countries, admin only")
+    include_deactivate: bool = Field(False, description="Whether to allow updates on soft-deleted countries, admin only")
 
     @field_validator('code')
     @classmethod

@@ -59,7 +59,7 @@ class TeamRepository:
 
         Args:
             team_id: UUID of the team
-            include_deleted: If True, include deactivated teams
+            include_deactivate: If True, include deactivated teams
 
         Returns:
             Team instance with country relationship loaded, or None if not found
@@ -81,7 +81,7 @@ class TeamRepository:
         List all teams with eager-loaded country data.
 
         Args:
-            include_deleted: If True, include deactivated teams
+            include_deactivate: If True, include deactivated teams
 
         Returns:
             List of Team instances, each with country relationship loaded
@@ -108,7 +108,7 @@ class TeamRepository:
 
         Args:
             country_id: UUID of the country to filter by
-            include_deleted: If True, include deactivated teams
+            include_deactivate: If True, include deactivated teams
 
         Returns:
             List of Team instances for the specified country

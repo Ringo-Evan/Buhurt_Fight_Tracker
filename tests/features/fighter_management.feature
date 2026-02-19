@@ -44,7 +44,7 @@ Feature: Fighter Management
     And a team "Team USA" exists for country "USA"
     And a fighter "John Smith" exists for team "Team USA"
     And fighter "John Smith" is soft deleted
-    When I retrieve fighter "John Smith" as admin with include_deleted
+    When I retrieve fighter "John Smith" as admin with include_deactivate
     Then the response includes the fighter
     And the fighter is marked as deleted
     And the team relationship is intact
@@ -158,7 +158,7 @@ Feature: Fighter Management
 
   # ===== SOFT DELETE SCENARIOS =====
 
-  Scenario: Soft delete fighter sets is_deleted flag
+  Scenario: Soft delete fighter sets is_deactivated flag
     Given an active country exists with code "USA" and name "United States"
     And a team "Team USA" exists for country "USA"
     And a fighter "John Smith" exists for team "Team USA"
