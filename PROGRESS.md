@@ -1,6 +1,6 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-02-19 (Session 5)
+**Last Updated**: 2026-02-19 (Session 6)
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
 **Velocity**: ~8 hours/week (target: 14)
@@ -16,13 +16,13 @@
 | Phase 2B: Fight Core Validation | ✅ COMPLETE | 24 unit (FightService), 1 integration | ~4 hrs |
 | Phase 2C: CI/CD Pipeline + Integration Tests | ✅ COMPLETE | 206 unit, 61 integration (1 skipped) | ~3 hrs |
 | Phase 2D: Deactivate + Hard Delete | ✅ COMPLETE | 222 unit, 66+ integration | ~3 hrs |
-| Phase 3: Tag Expansion | 📋 PLANNED | 0 | 0 |
+| Phase 3: Tag Expansion | 🔄 IN PROGRESS | 236 unit | Session 6 |
 | Phase 4A: Basic Deployment | 📋 PLANNED | 0 | 0 |
 | Phase 4B: Infrastructure as Code | 📋 OPTIONAL | 0 | 0 |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
-**Total Tests**: 222 unit (all passing) + 66+ integration + 98 BDD scenarios
+**Total Tests**: 236 unit (all passing) + 66+ integration + 98 BDD scenarios
 **Estimated Remaining**: 12-16 hours to "portfolio complete" (through Phase 4A)
 - Phase 3 (Tag Expansion): 8-10 hours
 - Phase 4A (Deployment): 4-6 hours
@@ -277,18 +277,18 @@ Without tags, Fight can't properly validate participant counts.
 
 ---
 
-### Phase 3: Tag Expansion 🔄 IN DESIGN
+### Phase 3: Tag Expansion 🔄 IN PROGRESS
 
-**Estimated Time**: 8-10 hours
+**Started**: 2026-02-19 (Session 6)
 **Complexity**: Medium-High
 **Prerequisites**: Phase 2D complete ✅
 **Design doc**: `planning/PHASE3_TAG_EXPANSION_DESIGN.md`
-**Decisions**: DD-007, DD-008, DD-009, DD-010
+**Decisions**: DD-007, DD-008, DD-009, DD-010, DD-011, DD-012
 
 **Scope (MVP — DD-010)**:
 | TagType | Parent | Cardinality | Values |
 |---------|--------|-------------|--------|
-| supercategory (rename fight_format) | none | exactly 1 | singles, melee |
+| supercategory (renamed from fight_format) | none | exactly 1 | singles, melee |
 | category | supercategory | 0 or 1 | singles→duel/profight, melee→3s/5s/10s/12s/16s/21s/30s/mass |
 | gender | none | 0 or 1 | male, female, mixed |
 | custom | none | unlimited | any string ≤200 chars |
@@ -299,36 +299,43 @@ Without tags, Fight can't properly validate participant counts.
 - Missing Fighter placeholders
 
 **Key Design Decisions**:
-- Tag write operations move to fight-scoped endpoints (`/fights/{id}/tags/...`) — DD-009
-- Standalone `/tags` write endpoints removed
-- `tags.fight_id` becomes NOT NULL — DD-008
-- fight_format TagType renamed to supercategory — DD-007
+- Tag write operations moved to fight-scoped endpoints (`/fights/{id}/tags/...`) — DD-009 ✅
+- Standalone `/tags` write endpoints removed — DD-009 ✅
+- `tags.fight_id` becomes NOT NULL — DD-008 (migration ready; runs in CI)
+- fight_format TagType renamed to supercategory — DD-007 ✅
+- Supercategory is immutable after creation — DD-011
+- DELETE rejects with 422 if children exist — DD-012 (not yet implemented)
 
-**Pre-work (before first BDD scenario)**:
-- [ ] Migration: `tags.fight_id` NOT NULL
-- [ ] Data migration: rename fight_format → supercategory, seed category/gender/custom TagTypes
-- [ ] Bug fix: `FightService.create_with_participants` must set `fight_id` on tag
-- [ ] Delete `tag_controller.py` write endpoints + associated integration tests
-- [ ] Add `tags` field to `FightResponse`
+**Pre-work (complete)**:
+- ✅ Migration: `tags.fight_id` NOT NULL + rename fight_format → supercategory + seed TagTypes
+- ✅ Bug fix: `FightService.create_with_participants` now sets `fight_id` on tag
+- ✅ Deleted `tag_controller.py` write endpoints + associated integration tests
+- ✅ Added `tags` field to `FightResponse`
+- ✅ TagTypes seeded in `conftest.db_engine` for all integration tests
 
-**New Features**:
-- [ ] `POST /fights/{id}/tags` — add tag with validation
-- [ ] `PATCH /fights/{id}/tags/{tag_id}` — update tag value (triggers cascade)
-- [ ] `PATCH /fights/{id}/tags/{tag_id}/deactivate` — deactivate tag (triggers cascade)
-- [ ] `DELETE /fights/{id}/tags/{tag_id}` — hard delete tag
-- [ ] Category-supercategory compatibility validation
-- [ ] One-active-tag-per-type enforcement
-- [ ] Cascade deactivation (supercategory change → deactivates category)
+**Implemented in Session 6**:
+- ✅ `POST /fights/{id}/tags` — add tag with full validation
+  - Category-supercategory compatibility (DD)
+  - One-per-type rule (supercategory, category, gender)
+  - Unlimited custom tags
+- ✅ `PATCH /fights/{id}/tags/{tag_id}/deactivate` — deactivate tag with cascade
+  - Cascade to children via `cascade_deactivate_children`
+  - Cross-fight access guard (404 if tag belongs to different fight)
+- ✅ `TagAddRequest` schema
+- ✅ BDD feature file: `tests/features/fight_tag_management.feature`
+- ✅ 14 new unit tests (10 add_tag + 3 deactivate_tag + 1 test_add_tag_rejects_deactivated_fight)
+- ✅ Integration tests written (Scenarios 1-8) in `test_fight_tag_integration.py`
 
-**Design Resolved**:
-- ✅ Supercategory is immutable after creation — cannot be changed
-- ✅ DELETE rejects with 422 if children exist — caller must remove children first
+**Remaining (unit tests all pass; integration tests need Docker/CI run)**:
+- [ ] Run integration test suite via CI to verify Scenarios 1-8 pass
+- [ ] `DELETE /fights/{id}/tags/{tag_id}` — hard delete with children-exist guard (DD-012)
+- [ ] Supercategory immutability enforcement (DD-011) — reject PATCH on supercategory tag
 
 **Success Criteria**:
-- All BDD scenarios in `fight_tag_management.feature` passing
-- `tags.fight_id` NOT NULL in production schema
-- No regressions in existing tests
-- FightResponse includes active tags
+- All BDD scenarios in `fight_tag_management.feature` passing in CI
+- `tags.fight_id` NOT NULL enforced after migration
+- No regressions in existing tests (currently 236/236 unit tests passing)
+- FightResponse includes active tags ✅
 
 ---
 
@@ -504,6 +511,34 @@ Types: feat, fix, test, docs, refactor
 
 ## Session Log
 
+### 2026-02-19 (Session 6): Phase 3 Started - Fight Tag Management
+
+- ✅ **Phase 3 pre-work** (all complete):
+  - Renamed `fight_format` → `supercategory` throughout (DD-007)
+  - Fixed bug: `FightService.create_with_participants` was creating tag without `fight_id`
+  - Removed standalone `tag_controller.py` write endpoints and integration tests (DD-009)
+  - Created migration `k6f7g8h9i0j1_phase3_tag_setup.py`: fight_id NOT NULL, rename, seed TagTypes
+  - Added `tags: list[TagResponse]` to `FightResponse` schema
+  - Seeded TagTypes in `conftest.db_engine` fixture so all integration tests have reference data
+- ✅ **BDD Feature File**: `tests/features/fight_tag_management.feature` (16 scenarios)
+- ✅ **Implemented `FightService.add_tag()`**:
+  - Category-supercategory compatibility validation
+  - One-per-type enforcement (supercategory/category/gender; unlimited custom)
+  - Cross-fight access guard
+  - 11 unit tests
+- ✅ **Implemented `FightService.deactivate_tag()`**:
+  - Validates tag belongs to fight
+  - Cascades deactivation to children
+  - Fixed typo in `TagRepository.cascade_deactivate_children` (recursive call was wrong method name)
+  - 3 unit tests
+- ✅ **Wired up controller endpoints**:
+  - `POST /fights/{id}/tags` → `add_tag()` → 201 TagResponse
+  - `PATCH /fights/{id}/tags/{tag_id}/deactivate` → `deactivate_tag()` → 200 TagResponse
+- ✅ **Integration tests written** (Scenarios 1-8, require Docker/CI):
+  - `tests/integration/api/test_fight_tag_integration.py`
+- ✅ **Unit tests**: 236/236 passing (up from 222)
+- 📋 **Remaining**: Run CI to verify integration tests, implement DELETE + supercategory immutability
+
 ### 2026-02-19 (Session 5): Phase 2D Complete - Deactivate + Hard Delete
 
 - ✅ **Fixed 3 pre-existing failures** in `TestCountryServicePermanentDelete`:
@@ -668,21 +703,18 @@ Types: feat, fix, test, docs, refactor
 
 ## Next Actions
 
-### Immediate (Next Session) - Begin Phase 3: Tag Expansion
-1. [ ] **Review Phase 3 requirements**
-   - Review `docs/tag-rules.md`
-   - Review tag hierarchy design
-   - Write BDD scenarios for new tag types
-2. [ ] **Implement new TagTypes** (category, gender, weapon, league, custom)
-3. [ ] **Implement tag hierarchy validation** (child tags require valid parent)
-4. [ ] **Implement cascading deactivate** for child tags
+### Immediate (Next Session) - Complete Phase 3
+1. [ ] Push to remote and run CI to verify Phase 3 integration tests pass
+2. [ ] Implement `DELETE /fights/{id}/tags/{tag_id}` with children-exist guard (DD-012)
+3. [ ] Enforce supercategory immutability (DD-011) — reject PATCH on supercategory tag
+4. [ ] Review Phase 3 scenarios for any gaps
 
 ### This Week (Feb 19)
 - [x] Fix 3 failing CountryService unit tests ✅
 - [x] Implement hard delete + deactivate for all entities ✅
 - [x] Fix CI failures (await session.delete, broken test) ✅
 - [x] Complete Phase 2D ✅
-- [ ] Begin Phase 3 (Tag Expansion)
+- [x] Begin Phase 3 (Tag Expansion) ✅ — pre-work + scenarios 1-8 implemented
 
 ### This Month (February 2026)
 - [x] Complete Phase 2D (Deactivate + Hard Delete) ✅
