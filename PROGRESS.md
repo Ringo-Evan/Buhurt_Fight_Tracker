@@ -1,6 +1,6 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-02-19 (Session 6)
+**Last Updated**: 2026-02-19 (Session 7)
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
 **Velocity**: ~8 hours/week (target: 14)
@@ -16,13 +16,13 @@
 | Phase 2B: Fight Core Validation | ✅ COMPLETE | 24 unit (FightService), 1 integration | ~4 hrs |
 | Phase 2C: CI/CD Pipeline + Integration Tests | ✅ COMPLETE | 206 unit, 61 integration (1 skipped) | ~3 hrs |
 | Phase 2D: Deactivate + Hard Delete | ✅ COMPLETE | 222 unit, 66+ integration | ~3 hrs |
-| Phase 3: Tag Expansion | 🔄 IN PROGRESS | 236 unit | Session 6 |
+| Phase 3: Tag Expansion | 🔄 IN PROGRESS | 242 unit | Session 6-7 |
 | Phase 4A: Basic Deployment | 📋 PLANNED | 0 | 0 |
 | Phase 4B: Infrastructure as Code | 📋 OPTIONAL | 0 | 0 |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
-**Total Tests**: 236 unit (all passing) + 66+ integration + 98 BDD scenarios
+**Total Tests**: 242 unit (all passing) + 66+ integration + 98 BDD scenarios
 **Estimated Remaining**: 12-16 hours to "portfolio complete" (through Phase 4A)
 - Phase 3 (Tag Expansion): 8-10 hours
 - Phase 4A (Deployment): 4-6 hours
@@ -326,15 +326,25 @@ Without tags, Fight can't properly validate participant counts.
 - ✅ 14 new unit tests (10 add_tag + 3 deactivate_tag + 1 test_add_tag_rejects_deactivated_fight)
 - ✅ Integration tests written (Scenarios 1-8) in `test_fight_tag_integration.py`
 
+**Implemented in Session 7 (continued)**:
+- ✅ `DELETE /fights/{id}/tags/{tag_id}` — hard delete with children-exist guard (DD-012)
+  - `TagRepository.list_active_children()` — checks parent_tag_id FK for active children
+  - Rejects with 422 if active children exist
+- ✅ `PATCH /fights/{id}/tags/{tag_id}` — update tag value (DD-011)
+  - Supercategory is immutable — rejects with 422
+  - Validates new value per tag type allowed-values rules
+- ✅ `TagUpdateRequest` schema
+- ✅ Auto-link category → supercategory via `parent_tag_id` in `add_tag` (hierarchy for DD-012)
+- ✅ Integration tests: `test_hard_delete_tag_with_no_children`, `test_hard_delete_tag_with_active_children_returns_422`, `test_cannot_update_supercategory_tag`
+- ✅ 6 new unit tests (4 delete_tag + 2 update_tag)
+
 **Remaining (unit tests all pass; integration tests need Docker/CI run)**:
-- [ ] Run integration test suite via CI to verify Scenarios 1-8 pass
-- [ ] `DELETE /fights/{id}/tags/{tag_id}` — hard delete with children-exist guard (DD-012)
-- [ ] Supercategory immutability enforcement (DD-011) — reject PATCH on supercategory tag
+- [ ] Run integration test suite via CI to verify all Phase 3 scenarios pass
 
 **Success Criteria**:
 - All BDD scenarios in `fight_tag_management.feature` passing in CI
 - `tags.fight_id` NOT NULL enforced after migration
-- No regressions in existing tests (currently 236/236 unit tests passing)
+- No regressions in existing tests (currently 242/242 unit tests passing)
 - FightResponse includes active tags ✅
 
 ---
