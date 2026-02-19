@@ -285,21 +285,43 @@ fight is deleted/deactivated, tag lifecycle is handled by the fight's cascade ru
 
 ---
 
-### DD-009: Standalone Tag Endpoints vs Fight-Scoped Tag Endpoints 📋 DECIDED
+### DD-009: Tag Write Operations Move to Fight-Scoped Endpoints ✅ DECIDED
 
-**Decision**: Keep standalone `/tags` endpoints but require `fight_id` on tag creation. Tags are not
-managed exclusively through fight endpoints in v1.
+**Decision**: Remove all standalone tag write endpoints. Tags are created, updated, and deleted
+exclusively through fight-scoped routes (`/fights/{id}/tags/...`). Read-only endpoints are also
+removed since tags are always fetched as part of their fight.
+
+**Endpoints removed** (from Phase 2A):
+- `POST /tags`
+- `PATCH /tags/{id}`
+- `PATCH /tags/{id}/deactivate`
+- `DELETE /tags/{id}`
+- `GET /tags`
+- `GET /tags/{id}`
+
+**Endpoints added** (Phase 3):
+- `POST /fights/{id}/tags` — add a tag to a fight
+- `PATCH /fights/{id}/tags/{tag_id}` — update a tag's value (may trigger cascade)
+- `PATCH /fights/{id}/tags/{tag_id}/deactivate` — deactivate a tag (and cascade children)
+- `DELETE /fights/{id}/tags/{tag_id}` — permanently delete a tag
+
+**What is NOT removed**: TagRepository and TagService. Both remain as internal building blocks.
+FightService calls TagRepository directly for tag operations (same pattern already used for
+fight_format tag creation). TagService methods remain available as internal utilities.
 
 **Rationale**:
-- Phase 2A already built and tested the `/tags` CRUD surface; removing it is waste
-- Requiring `fight_id` on POST makes the contract honest without restructuring routes
-- Fight-scoped routes (`POST /fights/{id}/tags`) are a cleaner v2 improvement
+- Tags only exist to describe fights — the domain does not have standalone tags
+- Participations already follow this pattern (no `POST /participations` endpoint)
+- Cascade deactivation requires fight context; doing it via `/tags` forces tag service to reach
+  into fight state (layer violation)
+- Phase 2A tag endpoints were scaffolding built before Fight existed; the pattern was always
+  temporary
+- Tests written against fight endpoints read as business scenarios; tests against `/tags` require
+  fight setup anyway and obscure intent
 
 **Trade-offs Accepted**:
-- Slightly awkward API (you create a fight, then POST to `/tags` with fight_id) — acceptable for v1
-- Fight endpoint doesn't return its tags inline on creation (only after refresh)
-
-**Deferred to v2**: Nested tag routes under fights (`/fights/{id}/tags`)
+- Phase 2A tag integration tests become dead code and must be deleted
+- Slightly more work on fight endpoints, but each method is small
 
 ---
 

@@ -277,40 +277,58 @@ Without tags, Fight can't properly validate participant counts.
 
 ---
 
-### Phase 3: Tag Expansion 📋 PLANNED
+### Phase 3: Tag Expansion 🔄 IN DESIGN
 
 **Estimated Time**: 8-10 hours
-**Complexity**: Medium (extending existing pattern)
-**Prerequisites**: Phase 2B complete
+**Complexity**: Medium-High
+**Prerequisites**: Phase 2D complete ✅
+**Design doc**: `planning/PHASE3_TAG_EXPANSION_DESIGN.md`
+**Decisions**: DD-007, DD-008, DD-009, DD-010
 
-**Scope**: Extend tag system with hierarchy and more tag types
+**Scope (MVP — DD-010)**:
+| TagType | Parent | Cardinality | Values |
+|---------|--------|-------------|--------|
+| supercategory (rename fight_format) | none | exactly 1 | singles, melee |
+| category | supercategory | 0 or 1 | singles→duel/profight, melee→3s/5s/10s/12s/16s/21s/30s/mass |
+| gender | none | 0 or 1 | male, female, mixed |
+| custom | none | unlimited | any string ≤200 chars |
 
-**New TagTypes to Add**:
-| TagType | Parent | Required | Values |
-|---------|--------|----------|--------|
-| category | fight_format | No | Singles: duel, profight / Melee: 3s, 5s, 10s, etc. |
-| gender | none | No | male, female, mixed |
-| weapon | category (duel only) | No | longsword, polearm, sword_shield, etc. |
-| league | category | No | BI, IMCF, AMMA, etc. |
-| custom | none | No | freeform text |
+**Deferred to Phase 3B**:
+- weapon, league, ruleset (category-value-dependent validation)
+- Team size enforcement per category
+- Missing Fighter placeholders
+
+**Key Design Decisions**:
+- Tag write operations move to fight-scoped endpoints (`/fights/{id}/tags/...`) — DD-009
+- Standalone `/tags` write endpoints removed
+- `tags.fight_id` becomes NOT NULL — DD-008
+- fight_format TagType renamed to supercategory — DD-007
+
+**Pre-work (before first BDD scenario)**:
+- [ ] Migration: `tags.fight_id` NOT NULL
+- [ ] Data migration: rename fight_format → supercategory, seed category/gender/custom TagTypes
+- [ ] Bug fix: `FightService.create_with_participants` must set `fight_id` on tag
+- [ ] Delete `tag_controller.py` write endpoints + associated integration tests
+- [ ] Add `tags` field to `FightResponse`
 
 **New Features**:
-- [ ] Tag.parent_tag_id for hierarchy
-- [ ] Validation: child tags require valid parent
-- [ ] Cascading soft delete (change category → delete weapon)
-- [ ] Custom tags allow multiple per fight
-- [ ] Category-specific allowed values
+- [ ] `POST /fights/{id}/tags` — add tag with validation
+- [ ] `PATCH /fights/{id}/tags/{tag_id}` — update tag value (triggers cascade)
+- [ ] `PATCH /fights/{id}/tags/{tag_id}/deactivate` — deactivate tag (triggers cascade)
+- [ ] `DELETE /fights/{id}/tags/{tag_id}` — hard delete tag
+- [ ] Category-supercategory compatibility validation
+- [ ] One-active-tag-per-type enforcement
+- [ ] Cascade deactivation (supercategory change → deactivates category)
 
-**Deferred to v2**:
-- TagChangeRequest (voting proposals)
-- Vote entity
-- Community voting workflow
-- Session-based fraud prevention
+**Open Questions**:
+- [ ] Should supercategory be changeable (value update) or immutable after creation?
+- [ ] Should DELETE cascade-delete children or require them gone first?
 
 **Success Criteria**:
-- Hierarchical tags working
-- Cascade delete working
-- No regressions
+- All BDD scenarios in `fight_tag_management.feature` passing
+- `tags.fight_id` NOT NULL in production schema
+- No regressions in existing tests
+- FightResponse includes active tags
 
 ---
 
