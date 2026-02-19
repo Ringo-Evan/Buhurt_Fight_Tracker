@@ -1,6 +1,6 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-01-27 (Session 4)
+**Last Updated**: 2026-02-19 (Session 5)
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
 **Velocity**: ~8 hours/week (target: 14)
@@ -15,13 +15,14 @@
 | Phase 2A: Tag Foundation (TagType + Tag) | ✅ COMPLETE | 28 unit, 17 integration | ~4 hrs |
 | Phase 2B: Fight Core Validation | ✅ COMPLETE | 24 unit (FightService), 1 integration | ~4 hrs |
 | Phase 2C: CI/CD Pipeline + Integration Tests | ✅ COMPLETE | 206 unit, 61 integration (1 skipped) | ~3 hrs |
+| Phase 2D: Deactivate + Hard Delete | ✅ COMPLETE | 222 unit, 66+ integration | ~3 hrs |
 | Phase 3: Tag Expansion | 📋 PLANNED | 0 | 0 |
 | Phase 4A: Basic Deployment | 📋 PLANNED | 0 | 0 |
 | Phase 4B: Infrastructure as Code | 📋 OPTIONAL | 0 | 0 |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
-**Total Tests**: 206 unit (all passing) + 61 integration (1 skipped) + 98 BDD scenarios
+**Total Tests**: 222 unit (all passing) + 66+ integration + 98 BDD scenarios
 **Estimated Remaining**: 12-16 hours to "portfolio complete" (through Phase 4A)
 - Phase 3 (Tag Expansion): 8-10 hours
 - Phase 4A (Deployment): 4-6 hours
@@ -235,11 +236,41 @@ Without tags, Fight can't properly validate participant counts.
 - [ ] Add integration tests for other entities (Country, Team, Fighter, Tag, TagType)
 - [ ] Set up branch protection rules requiring CI pass
 
-### Phase 2D: Change soft delete to deactivate and add permanent delete In progress
+### Phase 2D: Deactivate + Hard Delete ✅ COMPLETE
 
-**Scope** Remove all soft delted calls, replace with Deactivate. Create a delete call that does a normal hard delete.
+**Started**: 2026-02-19
+**Completed**: 2026-02-19 (Session 5)
+**Time Spent**: ~3 hours
 
-**Progress** Replaced soft delete. Implemented delte in tag type.
+**Scope**: Replace soft delete pattern with explicit deactivate (PATCH) + permanent hard delete (DELETE) across all entities.
+
+| Entity | Repo `delete()` | Service `delete()` | `PATCH /deactivate` | `DELETE` (hard) |
+|--------|----------------|-------------------|---------------------|-----------------|
+| Country | ✅ | ✅ (`permanent_delete`) | ✅ Added | ✅ Fixed |
+| Team | ✅ | ✅ | ✅ Added | ✅ Fixed |
+| Fighter | ✅ Added | ✅ Added | ✅ Added | ✅ Fixed |
+| TagType | ✅ (pre-existing) | ✅ (pre-existing) | ✅ (pre-existing) | ✅ (pre-existing) |
+| Tag | ✅ Added | ✅ Added | ✅ (pre-existing) | ✅ Fixed |
+| Fight | ✅ Added | ✅ Added | ✅ Added | ✅ Fixed |
+
+**New Integration Tests**:
+- `tests/integration/api/test_country_integration.py`
+- `tests/integration/api/test_team_integration.py`
+- `tests/integration/api/test_fighter_integration.py`
+- `tests/integration/api/test_tag_delete_integration.py`
+- `tests/integration/api/test_fight_delete_integration.py`
+
+**Bugs Fixed During Phase**:
+- Missing `await` on `session.delete()` in Fighter, Fight, Tag repositories (silent no-op in SQLAlchemy async)
+- Corresponding unit tests updated from `MagicMock` → `AsyncMock` for `session.delete`
+- `test_list_all_fights_excludes_deactivated` updated to use `PATCH /deactivate` instead of `DELETE`
+- 3 failing `TestCountryServicePermanentDelete` tests fixed (missing `permanent_delete` alias on repo)
+
+**Success Criteria** (all met):
+- ✅ All entities have both `PATCH /{id}/deactivate` and `DELETE /{id}` (hard) endpoints
+- ✅ 222/222 unit tests passing
+- ✅ All integration tests passing in CI (GitHub Actions green)
+- ✅ No regressions in previous phases
 
 
 
@@ -455,6 +486,33 @@ Types: feat, fix, test, docs, refactor
 
 ## Session Log
 
+### 2026-02-19 (Session 5): Phase 2D Complete - Deactivate + Hard Delete
+
+- ✅ **Fixed 3 pre-existing failures** in `TestCountryServicePermanentDelete`:
+  - Added `permanent_delete` alias to `CountryRepository`
+  - Fixed `CountryService.permanent_delete` to remove redundant `get_by_id` check
+- ✅ **Implemented hard delete + deactivate across all entities** (BDD → TDD workflow):
+  - Country: fixed controller DELETE → `permanent_delete`, added `PATCH /deactivate`
+  - Team: fixed controller DELETE → `delete`, added `PATCH /deactivate`
+  - Fighter: added `delete()` to repo + service, fixed broken controller DELETE, added `PATCH /deactivate`
+  - Tag: added `delete()` to repo + service, fixed controller DELETE
+  - Fight: added `delete()` to repo + service, added `PATCH /deactivate`
+- ✅ **Added 5 new integration test files** (DELETE hard + PATCH /deactivate scenarios)
+- ✅ **Added 13 new unit tests** across 6 test files (222 total, up from 209)
+- ✅ **Fixed CI failures after push**:
+  - Root cause: `session.delete()` not awaited in Fighter, Fight, Tag repos → silent no-op
+  - Fixed with `await self.session.delete(entity)` in all three repos
+  - Updated unit test mocks from `MagicMock` → `AsyncMock` for `session.delete`
+  - Fixed `test_list_all_fights_excludes_deactivated` to use `PATCH /deactivate` instead of `DELETE`
+- ✅ **CI green**: 222 unit + all integration tests passing (run time ~1m34s)
+- 📝 **Phase 2D COMPLETE**
+- 📋 **Next: Phase 3** - Tag Expansion
+
+**Lessons Learned**:
+- SQLAlchemy `AsyncSession.delete()` IS a coroutine — must be awaited (unlike `session.add()`)
+- When overriding `AsyncMock` attributes with `MagicMock`, `await` will fail at runtime
+- Always check existing tests that exercise the same endpoints when changing endpoint behavior
+
 ### 2026-01-27 (Session 4): Phase 2C Complete - CI/CD Pipeline + Integration Tests
 - ✅ **Created and debugged GitHub Actions CI/CD workflow** (`.github/workflows/test.yml`)
   - Configured PostgreSQL 16 service container
@@ -592,39 +650,24 @@ Types: feat, fix, test, docs, refactor
 
 ## Next Actions
 
-### Immediate (Next Session) - Begin Phase 2D: Replace Soft Delete
-1. [ ] **Review Phase 2D requirements** 
-   - Review `docs/002-deactivated-flag.md`
-   - Review Phase 2D scope in this document
-   - Identify which models to implement first
-2. [ ] **Plan implementation approach** (30 min)
-   - Decide on incremental vs all-at-once approach
-   - Write BDD scenarios
-   - Consider cascading delete issues
-3. [ ] **Begin Delete implementation** (TDD)
-   - write integration test from controller layer in BDD style
-   - Write test for first method
-   - Make test pass
-   - repeat till BDD test can pass
-   - Move on to next controller
-4. [ ] **Review work**
+### Immediate (Next Session) - Begin Phase 3: Tag Expansion
+1. [ ] **Review Phase 3 requirements**
+   - Review `docs/tag-rules.md`
+   - Review tag hierarchy design
+   - Write BDD scenarios for new tag types
+2. [ ] **Implement new TagTypes** (category, gender, weapon, league, custom)
+3. [ ] **Implement tag hierarchy validation** (child tags require valid parent)
+4. [ ] **Implement cascading deactivate** for child tags
 
-### This Week
-- [x] Create Alembic migration for TagType and Tag tables ✅
-- [x] Seed fight_format TagType with "singles" and "melee" values ✅
-- [x] Complete Fight entity core validation (format-dependent) ✅
-- [x] Set up GitHub Actions CI/CD pipeline ✅
-- [x] Write Fight integration tests ✅
-- [x] Push and verify CI/CD pipeline ✅
-- [ ] Begin Phase 2C (Tag Expansion)
+### This Week (Feb 19)
+- [x] Fix 3 failing CountryService unit tests ✅
+- [x] Implement hard delete + deactivate for all entities ✅
+- [x] Fix CI failures (await session.delete, broken test) ✅
+- [x] Complete Phase 2D ✅
+- [ ] Begin Phase 3 (Tag Expansion)
 
-### This Month (January 2026)
-- [x] Complete Phase 2A (Tag Foundation) ✅
-- [x] Complete Phase 2B Core (Fight + FightParticipation validation) ✅
-- [x] Complete Phase 2C (CI/CD pipeline + integration tests) ✅
-
-### Next Month (February 2026)
-- [ ] Complete Phase 2D
+### This Month (February 2026)
+- [x] Complete Phase 2D (Deactivate + Hard Delete) ✅
 - [ ] Complete Phase 3 (Tag Expansion)
 - [ ] Complete Phase 4A (Deployment)
 - [ ] Project "Portfolio Ready" milestone
@@ -641,6 +684,7 @@ Types: feat, fix, test, docs, refactor
 | Week 2 (Jan 17-24) | 14 hrs | ~2 hrs | TagType complete (Phase 2A partial) |
 | Week 3 (Jan 25-26) | 14 hrs | ~6 hrs | Tag complete, Phase 2A done, Phase 2B core complete, Docker investigation |
 | Week 4 (Jan 27) | 14 hrs | ~3 hrs | Phase 2C complete - CI/CD pipeline operational |
+| Week of Feb 19 | 14 hrs | ~3 hrs | Phase 2D complete - deactivate + hard delete across all entities |
 
 ### Velocity
 
