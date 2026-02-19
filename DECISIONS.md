@@ -352,6 +352,39 @@ fight_format tag creation). TagService methods remain available as internal util
 
 ---
 
+### DD-011: Supercategory Tag is Immutable After Creation ✅ DECIDED
+
+**Decision**: Once a fight is created with a supercategory ("singles" or "melee"), that value
+cannot be changed. `PATCH /fights/{id}/tags/{tag_id}` returns 422 if the tag type is
+supercategory.
+
+**Rationale**:
+- The supercategory determines participant count rules (1v1 vs 5v5+). Changing it after
+  participants are recorded would invalidate all existing validation.
+- In practice, the wrong format on a fight is a data entry error — the fight should be
+  deleted and re-created, not mutated.
+- Simplifies cascade logic: no need to handle "supercategory changed" cascade in Phase 3.
+
+**Deferred**: If a genuine use case emerges (e.g. reclassification of historical data), a
+dedicated `PATCH /fights/{id}/reclassify` endpoint with explicit business logic is the right
+approach, not a generic tag update.
+
+---
+
+### DD-012: Tag DELETE Rejects if Children Exist ✅ DECIDED
+
+**Decision**: `DELETE /fights/{id}/tags/{tag_id}` returns 422 if the tag has any active
+children (`parent_tag_id = tag_id AND is_deactivated = false`). Caller must deactivate or
+delete children first.
+
+**Rationale**:
+- Cascade-delete logic is non-trivial to implement correctly and test thoroughly.
+- Explicit ordering (children first) keeps each operation simple and auditable.
+- Deactivation cascade (via `PATCH .../deactivate`) already handles the common "clear a
+  tag and its children" use case without requiring hard delete.
+
+---
+
 ## Open Questions
 
 ### OQ-001: Fighter.team_id Nullable? ❓ OPEN

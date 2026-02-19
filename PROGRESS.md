@@ -320,9 +320,9 @@ Without tags, Fight can't properly validate participant counts.
 - [ ] One-active-tag-per-type enforcement
 - [ ] Cascade deactivation (supercategory change → deactivates category)
 
-**Open Questions**:
-- [ ] Should supercategory be changeable (value update) or immutable after creation?
-- [ ] Should DELETE cascade-delete children or require them gone first?
+**Design Resolved**:
+- ✅ Supercategory is immutable after creation — cannot be changed
+- ✅ DELETE rejects with 422 if children exist — caller must remove children first
 
 **Success Criteria**:
 - All BDD scenarios in `fight_tag_management.feature` passing

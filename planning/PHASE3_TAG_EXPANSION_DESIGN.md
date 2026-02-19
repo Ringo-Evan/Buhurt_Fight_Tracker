@@ -333,11 +333,14 @@ For each BDD scenario, follow strict RED → GREEN:
 
 ---
 
-## Open Questions Before Starting
+## Resolved Design Questions
 
-1. Should deactivating the supercategory tag be allowed? (It's required at creation — should it
-   be immutable? Or can it be changed to a different value only?) Current design: allow value
-   change (with cascade), disallow deactivation entirely.
+1. **Supercategory is immutable after creation.** ✅ DECIDED
+   Once a fight is created as "singles" or "melee" it cannot be changed. The supercategory tag
+   value is locked. `PATCH /fights/{id}/tags/{tag_id}` must reject attempts to update a
+   supercategory tag with 422.
 
-2. Should `DELETE /fights/{id}/tags/{tag_id}` cascade-delete children, or require children to be
-   deleted first? Recommend: cascade-delete via service logic (mirrors cascade-deactivation).
+2. **DELETE rejects if children exist.** ✅ DECIDED
+   `DELETE /fights/{id}/tags/{tag_id}` returns 422 if the tag has any active children
+   (tags with `parent_tag_id = tag_id` and `is_deactivated = false`). Caller must deactivate
+   or delete children first. No cascade-delete logic needed.
