@@ -14,6 +14,8 @@ from app.core.database import get_db
 from app.repositories.fight_repository import FightRepository
 from app.repositories.fight_participation_repository import FightParticipationRepository
 from app.repositories.fighter_repository import FighterRepository
+from app.repositories.tag_repository import TagRepository
+from app.repositories.tag_type_repository import TagTypeRepository
 from app.services.fight_service import FightService
 from app.schemas.fight import FightCreate, FightUpdate, FightResponse
 from app.exceptions import FightNotFoundError, ValidationError
@@ -26,10 +28,14 @@ def get_fight_service(db: AsyncSession = Depends(get_db)) -> FightService:
     fight_repository = FightRepository(db)
     participation_repository = FightParticipationRepository(db)
     fighter_repository = FighterRepository(db)
+    tag_repository = TagRepository(db)
+    tag_type_repository = TagTypeRepository(db)
     return FightService(
         fight_repository=fight_repository,
         participation_repository=participation_repository,
-        fighter_repository=fighter_repository
+        fighter_repository=fighter_repository,
+        tag_repository=tag_repository,
+        tag_type_repository=tag_type_repository
     )
 
 

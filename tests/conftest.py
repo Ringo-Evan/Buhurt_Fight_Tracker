@@ -6,10 +6,12 @@ Provides fixtures for unit tests (mocks) and integration tests (Testcontainers).
 
 import pytest
 import pytest_asyncio
-from uuid import uuid4
+from uuid import uuid4, UUID
+from datetime import datetime, UTC
 from testcontainers.postgres import PostgresContainer
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
+import sqlalchemy as sa
 
 # Import all models to ensure proper relationship resolution
 # This must be done before Base.metadata.create_all() is called
@@ -87,6 +89,17 @@ async def db_engine(postgres_container):
     # Create all tables in the test database
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Seed reference TagTypes (mirrors production migration data)
+        now = datetime.now(UTC).isoformat()
+        await conn.execute(sa.text("""
+            INSERT INTO tag_types (id, name, is_privileged, is_parent, has_children, display_order, is_deactivated, created_at)
+            VALUES
+                ('00000000-0000-0000-0000-000000000001', 'supercategory', true,  true,  true,  0, false, :now),
+                ('00000000-0000-0000-0000-000000000004', 'category',      true,  false, false, 1, false, :now),
+                ('00000000-0000-0000-0000-000000000005', 'gender',        false, false, false, 2, false, :now),
+                ('00000000-0000-0000-0000-000000000006', 'custom',        false, false, false, 3, false, :now)
+            ON CONFLICT (name) DO NOTHING
+        """).bindparams(now=now))
 
     yield engine
 
