@@ -241,6 +241,95 @@ async def create_fight_with_participants(self, fight_data, fight_format, partici
 
 ---
 
+### DD-007: fight_format Tag IS the Supercategory ✅ DECIDED
+
+**Decision**: The existing `fight_format` TagType (values: `"singles"`, `"melee"`) is the Supercategory
+level of the tag hierarchy described in `tag-rules.md`. It will be renamed `supercategory` in Phase 3.
+
+**Rationale**:
+- `tag-rules.md` defines the hierarchy root as "Supercategory" with values Singles and Melee
+- Phase 2B implemented this as `fight_format` before the naming was settled
+- They are the same concept; two names for one thing adds confusion
+- Renaming via migration in Phase 3 aligns code with domain language
+
+**Migration plan**:
+- Rename TagType `name = "fight_format"` → `name = "supercategory"` in a data migration
+- Update any hardcoded `"fight_format"` references in service/test code to `"supercategory"`
+
+**Alternatives Rejected**:
+- Keep `fight_format` and introduce separate `supercategory` (two things representing the same concept)
+- Use `fight_format` as a parent of `supercategory` (unnecessary indirection)
+
+---
+
+### DD-008: Tag fight_id is Required (One-to-Many, Not Many-to-Many) ✅ DECIDED
+
+**Decision**: Tags belong to exactly one Fight. `tag.fight_id` must be `NOT NULL`. The Tag ↔ Fight
+relationship is one-to-many (Fight has many Tags, Tag belongs to one Fight).
+
+**Rationale**:
+- Each tag instance is fight-specific: "Longsword" on Fight A and Fight B are two separate rows
+- The SQL hierarchy queries in `tag-rules.md` filter by `fight_id` — confirming per-fight instances
+- Nullable `fight_id` was a temporary concession while Fight was unimplemented; that reason is gone
+- Orphan tags (no fight) have no valid use case in this domain
+
+**Implications**:
+- Requires a migration to add `NOT NULL` constraint to `tags.fight_id`
+- The existing bug in `FightService.create_with_participants` (creates tag without `fight_id`) must be
+  fixed as part of Phase 3 setup
+- Standalone `POST /tags` endpoint must require `fight_id` on creation, OR tag management moves
+  exclusively to fight-scoped endpoints (see DD-009)
+
+**Auto-deactivation concern**: Not needed. A tag cannot "lose" its fight — it's a direct FK. If the
+fight is deleted/deactivated, tag lifecycle is handled by the fight's cascade rules.
+
+---
+
+### DD-009: Standalone Tag Endpoints vs Fight-Scoped Tag Endpoints 📋 DECIDED
+
+**Decision**: Keep standalone `/tags` endpoints but require `fight_id` on tag creation. Tags are not
+managed exclusively through fight endpoints in v1.
+
+**Rationale**:
+- Phase 2A already built and tested the `/tags` CRUD surface; removing it is waste
+- Requiring `fight_id` on POST makes the contract honest without restructuring routes
+- Fight-scoped routes (`POST /fights/{id}/tags`) are a cleaner v2 improvement
+
+**Trade-offs Accepted**:
+- Slightly awkward API (you create a fight, then POST to `/tags` with fight_id) — acceptable for v1
+- Fight endpoint doesn't return its tags inline on creation (only after refresh)
+
+**Deferred to v2**: Nested tag routes under fights (`/fights/{id}/tags`)
+
+---
+
+### DD-010: Phase 3 Scope (Tag Expansion MVP) 📋 DECIDED
+
+**Decision**: Phase 3 implements the following tag types only. All others deferred.
+
+**In scope for Phase 3**:
+| TagType | Parent Required | Cardinality per Fight |
+|---------|----------------|----------------------|
+| supercategory (rename fight_format) | none | exactly 1 |
+| category | supercategory | 0 or 1 |
+| gender | none | 0 or 1 |
+| custom | none | unlimited |
+
+**Deferred to Phase 3B / v2**:
+- weapon (requires category = "duel", complex validation)
+- league (values depend on category)
+- ruleset (values depend on category)
+- Team size enforcement per category (3s/5s/10s min-max counts)
+- Missing Fighter placeholder participations
+
+**Rationale**:
+- Supercategory + category + gender + custom covers the core hierarchy demonstration
+- Weapon/league/ruleset require category-value-dependent allowed-values logic — significant complexity
+- Team size / Missing Fighter changes fight creation logic deeply — separate phase
+- The cascading deactivation pattern is fully demonstrated by supercategory → category alone
+
+---
+
 ## Open Questions
 
 ### OQ-001: Fighter.team_id Nullable? ❓ OPEN
@@ -543,6 +632,7 @@ These don't need answers now, but should be considered eventually:
 
 | Date | Change |
 |------|--------|
+| 2026-02-19 | Added DD-007 through DD-010 (fight_format=supercategory, tag one-to-many, standalone endpoints, Phase 3 scope) |
 | 2026-01-18 | Added DD-001 through DD-006 (tags before fights, fight_format, validation rules) |
 | 2026-01-18 | Added SD-003 (deployment strategy with Neon + Azure) |
 | 2026-01-18 | Added DF-005, DF-006 (Azure Postgres deferred, IaC optional) |
