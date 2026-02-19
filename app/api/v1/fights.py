@@ -17,7 +17,7 @@ from app.repositories.fighter_repository import FighterRepository
 from app.repositories.tag_repository import TagRepository
 from app.repositories.tag_type_repository import TagTypeRepository
 from app.services.fight_service import FightService
-from app.schemas.fight import FightCreate, FightUpdate, FightResponse, TagAddRequest
+from app.schemas.fight import FightCreate, FightUpdate, FightResponse, TagAddRequest, TagUpdateRequest
 from app.schemas.tag_schema import TagResponse
 from app.exceptions import FightNotFoundError, ValidationError
 
@@ -232,6 +232,38 @@ async def add_tag_to_fight(
 
 
 @router.patch(
+    "/{fight_id}/tags/{tag_id}",
+    response_model=TagResponse,
+    summary="Update a tag on a fight",
+    description="Update a tag's value. Supercategory tags are immutable (DD-011).",
+    responses={
+        404: {"description": "Fight or tag not found"},
+        422: {"description": "Supercategory is immutable, or invalid value"},
+    },
+)
+async def update_fight_tag(
+    fight_id: UUID,
+    tag_id: UUID,
+    tag_data: TagUpdateRequest,
+    service: FightService = Depends(get_fight_service),
+) -> TagResponse:
+    """Update the value of a tag on a fight."""
+    try:
+        tag = await service.update_tag(fight_id=fight_id, tag_id=tag_id, new_value=tag_data.value)
+        return TagResponse.model_validate(tag)
+    except FightNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fight with ID {fight_id} not found",
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
+
+
+@router.patch(
     "/{fight_id}/tags/{tag_id}/deactivate",
     response_model=TagResponse,
     summary="Deactivate a tag on a fight",
@@ -260,6 +292,37 @@ async def deactivate_fight_tag(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+
+
+@router.delete(
+    "/{fight_id}/tags/{tag_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Hard delete a tag from a fight",
+    description="Permanently delete a tag. Rejects with 422 if active children exist (DD-012).",
+    responses={
+        404: {"description": "Fight or tag not found"},
+        422: {"description": "Tag has active children — deactivate or delete them first"},
+    },
+)
+async def delete_fight_tag(
+    fight_id: UUID,
+    tag_id: UUID,
+    service: FightService = Depends(get_fight_service),
+) -> None:
+    """Hard delete a tag from a fight."""
+    try:
+        await service.delete_tag(fight_id=fight_id, tag_id=tag_id)
+    except FightNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fight with ID {fight_id} not found",
+        )
+    except ValidationError as e:
+        # Could be "not found on fight" or "has children"
+        detail = str(e)
+        if "not found" in detail.lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
 
 
 @router.delete(

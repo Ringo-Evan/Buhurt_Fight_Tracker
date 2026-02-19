@@ -444,3 +444,137 @@ class TestFightTagIntegration:
 
         finally:
             app.dependency_overrides.clear()
+
+    # -------------------------------------------------------------------------
+    # Delete tag (DD-012: reject if children exist)
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_hard_delete_tag_with_no_children(self, db_session):
+        """
+        Scenario: Hard delete a tag that has no children
+
+        Given a singles fight with an active gender tag "male"
+        When I hard delete the gender tag
+        Then the gender tag no longer exists
+        """
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                tag_resp = await client.post(
+                    f"/api/v1/fights/{fight_id}/tags",
+                    json={"tag_type_name": "gender", "value": "male"}
+                )
+                assert tag_resp.status_code == 201, tag_resp.text
+                tag_id = tag_resp.json()["id"]
+
+                # Hard delete
+                delete_resp = await client.delete(f"/api/v1/fights/{fight_id}/tags/{tag_id}")
+
+            assert delete_resp.status_code == 204, delete_resp.text
+
+            # Verify gone from DB
+            from app.repositories.tag_repository import TagRepository
+            tag_repo = TagRepository(db_session)
+            result = await tag_repo.get_by_id(tag_id, include_deactivated=True)
+            assert result is None
+
+        finally:
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_hard_delete_tag_with_active_children_returns_422(self, db_session):
+        """
+        Scenario: Cannot delete a tag that has active children
+
+        Given a singles fight with an active category tag "duel"
+        When I hard delete the supercategory tag
+        Then I receive a 422 validation error
+        And the supercategory tag still exists
+        """
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+
+                # Add a category tag (child of supercategory)
+                cat_resp = await client.post(
+                    f"/api/v1/fights/{fight_id}/tags",
+                    json={"tag_type_name": "category", "value": "duel"}
+                )
+                assert cat_resp.status_code == 201, cat_resp.text
+
+                # Find supercategory tag
+                fight_data = (await client.get(f"/api/v1/fights/{fight_id}")).json()
+                sc_tag = next(t for t in fight_data["tags"] if t["value"] == "singles")
+                sc_tag_id = sc_tag["id"]
+
+                # Attempt to hard-delete supercategory (which has a child)
+                delete_resp = await client.delete(
+                    f"/api/v1/fights/{fight_id}/tags/{sc_tag_id}"
+                )
+
+            assert delete_resp.status_code == 422, delete_resp.text
+
+            # Supercategory tag still exists
+            from app.repositories.tag_repository import TagRepository
+            tag_repo = TagRepository(db_session)
+            still_there = await tag_repo.get_by_id(sc_tag_id, include_deactivated=True)
+            assert still_there is not None
+
+        finally:
+            app.dependency_overrides.clear()
+
+    # -------------------------------------------------------------------------
+    # Supercategory immutability (DD-011)
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_cannot_update_supercategory_tag(self, db_session):
+        """
+        Scenario: Cannot update supercategory tag after fight creation
+
+        Given a singles fight exists
+        When I update the supercategory tag to "melee"
+        Then I receive a 422 validation error
+        """
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+
+                fight_data = (await client.get(f"/api/v1/fights/{fight_id}")).json()
+                sc_tag = next(t for t in fight_data["tags"] if t["value"] == "singles")
+                sc_tag_id = sc_tag["id"]
+
+                response = await client.patch(
+                    f"/api/v1/fights/{fight_id}/tags/{sc_tag_id}",
+                    json={"value": "melee"}
+                )
+
+            assert response.status_code == 422, response.text
+
+        finally:
+            app.dependency_overrides.clear()

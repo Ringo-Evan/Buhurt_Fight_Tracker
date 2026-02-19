@@ -80,6 +80,15 @@ class TagRepository:
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
+    async def list_active_children(self, parent_tag_id: UUID) -> list[Tag]:
+        """Return all active (non-deactivated) child tags of the given parent."""
+        query = select(Tag).where(
+            Tag.parent_tag_id == parent_tag_id,
+            Tag.is_deactivated == False
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
     async def update(self, tag_id: UUID, update_data: Dict[str, Any]) -> Tag | None:
         """Update an existing tag."""
         tag = await self.get_by_id(tag_id)

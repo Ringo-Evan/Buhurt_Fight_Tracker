@@ -1371,3 +1371,197 @@ class TestFightServiceDeactivateTag:
         assert result.is_deactivated is True
         mock_tag_repo.deactivate.assert_awaited_once_with(sc_tag_id)
         mock_tag_repo.cascade_deactivate_children.assert_awaited_once_with(sc_tag_id)
+
+
+class TestFightServiceDeleteTag:
+    """Test suite for FightService.delete_tag() - hard delete with children guard (DD-012)."""
+
+    def _make_service(self, fight=None, tag=None, child_tags=None):
+        """Build a FightService with mocked repos for delete_tag tests."""
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+        from app.repositories.tag_repository import TagRepository
+        from app.repositories.tag_type_repository import TagTypeRepository
+
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_tag_repo = AsyncMock(spec=TagRepository)
+
+        mock_fight_repo.get_by_id.return_value = fight
+        mock_tag_repo.get_by_id.return_value = tag
+        # list_active_children returns tags with this parent_tag_id
+        mock_tag_repo.list_active_children = AsyncMock(return_value=child_tags or [])
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=AsyncMock(spec=FightParticipationRepository),
+            fighter_repository=AsyncMock(spec=FighterRepository),
+            tag_repository=mock_tag_repo,
+            tag_type_repository=AsyncMock(spec=TagTypeRepository),
+        )
+        return service, mock_fight_repo, mock_tag_repo
+
+    @pytest.mark.asyncio
+    async def test_delete_tag_raises_fight_not_found(self):
+        """Test that delete_tag raises FightNotFoundError when fight not found."""
+        service, _, _ = self._make_service(fight=None)
+
+        with pytest.raises(FightNotFoundError):
+            await service.delete_tag(uuid4(), uuid4())
+
+    @pytest.mark.asyncio
+    async def test_delete_tag_raises_not_found_when_tag_not_on_fight(self):
+        """Test that delete_tag raises ValidationError when tag not on this fight."""
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight_id = uuid4()
+        fight = Fight(
+            id=fight_id, date=date(2025, 1, 10),
+            location="Arena", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        fight.tags = []
+
+        # Tag belongs to a different fight
+        tag = TagModel(
+            id=uuid4(), fight_id=uuid4(),  # different fight
+            tag_type_id=uuid4(), value="male",
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+
+        service, _, _ = self._make_service(fight=fight, tag=tag)
+
+        with pytest.raises((ValidationError, Exception)):
+            await service.delete_tag(fight_id, tag.id)
+
+    @pytest.mark.asyncio
+    async def test_delete_tag_rejects_when_active_children_exist(self):
+        """
+        DD-012: Cannot delete a tag that has active child tags.
+        """
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight_id = uuid4()
+        sc_tag_id = uuid4()
+
+        sc_tag_type = TagType(id=uuid4(), name="supercategory", is_privileged=True,
+                              is_deactivated=False, created_at=datetime.now(UTC))
+        sc_tag = TagModel(
+            id=sc_tag_id, fight_id=fight_id,
+            tag_type_id=sc_tag_type.id, value="singles",
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        sc_tag.tag_type = sc_tag_type
+
+        # Active child tag
+        cat_tag = TagModel(
+            id=uuid4(), fight_id=fight_id,
+            tag_type_id=uuid4(), value="duel",
+            parent_tag_id=sc_tag_id,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+
+        fight = Fight(
+            id=fight_id, date=date(2025, 1, 10),
+            location="Arena", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        fight.tags = [sc_tag, cat_tag]
+
+        service, _, _ = self._make_service(fight=fight, tag=sc_tag, child_tags=[cat_tag])
+
+        with pytest.raises(ValidationError, match="[Cc]hildren|[Cc]hild tags"):
+            await service.delete_tag(fight_id, sc_tag_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_tag_succeeds_when_no_children(self):
+        """Test that delete_tag succeeds when no active children exist."""
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight_id = uuid4()
+        gender_tag_id = uuid4()
+
+        gender_tag_type = TagType(id=uuid4(), name="gender", is_privileged=False,
+                                  is_deactivated=False, created_at=datetime.now(UTC))
+        gender_tag = TagModel(
+            id=gender_tag_id, fight_id=fight_id,
+            tag_type_id=gender_tag_type.id, value="male",
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        gender_tag.tag_type = gender_tag_type
+
+        fight = Fight(
+            id=fight_id, date=date(2025, 1, 10),
+            location="Arena", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        fight.tags = [gender_tag]
+
+        service, _, mock_tag_repo = self._make_service(fight=fight, tag=gender_tag, child_tags=[])
+
+        await service.delete_tag(fight_id, gender_tag_id)
+
+        mock_tag_repo.delete.assert_awaited_once_with(gender_tag_id)
+
+
+class TestFightServiceUpdateTag:
+    """Test suite for FightService.update_tag() - DD-011: supercategory immutability."""
+
+    def _make_service(self, fight=None, tag=None):
+        """Build a FightService with mocked repos for update_tag tests."""
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+        from app.repositories.tag_repository import TagRepository
+        from app.repositories.tag_type_repository import TagTypeRepository
+
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_tag_repo = AsyncMock(spec=TagRepository)
+
+        mock_fight_repo.get_by_id.return_value = fight
+        mock_tag_repo.get_by_id.return_value = tag
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=AsyncMock(spec=FightParticipationRepository),
+            fighter_repository=AsyncMock(spec=FighterRepository),
+            tag_repository=mock_tag_repo,
+            tag_type_repository=AsyncMock(spec=TagTypeRepository),
+        )
+        return service, mock_fight_repo, mock_tag_repo
+
+    @pytest.mark.asyncio
+    async def test_update_supercategory_tag_raises_validation_error(self):
+        """
+        DD-011: Supercategory is immutable after creation.
+        PATCH /fights/{id}/tags/{tag_id} must reject attempts to update a supercategory tag.
+        """
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight_id = uuid4()
+        sc_tag_type = TagType(id=uuid4(), name="supercategory", is_privileged=True,
+                              is_deactivated=False, created_at=datetime.now(UTC))
+        sc_tag = TagModel(
+            id=uuid4(), fight_id=fight_id,
+            tag_type_id=sc_tag_type.id, value="singles",
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        sc_tag.tag_type = sc_tag_type
+
+        fight = Fight(
+            id=fight_id, date=date(2025, 1, 10),
+            location="Arena", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        fight.tags = [sc_tag]
+
+        service, _, _ = self._make_service(fight=fight, tag=sc_tag)
+
+        with pytest.raises(ValidationError, match="[Ss]upercategory.*immutable|[Cc]annot update supercategory"):
+            await service.update_tag(fight_id, sc_tag.id, new_value="melee")
+
+    @pytest.mark.asyncio
+    async def test_update_tag_raises_fight_not_found(self):
+        """Test that update_tag raises FightNotFoundError when fight not found."""
+        service, _, _ = self._make_service(fight=None)
+
+        with pytest.raises(FightNotFoundError):
+            await service.update_tag(uuid4(), uuid4(), new_value="duel")

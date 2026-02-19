@@ -134,6 +134,22 @@ class TagAddRequest(BaseModel):
     }
 
 
+class TagUpdateRequest(BaseModel):
+    """
+    Schema for updating a tag's value via PATCH /fights/{id}/tags/{tag_id}.
+
+    Attributes:
+        value: New tag value
+    """
+    value: str = Field(..., min_length=1, max_length=200, description="New tag value")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"value": "profight"}]
+        }
+    }
+
+
 class FightUpdate(BaseModel):
     """
     Schema for updating an existing fight.

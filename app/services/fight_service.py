@@ -203,6 +203,83 @@ class FightService:
         await self.fight_repository.refresh_session(fight)
         return fight
 
+    async def delete_tag(self, fight_id: UUID, tag_id: UUID) -> None:
+        """
+        Hard delete a tag from a fight.
+
+        DD-012: Rejects with ValidationError if tag has active children.
+
+        Args:
+            fight_id: UUID of the fight owning the tag
+            tag_id: UUID of the tag to delete
+
+        Raises:
+            FightNotFoundError: If fight not found
+            ValidationError: If tag not on this fight, or has active children
+        """
+        # 1. Validate fight exists
+        fight = await self.fight_repository.get_by_id(fight_id, include_deactivated=False)
+        if fight is None:
+            raise FightNotFoundError(f"Fight with ID {fight_id} not found")
+
+        # 2. Validate tag exists and belongs to this fight
+        tag = await self.tag_repository.get_by_id(tag_id, include_deactivated=True)
+        if tag is None or tag.fight_id != fight_id:
+            raise ValidationError(f"Tag with ID {tag_id} not found on fight {fight_id}")
+
+        # 3. DD-012: Reject if active children exist
+        active_children = await self.tag_repository.list_active_children(tag_id)
+        if active_children:
+            raise ValidationError(
+                f"Cannot delete tag '{tag_id}': it has {len(active_children)} active child tag(s). "
+                f"Deactivate or delete children first."
+            )
+
+        # 4. Hard delete
+        await self.tag_repository.delete(tag_id)
+
+    async def update_tag(self, fight_id: UUID, tag_id: UUID, new_value: str) -> Tag:
+        """
+        Update the value of a tag on a fight.
+
+        DD-011: Supercategory tags are immutable after creation.
+
+        Args:
+            fight_id: UUID of the fight owning the tag
+            tag_id: UUID of the tag to update
+            new_value: New tag value
+
+        Returns:
+            Updated Tag instance
+
+        Raises:
+            FightNotFoundError: If fight not found
+            ValidationError: If tag not on this fight, supercategory tag, or invalid new value
+        """
+        # 1. Validate fight exists
+        fight = await self.fight_repository.get_by_id(fight_id, include_deactivated=False)
+        if fight is None:
+            raise FightNotFoundError(f"Fight with ID {fight_id} not found")
+
+        # 2. Validate tag exists and belongs to this fight
+        tag = await self.tag_repository.get_by_id(tag_id, include_deactivated=False)
+        if tag is None or tag.fight_id != fight_id:
+            raise ValidationError(f"Tag with ID {tag_id} not found on fight {fight_id}")
+
+        # 3. DD-011: Supercategory is immutable
+        if tag.tag_type and tag.tag_type.name == "supercategory":
+            raise ValidationError(
+                "Cannot update supercategory tag: supercategory is immutable after fight creation."
+            )
+
+        # 4. Validate new value for this tag type
+        if tag.tag_type:
+            self._validate_tag_value(tag.tag_type.name, new_value, fight)
+
+        # 5. Update
+        updated = await self.tag_repository.update(tag_id, {"value": new_value})
+        return updated
+
     # Allowed tag values per tag type
     _SUPERCATEGORY_VALUES = {"singles", "melee"}
     _CATEGORY_VALUES = {
@@ -262,7 +339,17 @@ class FightService:
                     f"Deactivate it before adding a new one."
                 )
 
-        # 5. Create tag
+        # 5. Auto-link category to supercategory tag (hierarchy)
+        if tag_type_name == "category" and parent_tag_id is None:
+            sc_tag = next(
+                (t for t in fight.tags if not t.is_deactivated
+                 and t.tag_type and t.tag_type.name == "supercategory"),
+                None
+            )
+            if sc_tag:
+                parent_tag_id = sc_tag.id
+
+        # 6. Create tag
         return await self.tag_repository.create({
             "fight_id": fight_id,
             "tag_type_id": tag_type.id,
