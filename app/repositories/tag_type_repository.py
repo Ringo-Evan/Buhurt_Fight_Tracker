@@ -79,3 +79,11 @@ class TagTypeRepository:
             raise ValueError("Tag type not found")
         tag_type.is_deactivated = True
         await self.session.commit()
+
+    async def delete(self, tag_type_id: UUID) -> None:
+        """Permanently delete a tag type."""
+        tag_type = await self.get_by_id(tag_type_id, include_deactivated=True)
+        if tag_type is None:
+            raise ValueError("Tag type not found")
+        await self.session.delete(tag_type)
+        await self.session.commit()

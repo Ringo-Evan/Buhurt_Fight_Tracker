@@ -116,6 +116,23 @@ class TagTypeService:
 
         await self.tag_type_repository.deactivate(tag_type_id)
 
+    async def delete(self, tag_type_id: UUID) -> None:
+        """
+        Permanently delete a tag type.
+
+        Args:
+            tag_type_id: ID of the tag type to delete
+
+        Raises:
+            ValidationError: If tag type not found
+        """
+        # Verify tag type exists (including deactivated)
+        existing_tag_type = await self.tag_type_repository.get_by_id(tag_type_id, include_deactivated=True)
+        if not existing_tag_type:
+            raise ValidationError(f"Tag type with ID {tag_type_id} not found")
+
+        await self.tag_type_repository.delete(tag_type_id)
+
     ###Helper Methods###
 
     async def _validate_tag_type_data(self, data: Dict[str, Any]) -> None:

@@ -125,7 +125,7 @@ async def deactivate_tag_type(
     "/{tag_type_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a tag type",
-    description="Deactivate a tag type (sets is_deactivated flag)",
+    description="Delete a tag type (permanently removes it from the database)",
     responses={
         404: {"description": "Tag type not found"},
     },
@@ -134,8 +134,8 @@ async def delete_tag_type(
     tag_type_id: UUID,
     service: TagTypeService = Depends(get_tag_type_service)
 ):
-    """Deactivate a tag type."""
+    """Delete a tag type."""
     try:
-        await service.deactivate(tag_type_id)
+        await service.delete(tag_type_id)
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

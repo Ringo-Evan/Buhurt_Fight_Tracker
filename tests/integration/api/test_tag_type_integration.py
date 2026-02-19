@@ -392,7 +392,58 @@ class TestTagTypeIntegration:
         finally:
             app.dependency_overrides.clear()
 
+    @pytest.mark.asyncio
+    async def test_delete_tag_type(self, db_session):
+        """
+        Scenario 6: Delete a tag type
 
+        Given the tag type "category" exists
+        When I delete the tag type "category"
+        Then the tag type "category" should not appear in the list even if is_deactivated is true
+
+        Verifies:
+        - DELETE /tag-types/{id} deletes tag type
+        - Deleted tag types are removed from database
+        """
+        # Arrange
+        async def get_db_override():
+            yield db_session
+
+        app.dependency_overrides[get_db] = get_db_override
+
+        # Create the tag type
+        from app.repositories.tag_type_repository import TagTypeRepository
+        repo = TagTypeRepository(db_session)
+        category = await repo.create({
+            'name': 'category',
+            'is_privileged': True,
+            'is_parent': True,
+            'has_children': False,
+            'display_order': 2
+        })
+        await db_session.commit()
+
+        try:
+            # Act: Delete
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                delete_response = await client.delete(f"/api/v1/tag-types/{category.id}")
+                assert delete_response.status_code == 204
+
+                # Then: Verify not in list
+                list_response = await client.get("/api/v1/tag-types")
+                tag_types = list_response.json()
+                names = [tt['name'] for tt in tag_types]
+                assert 'category' not in names
+
+            # Does not exists in database with even with is_deactivated=True
+            deactivated_tag_type = await repo.get_by_id(category.id, include_deactivated=True)
+            assert deactivated_tag_type is None
+
+        finally:
+            app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
     async def test_create_tag_type_with_name_too_long_returns_422(self, db_session):

@@ -47,20 +47,25 @@ class TestTagTypeService:
         Assert: Verify that the correct tag type is returned.
         """
 
-        #arrange 
+        #arrange
         mock_tag_type_repository = AsyncMock(spec=TagTypeRepository)
         tag_type_service = TagTypeService(tag_type_repository=mock_tag_type_repository)
-        tag_type = TagType(id='123e4567-e89b-12d3-a456-426614174000', name='Test Tag Type')
+        tag_type_id = UUID('123e4567-e89b-12d3-a456-426614174000')
+        tag_type = TagType(id=tag_type_id, name='Test Tag Type')
         mock_tag_type_repository.get_by_id.return_value = tag_type
-        
-        tag_type_id = '123e4567-e89b-12d3-a456-426614174000'
 
         #act
         retrieved_tag_type = await tag_type_service.get_by_id(tag_type_id)
+        if retrieved_tag_type is None:
+            raise AssertionError("Tag type not found")
+        else:
+            result_id = retrieved_tag_type.id
+            
+            
 
         #assert
         mock_tag_type_repository.get_by_id.assert_called_once_with(tag_type_id)
-        assert retrieved_tag_type.id == tag_type_id
+        assert result_id == tag_type_id
         assert retrieved_tag_type.name == 'Test Tag Type'
 
 
@@ -72,21 +77,26 @@ class TestTagTypeService:
         Act: Call the update_tag_type method with valid data.
         Assert: Verify that the tag type was updated successfully.
         """
-        #arrange 
+        #arrange
         mock_tag_type_repository = AsyncMock(spec=TagTypeRepository)
         tag_type_service = TagTypeService(tag_type_repository=mock_tag_type_repository)
-        tag_type = TagType(id='123e4567-e89b-12d3-a456-426614174000', name='Original Tag Type')
-        mock_tag_type_repository.update.return_value = tag_type
-        
-        tag_type_id = '123e4567-e89b-12d3-a456-426614174000'
+
+        tag_type_id = UUID('123e4567-e89b-12d3-a456-426614174000')
+        existing_tag_type = TagType(id=tag_type_id, name='Original Tag Type')
+        updated_tag_type = TagType(id=tag_type_id, name='Updated Tag Type')
+
+        mock_tag_type_repository.get_by_id.return_value = existing_tag_type
+        mock_tag_type_repository.get_by_name.return_value = None  # no duplicate
+        mock_tag_type_repository.update.return_value = updated_tag_type
+
         tag_type_data = {'name': 'Updated Tag Type'}
 
         #act
-        updated_tag_type = await tag_type_service.tag_type_repository.update(tag_type_id, tag_type_data)
+        result = await tag_type_service.update(tag_type_id, tag_type_data)
 
         #assert
         mock_tag_type_repository.update.assert_called_once_with(tag_type_id, tag_type_data)
-        assert updated_tag_type.name == 'Updated Tag Type'
+        assert result.name == 'Updated Tag Type'
 
     @pytest.mark.asyncio
     async def test_create_tag_type_with_duplicate_name_raises_error(self):
@@ -198,44 +208,6 @@ class TestTagTypeService:
         mock_tag_type_repository.list_all.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_update_tag_type(self):
-        """
-        Test updating a tag type.
-
-        Arrange: Mock repository to return existing and updated tag type
-        Act: Call service.update()
-        Assert: Tag type updated successfully
-        """
-        # Arrange
-        mock_tag_type_repository = AsyncMock(spec=TagTypeRepository)
-        tag_type_service = TagTypeService(tag_type_repository=mock_tag_type_repository)
-
-        tag_type_id = '123e4567-e89b-12d3-a456-426614174000'
-        existing_tag_type = TagType(
-            id=tag_type_id,
-            name='weapon',
-            display_order=3
-        )
-        updated_tag_type = TagType(
-            id=tag_type_id,
-            name='weapon',
-            display_order=10
-        )
-
-        mock_tag_type_repository.get_by_id.return_value = existing_tag_type
-        mock_tag_type_repository.update.return_value = updated_tag_type
-
-        update_data = {'display_order': 10}
-
-        # Act
-        result = await tag_type_service.update(tag_type_id, update_data)
-
-        # Assert
-        assert result.display_order == 10
-        mock_tag_type_repository.get_by_id.assert_called_once_with(tag_type_id)
-        mock_tag_type_repository.update.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_update_nonexistent_tag_type_raises_error(self):
         """
         Test that updating a nonexistent tag type raises error.
@@ -284,3 +256,27 @@ class TestTagTypeService:
         # Assert
         mock_tag_type_repository.get_by_id.assert_called_once_with(tag_type_id)
         mock_tag_type_repository.deactivate.assert_called_once_with(tag_type_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_tag_type(self):
+        """
+        Test deleting a tag type.
+
+        Arrange: Mock repository
+        Act: Call service.delete()
+        Assert: Repository delete called
+        """
+        # Arrange
+        mock_tag_type_repository = AsyncMock(spec=TagTypeRepository)
+        tag_type_service = TagTypeService(tag_type_repository=mock_tag_type_repository)
+
+        tag_type_id = UUID('123e4567-e89b-12d3-a456-426614174000')
+        existing_tag_type = TagType(id=tag_type_id, name='league')
+        mock_tag_type_repository.get_by_id.return_value = existing_tag_type
+
+        # Act
+        await tag_type_service.delete(tag_type_id)
+
+        # Assert
+        mock_tag_type_repository.get_by_id.assert_called_once_with(tag_type_id, include_deactivated=True)
+        mock_tag_type_repository.delete.assert_called_once_with(tag_type_id)

@@ -289,7 +289,7 @@ class TestTagTypeRepositoryListAll:
         mock_session.execute.assert_awaited_once()
 
 
-class TestTagTypeRepositorySoftDelete:
+class TestTagTypeRepositoryDeactivate:
     """Test suite for deactivate operations."""
 
     @pytest.mark.asyncio
@@ -347,3 +347,62 @@ class TestTagTypeRepositorySoftDelete:
         # Act & Assert
         with pytest.raises(ValueError, match="Tag type not found"):
             await repository.deactivate(tag_type_id)
+
+class TestTagTypeRepositoryDelete:
+    """Test suite for delete operations."""
+
+    @pytest.mark.asyncio
+    async def test_delete_removes_tag_type_from_database(self):
+        """
+        Test that delete removes tag type from database.
+
+        Arrange: Mock session with existing tag type
+        Act: Call repository.delete()
+        Assert: Tag type is removed and commit called
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        tag_type_id = uuid4()
+
+        mock_tag_type = TagType(
+            id=tag_type_id,
+            name="league",
+            is_deactivated=False
+        )
+
+        # Mock the get_by_id call that happens inside delete
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_tag_type
+        mock_session.execute.return_value = mock_result
+
+        repository = TagTypeRepository(mock_session)
+
+        # Act
+        await repository.delete(tag_type_id)
+
+        # Assert
+        mock_session.delete.assert_called_once_with(mock_tag_type)
+        mock_session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_raises_error_when_not_found(self):
+        """
+        Test that delete raises ValueError when tag type not found.
+
+        Arrange: Mock session returning None
+        Act: Call repository.delete()
+        Assert: Raises ValueError
+        """
+        # Arrange
+        mock_session = AsyncMock()
+        tag_type_id = uuid4()
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
+
+        repository = TagTypeRepository(mock_session)
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="Tag type not found"):
+            await repository.delete(tag_type_id)
