@@ -17,7 +17,8 @@ from app.repositories.fighter_repository import FighterRepository
 from app.repositories.tag_repository import TagRepository
 from app.repositories.tag_type_repository import TagTypeRepository
 from app.services.fight_service import FightService
-from app.schemas.fight import FightCreate, FightUpdate, FightResponse
+from app.schemas.fight import FightCreate, FightUpdate, FightResponse, TagAddRequest
+from app.schemas.tag_schema import TagResponse
 from app.exceptions import FightNotFoundError, ValidationError
 
 router = APIRouter(prefix="/fights", tags=["Fights"])
@@ -190,6 +191,74 @@ async def deactivate_fight(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Fight with ID {fight_id} not found",
+        )
+
+
+@router.post(
+    "/{fight_id}/tags",
+    response_model=TagResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Add a tag to a fight",
+    description="Add a tag (category, gender, or custom) to a fight.",
+    responses={
+        400: {"description": "Validation error (invalid value, wrong type for supercategory, etc.)"},
+        404: {"description": "Fight not found"},
+    },
+)
+async def add_tag_to_fight(
+    fight_id: UUID,
+    tag_data: TagAddRequest,
+    service: FightService = Depends(get_fight_service),
+) -> TagResponse:
+    """Add a tag to a fight."""
+    try:
+        tag = await service.add_tag(
+            fight_id=fight_id,
+            tag_type_name=tag_data.tag_type_name,
+            value=tag_data.value,
+            parent_tag_id=tag_data.parent_tag_id,
+        )
+        return TagResponse.model_validate(tag)
+    except FightNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fight with ID {fight_id} not found",
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
+
+
+@router.patch(
+    "/{fight_id}/tags/{tag_id}/deactivate",
+    response_model=TagResponse,
+    summary="Deactivate a tag on a fight",
+    description="Deactivate a tag. Cascades to child tags.",
+    responses={
+        404: {"description": "Fight or tag not found"},
+        422: {"description": "Tag does not belong to this fight"},
+    },
+)
+async def deactivate_fight_tag(
+    fight_id: UUID,
+    tag_id: UUID,
+    service: FightService = Depends(get_fight_service),
+) -> TagResponse:
+    """Deactivate a tag on a fight (with cascade to children)."""
+    try:
+        tag = await service.deactivate_tag(fight_id=fight_id, tag_id=tag_id)
+        return TagResponse.model_validate(tag)
+    except FightNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fight with ID {fight_id} not found",
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
         )
 
 

@@ -132,8 +132,8 @@ class TagRepository:
         for child in children:
             child.is_deactivated = True
             count += 1
-            # Recursively delete grandchildren
-            count += await self.cascade_soft_delete_children(child.id)
+            # Recursively deactivate grandchildren
+            count += await self.cascade_deactivate_children(child.id)
 
         await self.session.commit()
         return count

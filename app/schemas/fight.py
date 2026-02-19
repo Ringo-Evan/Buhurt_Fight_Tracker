@@ -108,6 +108,32 @@ class FightCreate(BaseModel):
     }
 
 
+class TagAddRequest(BaseModel):
+    """
+    Schema for adding a tag to a fight via POST /fights/{id}/tags.
+
+    Attributes:
+        tag_type_name: Name of the tag type (supercategory, category, gender, custom)
+        value: Tag value (validated per type)
+        parent_tag_id: Optional parent tag UUID (for hierarchy)
+    """
+    tag_type_name: str = Field(
+        ..., min_length=1, max_length=50, description="Tag type name"
+    )
+    value: str = Field(
+        ..., min_length=1, max_length=200, description="Tag value"
+    )
+    parent_tag_id: Optional[UUID] = Field(
+        None, description="Optional parent tag UUID"
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"tag_type_name": "category", "value": "duel"}]
+        }
+    }
+
+
 class FightUpdate(BaseModel):
     """
     Schema for updating an existing fight.

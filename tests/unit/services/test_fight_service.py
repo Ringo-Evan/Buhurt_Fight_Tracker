@@ -913,3 +913,461 @@ class TestFightServicePermanentDelete:
         # Act & Assert
         with pytest.raises(FightNotFoundError):
             await service.delete(uuid4())
+
+
+class TestFightServiceAddTag:
+    """Test suite for FightService.add_tag() - fight-scoped tag management."""
+
+    def _make_service(self, fight=None, tag_type=None):
+        """Build a FightService with mocked repos for add_tag tests."""
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+        from app.repositories.tag_repository import TagRepository
+        from app.repositories.tag_type_repository import TagTypeRepository
+
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_tag_repo = AsyncMock(spec=TagRepository)
+        mock_tag_type_repo = AsyncMock(spec=TagTypeRepository)
+
+        mock_fight_repo.get_by_id.return_value = fight
+        mock_tag_type_repo.get_by_name.return_value = tag_type
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=AsyncMock(spec=FightParticipationRepository),
+            fighter_repository=AsyncMock(spec=FighterRepository),
+            tag_repository=mock_tag_repo,
+            tag_type_repository=mock_tag_type_repo,
+        )
+        return service, mock_fight_repo, mock_tag_repo, mock_tag_type_repo
+
+    @pytest.mark.asyncio
+    async def test_add_tag_creates_tag_linked_to_fight(self):
+        """
+        Test that add_tag creates a tag with the correct fight_id and tag_type_id.
+
+        Scenario: Add a valid category tag to a singles fight
+        """
+        from app.models.tag_type import TagType
+        from app.models.tag import Tag
+
+        fight_id = uuid4()
+        category_tag_type_id = uuid4()
+        tag_id = uuid4()
+
+        # Create a minimal fight mock with is_deactivated=False and tags=[]
+        fight = Fight(
+            id=fight_id,
+            date=date(2025, 1, 10),
+            location="Arena",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        fight.tags = []  # No existing tags
+
+        category_tag_type = TagType(
+            id=category_tag_type_id,
+            name="category",
+            is_privileged=True,
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+
+        # The existing supercategory tag on the fight (needed for compatibility check)
+        supercategory_tag_type_id = uuid4()
+        supercategory_tag_type = TagType(
+            id=supercategory_tag_type_id,
+            name="supercategory",
+            is_privileged=True,
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        from app.models.tag import Tag as TagModel
+        sc_tag = TagModel(
+            id=uuid4(),
+            fight_id=fight_id,
+            tag_type_id=supercategory_tag_type_id,
+            value="singles",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        sc_tag.tag_type = supercategory_tag_type
+        fight.tags = [sc_tag]
+
+        expected_tag = TagModel(
+            id=tag_id,
+            fight_id=fight_id,
+            tag_type_id=category_tag_type_id,
+            value="duel",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+
+        service, mock_fight_repo, mock_tag_repo, mock_tag_type_repo = self._make_service(
+            fight=fight, tag_type=category_tag_type
+        )
+        mock_tag_repo.create.return_value = expected_tag
+
+        # Act
+        result = await service.add_tag(fight_id, tag_type_name="category", value="duel")
+
+        # Assert
+        assert result.value == "duel"
+        assert result.fight_id == fight_id
+        mock_tag_repo.create.assert_awaited_once()
+        call_args = mock_tag_repo.create.call_args[0][0]
+        assert call_args["fight_id"] == fight_id
+        assert call_args["tag_type_id"] == category_tag_type_id
+        assert call_args["value"] == "duel"
+
+    @pytest.mark.asyncio
+    async def test_add_tag_raises_error_for_nonexistent_fight(self):
+        """Test that add_tag raises FightNotFoundError when fight does not exist."""
+        from app.models.tag_type import TagType
+
+        service, _, _, _ = self._make_service(fight=None, tag_type=None)
+
+        with pytest.raises(FightNotFoundError):
+            await service.add_tag(uuid4(), tag_type_name="category", value="duel")
+
+    @pytest.mark.asyncio
+    async def test_add_tag_raises_error_for_unknown_tag_type(self):
+        """Test that add_tag raises ValidationError for unknown tag_type_name."""
+        fight = Fight(
+            id=uuid4(),
+            date=date(2025, 1, 10),
+            location="Arena",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        fight.tags = []
+
+        service, _, _, _ = self._make_service(fight=fight, tag_type=None)
+
+        with pytest.raises(ValidationError, match="[Uu]nknown tag type|tag.type.*not found"):
+            await service.add_tag(uuid4(), tag_type_name="bogus", value="whatever")
+
+    def _make_fight_with_supercategory(self, supercategory_value: str):
+        """Build a Fight instance with an active supercategory tag attached."""
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight_id = uuid4()
+        sc_tag_type = TagType(
+            id=uuid4(), name="supercategory",
+            is_privileged=True, is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        sc_tag = TagModel(
+            id=uuid4(), fight_id=fight_id,
+            tag_type_id=sc_tag_type.id,
+            value=supercategory_value,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        sc_tag.tag_type = sc_tag_type
+
+        fight = Fight(
+            id=fight_id, date=date(2025, 1, 10),
+            location="Arena", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        fight.tags = [sc_tag]
+        return fight
+
+    @pytest.mark.asyncio
+    async def test_add_category_tag_rejects_melee_value_for_singles_fight(self):
+        """
+        Scenario: Cannot add a melee category to a singles fight
+        """
+        from app.models.tag_type import TagType
+        fight = self._make_fight_with_supercategory("singles")
+        category_tag_type = TagType(
+            id=uuid4(), name="category", is_privileged=True,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        service, _, _, _ = self._make_service(fight=fight, tag_type=category_tag_type)
+
+        with pytest.raises(ValidationError, match="5s|not valid for supercategory 'singles'"):
+            await service.add_tag(fight.id, tag_type_name="category", value="5s")
+
+    @pytest.mark.asyncio
+    async def test_add_category_tag_rejects_singles_value_for_melee_fight(self):
+        """
+        Scenario: Cannot add a singles category to a melee fight
+        """
+        from app.models.tag_type import TagType
+        fight = self._make_fight_with_supercategory("melee")
+        category_tag_type = TagType(
+            id=uuid4(), name="category", is_privileged=True,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        service, _, _, _ = self._make_service(fight=fight, tag_type=category_tag_type)
+
+        with pytest.raises(ValidationError, match="duel|not valid for supercategory 'melee'"):
+            await service.add_tag(fight.id, tag_type_name="category", value="duel")
+
+    @pytest.mark.asyncio
+    async def test_add_category_tag_rejects_second_active_category(self):
+        """
+        Scenario: Cannot add two active category tags to the same fight (one-per-type rule)
+        """
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight = self._make_fight_with_supercategory("singles")
+        category_tag_type_id = uuid4()
+        category_tag_type = TagType(
+            id=category_tag_type_id, name="category", is_privileged=True,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        # Add an existing active category tag
+        existing_cat_tag = TagModel(
+            id=uuid4(), fight_id=fight.id,
+            tag_type_id=category_tag_type_id,
+            value="duel", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        existing_cat_tag.tag_type = category_tag_type
+        fight.tags.append(existing_cat_tag)
+
+        service, _, _, _ = self._make_service(fight=fight, tag_type=category_tag_type)
+
+        with pytest.raises(ValidationError, match="already has an active category tag"):
+            await service.add_tag(fight.id, tag_type_name="category", value="profight")
+
+    @pytest.mark.asyncio
+    async def test_add_gender_tag_with_valid_value_succeeds(self):
+        """
+        Scenario: Add a gender tag to a fight
+        """
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight = self._make_fight_with_supercategory("singles")
+        gender_tag_type_id = uuid4()
+        gender_tag_type = TagType(
+            id=gender_tag_type_id, name="gender", is_privileged=False,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        expected_tag = TagModel(
+            id=uuid4(), fight_id=fight.id,
+            tag_type_id=gender_tag_type_id,
+            value="male", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+
+        service, _, mock_tag_repo, _ = self._make_service(fight=fight, tag_type=gender_tag_type)
+        mock_tag_repo.create.return_value = expected_tag
+
+        result = await service.add_tag(fight.id, tag_type_name="gender", value="male")
+
+        assert result.value == "male"
+        mock_tag_repo.create.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_add_gender_tag_rejects_invalid_value(self):
+        """
+        Scenario: Cannot add an invalid gender value
+        """
+        from app.models.tag_type import TagType
+        fight = self._make_fight_with_supercategory("singles")
+        gender_tag_type = TagType(
+            id=uuid4(), name="gender", is_privileged=False,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        service, _, _, _ = self._make_service(fight=fight, tag_type=gender_tag_type)
+
+        with pytest.raises(ValidationError, match="[Ii]nvalid gender value"):
+            await service.add_tag(fight.id, tag_type_name="gender", value="unknown")
+
+    @pytest.mark.asyncio
+    async def test_add_custom_tag_succeeds(self):
+        """
+        Scenario: Add a custom tag to a fight
+        """
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight = self._make_fight_with_supercategory("singles")
+        custom_tag_type_id = uuid4()
+        custom_tag_type = TagType(
+            id=custom_tag_type_id, name="custom", is_privileged=False,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        expected_tag = TagModel(
+            id=uuid4(), fight_id=fight.id,
+            tag_type_id=custom_tag_type_id,
+            value="great technique", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+
+        service, _, mock_tag_repo, _ = self._make_service(fight=fight, tag_type=custom_tag_type)
+        mock_tag_repo.create.return_value = expected_tag
+
+        result = await service.add_tag(fight.id, tag_type_name="custom", value="great technique")
+
+        assert result.value == "great technique"
+
+    @pytest.mark.asyncio
+    async def test_add_tag_rejects_deactivated_fight(self):
+        """Test that add_tag raises FightNotFoundError for a deactivated fight."""
+        # get_by_id with include_deactivated=False returns None for deactivated fights
+        service, mock_fight_repo, _, _ = self._make_service(fight=None)
+        mock_fight_repo.get_by_id.return_value = None
+
+        with pytest.raises(FightNotFoundError):
+            await service.add_tag(uuid4(), tag_type_name="category", value="duel")
+
+    @pytest.mark.asyncio
+    async def test_add_custom_tag_allows_multiple_per_fight(self):
+        """
+        Scenario: Fight can have multiple custom tags (no one-per-type restriction)
+        """
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight = self._make_fight_with_supercategory("singles")
+        custom_tag_type_id = uuid4()
+        custom_tag_type = TagType(
+            id=custom_tag_type_id, name="custom", is_privileged=False,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        # An existing custom tag
+        existing_custom = TagModel(
+            id=uuid4(), fight_id=fight.id,
+            tag_type_id=custom_tag_type_id,
+            value="exciting", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        existing_custom.tag_type = custom_tag_type
+        fight.tags.append(existing_custom)
+
+        second_custom = TagModel(
+            id=uuid4(), fight_id=fight.id,
+            tag_type_id=custom_tag_type_id,
+            value="controversial", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+
+        service, _, mock_tag_repo, _ = self._make_service(fight=fight, tag_type=custom_tag_type)
+        mock_tag_repo.create.return_value = second_custom
+
+        # Should NOT raise even though another custom tag exists
+        result = await service.add_tag(fight.id, tag_type_name="custom", value="controversial")
+
+        assert result.value == "controversial"
+
+
+class TestFightServiceDeactivateTag:
+    """Test suite for FightService.deactivate_tag() - deactivate a fight's tag."""
+
+    def _make_service(self, fight=None, tag=None):
+        """Build a FightService with mocked repos for deactivate_tag tests."""
+        from app.repositories.fight_participation_repository import FightParticipationRepository
+        from app.repositories.fighter_repository import FighterRepository
+        from app.repositories.tag_repository import TagRepository
+        from app.repositories.tag_type_repository import TagTypeRepository
+
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        mock_tag_repo = AsyncMock(spec=TagRepository)
+
+        mock_fight_repo.get_by_id.return_value = fight
+        mock_tag_repo.get_by_id.return_value = tag
+
+        service = FightService(
+            fight_repository=mock_fight_repo,
+            participation_repository=AsyncMock(spec=FightParticipationRepository),
+            fighter_repository=AsyncMock(spec=FighterRepository),
+            tag_repository=mock_tag_repo,
+            tag_type_repository=AsyncMock(spec=TagTypeRepository),
+        )
+        return service, mock_fight_repo, mock_tag_repo
+
+    @pytest.mark.asyncio
+    async def test_deactivate_tag_raises_fight_not_found(self):
+        """Test that deactivate_tag raises FightNotFoundError when fight not found."""
+        service, _, _ = self._make_service(fight=None)
+
+        with pytest.raises(FightNotFoundError):
+            await service.deactivate_tag(uuid4(), uuid4())
+
+    @pytest.mark.asyncio
+    async def test_deactivate_tag_raises_not_found_when_tag_not_in_fight(self):
+        """
+        Test that deactivate_tag raises ValidationError when the tag belongs to a different fight.
+        """
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight_id = uuid4()
+        other_fight_id = uuid4()
+        fight = Fight(
+            id=fight_id, date=date(2025, 1, 10),
+            location="Arena", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        fight.tags = []
+
+        tag_type = TagType(id=uuid4(), name="gender", is_privileged=False,
+                           is_deactivated=False, created_at=datetime.now(UTC))
+        # Tag belongs to a DIFFERENT fight
+        tag = TagModel(
+            id=uuid4(), fight_id=other_fight_id,
+            tag_type_id=tag_type.id, value="male",
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        tag.tag_type = tag_type
+
+        service, _, _ = self._make_service(fight=fight, tag=tag)
+
+        with pytest.raises((ValidationError, Exception)):
+            await service.deactivate_tag(fight_id, tag.id)
+
+    @pytest.mark.asyncio
+    async def test_deactivate_tag_cascades_to_children(self):
+        """
+        Test that deactivating a supercategory tag also deactivates its child tags.
+        """
+        from app.models.tag import Tag as TagModel
+        from app.models.tag_type import TagType
+
+        fight_id = uuid4()
+        sc_tag_type = TagType(id=uuid4(), name="supercategory", is_privileged=True,
+                              is_deactivated=False, created_at=datetime.now(UTC))
+        cat_tag_type = TagType(id=uuid4(), name="category", is_privileged=True,
+                               is_deactivated=False, created_at=datetime.now(UTC))
+
+        sc_tag_id = uuid4()
+        cat_tag_id = uuid4()
+
+        sc_tag = TagModel(
+            id=sc_tag_id, fight_id=fight_id,
+            tag_type_id=sc_tag_type.id, value="singles",
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        sc_tag.tag_type = sc_tag_type
+
+        cat_tag = TagModel(
+            id=cat_tag_id, fight_id=fight_id,
+            tag_type_id=cat_tag_type.id, value="duel",
+            parent_tag_id=sc_tag_id,
+            is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        cat_tag.tag_type = cat_tag_type
+
+        fight = Fight(
+            id=fight_id, date=date(2025, 1, 10),
+            location="Arena", is_deactivated=False, created_at=datetime.now(UTC)
+        )
+        fight.tags = [sc_tag, cat_tag]
+
+        service, _, mock_tag_repo = self._make_service(fight=fight, tag=sc_tag)
+        # After deactivation, get_by_id (include_deactivated=True) returns deactivated tag
+        deactivated_sc_tag = TagModel(
+            id=sc_tag_id, fight_id=fight_id,
+            tag_type_id=sc_tag_type.id, value="singles",
+            is_deactivated=True, created_at=datetime.now(UTC)
+        )
+        mock_tag_repo.get_by_id.side_effect = [
+            sc_tag,         # first call: fetch tag to verify it belongs to fight
+            deactivated_sc_tag,  # second call: fetch after deactivation
+        ]
+        mock_tag_repo.cascade_deactivate_children = AsyncMock(return_value=1)
+
+        result = await service.deactivate_tag(fight_id, sc_tag_id)
+
+        assert result.is_deactivated is True
+        mock_tag_repo.deactivate.assert_awaited_once_with(sc_tag_id)
+        mock_tag_repo.cascade_deactivate_children.assert_awaited_once_with(sc_tag_id)

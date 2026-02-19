@@ -14,6 +14,7 @@ from app.repositories.fighter_repository import FighterRepository
 from app.repositories.tag_repository import TagRepository
 from app.repositories.tag_type_repository import TagTypeRepository
 from app.models.fight import Fight
+from app.models.tag import Tag
 from app.exceptions import FightNotFoundError, ValidationError
 
 
@@ -201,6 +202,154 @@ class FightService:
         # Refresh the fight to load the newly created participations
         await self.fight_repository.refresh_session(fight)
         return fight
+
+    # Allowed tag values per tag type
+    _SUPERCATEGORY_VALUES = {"singles", "melee"}
+    _CATEGORY_VALUES = {
+        "singles": {"duel", "profight"},
+        "melee": {"3s", "5s", "10s", "12s", "16s", "21s", "30s", "mass"},
+    }
+    _GENDER_VALUES = {"male", "female", "mixed"}
+    # custom: any non-empty string up to 200 chars
+    # Tag types that allow only one active instance per fight
+    _ONE_PER_FIGHT_TYPES = {"supercategory", "category", "gender"}
+
+    async def add_tag(
+        self,
+        fight_id: UUID,
+        tag_type_name: str,
+        value: str,
+        parent_tag_id: Optional[UUID] = None
+    ) -> Tag:
+        """
+        Add a tag to a fight.
+
+        Args:
+            fight_id: UUID of the fight
+            tag_type_name: Name of the tag type (supercategory, category, gender, custom)
+            value: Tag value (validated per type)
+            parent_tag_id: Optional parent tag UUID (for hierarchy)
+
+        Returns:
+            Created Tag instance
+
+        Raises:
+            FightNotFoundError: If fight not found
+            ValidationError: If tag_type_name unknown, value invalid, or business rules violated
+        """
+        # 1. Validate fight exists and is active
+        fight = await self.fight_repository.get_by_id(fight_id, include_deactivated=False)
+        if fight is None:
+            raise FightNotFoundError(f"Fight with ID {fight_id} not found")
+
+        # 2. Validate tag type exists
+        tag_type = await self.tag_type_repository.get_by_name(tag_type_name)
+        if tag_type is None:
+            raise ValidationError(f"Unknown tag type: '{tag_type_name}'")
+
+        # 3. Validate value is allowed for this tag type
+        self._validate_tag_value(tag_type_name, value, fight)
+
+        # 4. Enforce one-per-type rule (not for custom)
+        if tag_type_name in self._ONE_PER_FIGHT_TYPES:
+            active_tags_of_type = [
+                t for t in fight.tags
+                if not t.is_deactivated and t.tag_type_id == tag_type.id
+            ]
+            if active_tags_of_type:
+                raise ValidationError(
+                    f"Fight already has an active {tag_type_name} tag. "
+                    f"Deactivate it before adding a new one."
+                )
+
+        # 5. Create tag
+        return await self.tag_repository.create({
+            "fight_id": fight_id,
+            "tag_type_id": tag_type.id,
+            "value": value,
+            "parent_tag_id": parent_tag_id,
+        })
+
+    async def deactivate_tag(self, fight_id: UUID, tag_id: UUID) -> Tag:
+        """
+        Deactivate a tag on a fight. Cascades deactivation to child tags.
+
+        Args:
+            fight_id: UUID of the fight owning the tag
+            tag_id: UUID of the tag to deactivate
+
+        Returns:
+            Deactivated Tag instance
+
+        Raises:
+            FightNotFoundError: If fight not found
+            ValidationError: If tag does not belong to this fight
+        """
+        # 1. Validate fight exists
+        fight = await self.fight_repository.get_by_id(fight_id, include_deactivated=False)
+        if fight is None:
+            raise FightNotFoundError(f"Fight with ID {fight_id} not found")
+
+        # 2. Validate tag exists and belongs to this fight
+        tag = await self.tag_repository.get_by_id(tag_id, include_deactivated=True)
+        if tag is None or tag.fight_id != fight_id:
+            raise ValidationError(f"Tag with ID {tag_id} not found on fight {fight_id}")
+
+        # 3. Deactivate tag
+        await self.tag_repository.deactivate(tag_id)
+
+        # 4. Cascade deactivation to children (e.g., category tags when supercategory deactivated)
+        await self.tag_repository.cascade_deactivate_children(tag_id)
+
+        # 5. Return the deactivated tag
+        return await self.tag_repository.get_by_id(tag_id, include_deactivated=True)
+
+    def _validate_tag_value(self, tag_type_name: str, value: str, fight: Fight) -> None:
+        """
+        Validate that value is allowed for the given tag type on this fight.
+
+        Args:
+            tag_type_name: Tag type name
+            value: Proposed tag value
+            fight: The fight (needed to check supercategory for category validation)
+
+        Raises:
+            ValidationError: If value is invalid
+        """
+        if tag_type_name == "supercategory":
+            if value not in self._SUPERCATEGORY_VALUES:
+                raise ValidationError(
+                    f"Invalid supercategory value '{value}'. "
+                    f"Allowed: {sorted(self._SUPERCATEGORY_VALUES)}"
+                )
+
+        elif tag_type_name == "category":
+            # Determine fight's active supercategory value
+            sc_tag = next(
+                (t for t in fight.tags if not t.is_deactivated and t.tag_type and t.tag_type.name == "supercategory"),
+                None
+            )
+            if sc_tag is None:
+                raise ValidationError("Fight has no active supercategory tag. Cannot add category.")
+            allowed = self._CATEGORY_VALUES.get(sc_tag.value, set())
+            if value not in allowed:
+                raise ValidationError(
+                    f"Category value '{value}' is not valid for supercategory '{sc_tag.value}'. "
+                    f"Allowed: {sorted(allowed)}"
+                )
+
+        elif tag_type_name == "gender":
+            if value not in self._GENDER_VALUES:
+                raise ValidationError(
+                    f"Invalid gender value '{value}'. "
+                    f"Allowed: {sorted(self._GENDER_VALUES)}"
+                )
+
+        elif tag_type_name == "custom":
+            if not value or not value.strip():
+                raise ValidationError("Custom tag value cannot be empty")
+            if len(value) > 200:
+                raise ValidationError("Custom tag value cannot exceed 200 characters")
 
     async def get_by_id(self, fight_id: UUID, include_deactivated: bool = False) -> Fight:
         """
