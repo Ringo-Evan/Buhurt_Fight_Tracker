@@ -90,7 +90,7 @@ async def db_engine(postgres_container):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # Seed reference TagTypes (mirrors production migration data)
-        now = datetime.now(UTC).isoformat()
+        now = datetime.now(UTC)
         await conn.execute(sa.text("""
             INSERT INTO tag_types (id, name, is_privileged, is_parent, has_children, display_order, is_deactivated, created_at)
             VALUES
