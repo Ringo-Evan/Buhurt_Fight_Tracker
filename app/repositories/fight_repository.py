@@ -170,7 +170,7 @@ class FightRepository:
         if fight is None:
             raise ValueError("Fight not found")
 
-        self.session.delete(fight)
+        await self.session.delete(fight)
         await self.session.commit()
 
     async def refresh_session(self, fight: Fight) -> None:

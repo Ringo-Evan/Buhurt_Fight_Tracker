@@ -116,7 +116,7 @@ class TagRepository:
         if tag is None:
             raise ValueError("Tag not found")
 
-        self.session.delete(tag)
+        await self.session.delete(tag)
         await self.session.commit()
 
     async def cascade_deactivate_children(self, parent_tag_id: UUID) -> int:

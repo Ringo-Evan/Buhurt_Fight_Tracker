@@ -456,7 +456,7 @@ class TestFightRepositoryPermanentDelete:
         mock_result = MagicMock()
         mock_result.unique.return_value.scalar_one_or_none.return_value = fight
         mock_session.execute.return_value = mock_result
-        mock_session.delete = MagicMock()
+        mock_session.delete = AsyncMock()
 
         repository = FightRepository(mock_session)
 
@@ -464,7 +464,7 @@ class TestFightRepositoryPermanentDelete:
         await repository.delete(fight_id)
 
         # Assert
-        mock_session.delete.assert_called_once_with(fight)
+        mock_session.delete.assert_awaited_once_with(fight)
         mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio

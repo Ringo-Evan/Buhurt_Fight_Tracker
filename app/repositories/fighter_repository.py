@@ -203,5 +203,5 @@ class FighterRepository:
         if fighter is None:
             raise ValueError("Fighter not found")
 
-        self.session.delete(fighter)
+        await self.session.delete(fighter)
         await self.session.commit()

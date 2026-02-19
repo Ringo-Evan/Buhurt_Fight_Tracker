@@ -137,7 +137,7 @@ class TestTagRepositoryPermanentDelete:
         mock_result = MagicMock()
         mock_result.unique.return_value.scalar_one_or_none.return_value = tag
         mock_session.execute.return_value = mock_result
-        mock_session.delete = MagicMock()
+        mock_session.delete = AsyncMock()
 
         repository = TagRepository(mock_session)
 
@@ -145,7 +145,7 @@ class TestTagRepositoryPermanentDelete:
         await repository.delete(tag_id)
 
         # Assert
-        mock_session.delete.assert_called_once_with(tag)
+        mock_session.delete.assert_awaited_once_with(tag)
         mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio

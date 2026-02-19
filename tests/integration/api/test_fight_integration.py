@@ -551,8 +551,8 @@ class TestFightIntegration:
                 fight2_id = response2.json()['id']
 
                 # Deactivate fight2 via API
-                delete_response = await client.delete(f"/api/v1/fights/{fight2_id}")
-                assert delete_response.status_code == 204
+                delete_response = await client.patch(f"/api/v1/fights/{fight2_id}/deactivate")
+                assert delete_response.status_code == 200
 
                 # Act: List all fights
                 list_response = await client.get("/api/v1/fights")
