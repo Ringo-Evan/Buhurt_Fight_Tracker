@@ -1,6 +1,6 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-02-19 (Session 7)
+**Last Updated**: 2026-02-19 (Session 7 — Phase 3A complete, Phase 3B ready)
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
 **Velocity**: ~8 hours/week (target: 14)
@@ -16,16 +16,19 @@
 | Phase 2B: Fight Core Validation | ✅ COMPLETE | 24 unit (FightService), 1 integration | ~4 hrs |
 | Phase 2C: CI/CD Pipeline + Integration Tests | ✅ COMPLETE | 206 unit, 61 integration (1 skipped) | ~3 hrs |
 | Phase 2D: Deactivate + Hard Delete | ✅ COMPLETE | 222 unit, 66+ integration | ~3 hrs |
-| Phase 3: Tag Expansion | 🔄 IN PROGRESS | 242 unit | Session 6-7 |
+| Phase 3A: Tag MVP (supercategory/category/gender/custom) | ✅ COMPLETE | 242 unit, 75+ integration | Session 6-7 |
+| Phase 3B: Tag Expansion (weapon/league/ruleset + team size) | 📋 PLANNED | 0 | 0 |
 | Phase 4A: Basic Deployment | 📋 PLANNED | 0 | 0 |
 | Phase 4B: Infrastructure as Code | 📋 OPTIONAL | 0 | 0 |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
-**Total Tests**: 242 unit (all passing) + 66+ integration + 98 BDD scenarios
-**Estimated Remaining**: 12-16 hours to "portfolio complete" (through Phase 4A)
-- Phase 3 (Tag Expansion): 8-10 hours
-- Phase 4A (Deployment): 4-6 hours
+**Total Tests**: 242 unit (all passing) + 75+ integration + 98 BDD scenarios
+**CI**: ✅ Green (GitHub Actions)
+
+**Estimated Remaining to "portfolio complete"** (Phase 4A):
+- Phase 3B (weapon/league/ruleset): optional — does not block portfolio
+- Phase 4A (Deployment): 4-6 hours — **this is the blocker**
 
 ---
 
@@ -277,75 +280,85 @@ Without tags, Fight can't properly validate participant counts.
 
 ---
 
-### Phase 3: Tag Expansion 🔄 IN PROGRESS
+### Phase 3A: Tag MVP ✅ COMPLETE
 
 **Started**: 2026-02-19 (Session 6)
-**Complexity**: Medium-High
+**Completed**: 2026-02-19 (Session 7)
 **Prerequisites**: Phase 2D complete ✅
 **Design doc**: `planning/PHASE3_TAG_EXPANSION_DESIGN.md`
 **Decisions**: DD-007, DD-008, DD-009, DD-010, DD-011, DD-012
 
-**Scope (MVP — DD-010)**:
+**Scope delivered**:
 | TagType | Parent | Cardinality | Values |
 |---------|--------|-------------|--------|
-| supercategory (renamed from fight_format) | none | exactly 1 | singles, melee |
+| supercategory | none | exactly 1 | singles, melee |
 | category | supercategory | 0 or 1 | singles→duel/profight, melee→3s/5s/10s/12s/16s/21s/30s/mass |
 | gender | none | 0 or 1 | male, female, mixed |
 | custom | none | unlimited | any string ≤200 chars |
 
-**Deferred to Phase 3B**:
-- weapon, league, ruleset (category-value-dependent validation)
-- Team size enforcement per category
-- Missing Fighter placeholders
+**All endpoints implemented**:
+| Endpoint | Business rules |
+|----------|----------------|
+| `POST /fights/{id}/tags` | Category/supercategory compatibility, one-per-type, allowed values |
+| `PATCH /fights/{id}/tags/{tag_id}` | Supercategory immutable (DD-011), validates new value |
+| `PATCH /fights/{id}/tags/{tag_id}/deactivate` | Cascades to children |
+| `DELETE /fights/{id}/tags/{tag_id}` | 422 if active children exist (DD-012) |
 
-**Key Design Decisions**:
-- Tag write operations moved to fight-scoped endpoints (`/fights/{id}/tags/...`) — DD-009 ✅
+**Key decisions**:
+- Tag writes moved to fight-scoped endpoints — DD-009 ✅
 - Standalone `/tags` write endpoints removed — DD-009 ✅
-- `tags.fight_id` becomes NOT NULL — DD-008 (migration ready; runs in CI)
-- fight_format TagType renamed to supercategory — DD-007 ✅
-- Supercategory is immutable after creation — DD-011
-- DELETE rejects with 422 if children exist — DD-012 (not yet implemented)
+- `tags.fight_id` NOT NULL — DD-008 ✅
+- fight_format renamed → supercategory — DD-007 ✅
+- Supercategory immutable after creation — DD-011 ✅
+- DELETE rejects if children exist — DD-012 ✅
+- Category auto-linked to supercategory via `parent_tag_id` (hierarchy for cascade/delete) ✅
 
-**Pre-work (complete)**:
-- ✅ Migration: `tags.fight_id` NOT NULL + rename fight_format → supercategory + seed TagTypes
-- ✅ Bug fix: `FightService.create_with_participants` now sets `fight_id` on tag
-- ✅ Deleted `tag_controller.py` write endpoints + associated integration tests
-- ✅ Added `tags` field to `FightResponse`
-- ✅ TagTypes seeded in `conftest.db_engine` for all integration tests
+**Tests**:
+- 20 unit tests added (10 add_tag, 3 deactivate_tag, 4 delete_tag, 2 update_tag, 1 deactivated fight guard)
+- 13 integration tests in `test_fight_tag_integration.py` — all passing in CI
+- BDD feature file: `tests/features/fight_tag_management.feature` (16 scenarios)
 
-**Implemented in Session 6**:
-- ✅ `POST /fights/{id}/tags` — add tag with full validation
-  - Category-supercategory compatibility (DD)
-  - One-per-type rule (supercategory, category, gender)
-  - Unlimited custom tags
-- ✅ `PATCH /fights/{id}/tags/{tag_id}/deactivate` — deactivate tag with cascade
-  - Cascade to children via `cascade_deactivate_children`
-  - Cross-fight access guard (404 if tag belongs to different fight)
-- ✅ `TagAddRequest` schema
-- ✅ BDD feature file: `tests/features/fight_tag_management.feature`
-- ✅ 14 new unit tests (10 add_tag + 3 deactivate_tag + 1 test_add_tag_rejects_deactivated_fight)
-- ✅ Integration tests written (Scenarios 1-8) in `test_fight_tag_integration.py`
+**Success criteria** (all met):
+- ✅ 242/242 unit tests passing
+- ✅ CI green (all integration tests passing)
+- ✅ FightResponse includes active tags
+- ✅ `tags.fight_id` NOT NULL enforced in migration
 
-**Implemented in Session 7 (continued)**:
-- ✅ `DELETE /fights/{id}/tags/{tag_id}` — hard delete with children-exist guard (DD-012)
-  - `TagRepository.list_active_children()` — checks parent_tag_id FK for active children
-  - Rejects with 422 if active children exist
-- ✅ `PATCH /fights/{id}/tags/{tag_id}` — update tag value (DD-011)
-  - Supercategory is immutable — rejects with 422
-  - Validates new value per tag type allowed-values rules
-- ✅ `TagUpdateRequest` schema
-- ✅ Auto-link category → supercategory via `parent_tag_id` in `add_tag` (hierarchy for DD-012)
-- ✅ Integration tests: `test_hard_delete_tag_with_no_children`, `test_hard_delete_tag_with_active_children_returns_422`, `test_cannot_update_supercategory_tag`
-- ✅ 6 new unit tests (4 delete_tag + 2 update_tag)
+---
 
-**Remaining (unit tests all pass; integration tests need Docker/CI run)**:
-- [ ] Run integration test suite via CI to verify all Phase 3 scenarios pass
+### Phase 3B: Tag Expansion 📋 PLANNED
 
-**Success Criteria**:
-- All BDD scenarios in `fight_tag_management.feature` passing in CI
-- `tags.fight_id` NOT NULL enforced after migration
-- No regressions in existing tests (currently 242/242 unit tests passing)
-- FightResponse includes active tags ✅
+**Prerequisites**: Phase 3A complete ✅
+**Complexity**: High (category-value-dependent validation, fighter count enforcement)
+**Does NOT block portfolio** — Phase 4A (deployment) can proceed without this
+
+**Scope**:
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| `weapon` tag type | Valid values depend on category (duel → sword types, etc.) | Medium |
+| `league` tag type | Valid values depend on category | Medium |
+| `ruleset` tag type | Valid values depend on category | Medium |
+| Team size enforcement | Per category: 3s=3-5, 5s=5-8, 10s=10-15, etc. | High |
+| Missing Fighter placeholders | `FightParticipation` with `fighter_id = NULL` to fill minimum counts | High |
+
+**Key design questions to resolve before starting**:
+1. What are the allowed weapon values per category? (needs doc)
+2. What are the allowed league values? (needs doc)
+3. Should team size enforcement happen at fight creation, or separately?
+4. Should missing-fighter placeholders be auto-created or require explicit API call?
+
+**What this unlocks**:
+- More complete fight descriptions (weapon type adds significant value to the data model)
+- Stricter data integrity for melee size categories
+- Closer to real buhurt tournament data requirements
+
+**Implementation order** (when ready):
+1. Write BDD feature file for weapon/league/ruleset scenarios
+2. Add new TagTypes to migration + conftest seed
+3. Extend `_validate_tag_value` and `_CATEGORY_VALUES` in `FightService`
+4. Add team size enforcement to `create_with_participants` and/or `add_tag`
+5. Implement Missing Fighter placeholder logic
 
 ---
 
