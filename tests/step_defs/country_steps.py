@@ -465,7 +465,7 @@ async def delete_country(country_name, db_session, context):
     service = CountryService(repository)
 
     try:
-        await service.delete(country.id)
+        await service.deactivate(country.id)
         context['result'] = True
         context['error'] = None
         return True

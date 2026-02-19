@@ -109,6 +109,28 @@ async def update_tag(
         )
     return tag
 
+@router.patch(
+    "/{tag_id}/deactivate",
+    status_code=status.HTTP_200_OK,
+    summary="Deactivate a tag",
+    description="Deactivate a tag (sets is_deactivated flag)",
+    responses={
+        404: {"description": "Tag not found"},
+    },
+)
+async def deactivate_tag(
+    tag_id: UUID,
+    service: TagService = Depends(get_tag_service)
+):
+    """Deactivate a tag."""
+    try:
+        await service.deactivate(tag_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tag with ID {tag_id} not found"
+        )
+
 
 @router.delete(
     "/{tag_id}",

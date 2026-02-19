@@ -151,9 +151,9 @@ class CountryRepository:
         await self.session.refresh(country)
         return country
 
-    async def permanent_delete(self, country_id: UUID) -> None:
+    async def delete(self, country_id: UUID) -> None:
         """
-        Permanently delete a country from database.
+        Delete a country from database.
 
         Args:
             country_id: UUID of the country to delete

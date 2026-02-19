@@ -1,0 +1,2 @@
+Spent about an hour cleaning up broken tests.
+Now need to write the update/deactivate tests, then update code.

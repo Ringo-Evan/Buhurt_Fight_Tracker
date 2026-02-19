@@ -284,38 +284,38 @@ class TestCountryServiceRetrieve:
         mock_repository.get_by_code.assert_awaited_once_with("CZE", include_deactivated=False)
 
 
-class TestCountryServiceDelete:
-    """Test suite for country deletion business logic."""
+class TestCountryServiceDeactivate:
+    """Test suite for country deactivation business logic."""
 
     @pytest.mark.asyncio
-    async def test_delete_country_delegates_to_repository(self):
+    async def test_deactivate_country(self):
         """
-        Test that delete operation delegates to repository soft_delete.
+        Test deactivate operation.
 
         Arrange: Mock repository
-        Act: Call service.delete()
-        Assert: Repository soft_delete called with correct ID
+        Act: Call service.deactivate()
+        Assert: Repository deactivate called with correct ID
         """
         # Arrange
         mock_repository = AsyncMock(spec=CountryRepository)
         service = CountryService(mock_repository)
 
         country_id = uuid4()
-        mock_repository.soft_delete.return_value = None
+        mock_repository.deactivate.return_value = None
 
         # Act
-        await service.delete(country_id)
+        await service.deactivate(country_id)
 
         # Assert
-        mock_repository.soft_delete.assert_awaited_once_with(country_id)
+        mock_repository.deactivate.assert_awaited_once_with(country_id)
 
     @pytest.mark.asyncio
-    async def test_delete_country_handles_non_existent_country(self):
+    async def test_deactivate_country_handles_non_existent_country(self):
         """
-        Test that delete raises error for non-existent country.
+        Test that deactivate raises error for non-existent country.
 
         Arrange: Mock repository raising ValueError
-        Act: Call service.delete() with non-existent ID
+        Act: Call service.deactivate() with non-existent ID
         Assert: CountryNotFoundError raised
         """
         # Arrange
@@ -323,13 +323,13 @@ class TestCountryServiceDelete:
         service = CountryService(mock_repository)
 
         country_id = uuid4()
-        mock_repository.soft_delete.side_effect = ValueError("Country not found")
+        mock_repository.deactivate.side_effect = ValueError("Country not found")
 
         # Act & Assert
         with pytest.raises(CountryNotFoundError, match="Country not found"):
-            await service.delete(country_id)
+            await service.deactivate(country_id)
 
-        mock_repository.soft_delete.assert_awaited_once_with(country_id)
+        mock_repository.deactivate.assert_awaited_once_with(country_id)
 
 
 class TestCountryServiceUpdate:

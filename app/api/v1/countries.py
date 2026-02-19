@@ -186,7 +186,7 @@ async def delete_country(
 ) -> None:
     """Soft delete a country."""
     try:
-        await service.delete(country_id)
+        await service.deactivate(country_id)
     except CountryNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

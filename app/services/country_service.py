@@ -136,12 +136,12 @@ class CountryService:
         """
         return await self.repository.list_all(include_deactivated=include_deactivated)
 
-    async def delete(self, country_id: UUID) -> None:
+    async def deactivate(self, country_id: UUID) -> None:
         """
-        Soft delete a country.
+        Deactivate a country.
 
         Args:
-            country_id: UUID of the country to delete
+            country_id: UUID of the country to deactivate
 
         Raises:
             CountryNotFoundError: If country not found
@@ -205,7 +205,7 @@ class CountryService:
 
         # Permanently delete country
         try:
-            await self.repository.permanent_delete(country_id)
+            await self.repository.delete(country_id)
         except ValueError as e:
             raise CountryNotFoundError(str(e))
 

@@ -661,7 +661,7 @@ class TestCountryRepositoryPermanentDelete:
         repository = CountryRepository(mock_session)
 
         # Act
-        await repository.permanent_delete(country_id)
+        await repository.delete(country_id)
 
         # Assert
         mock_session.delete.assert_called_once_with(country)
@@ -688,7 +688,7 @@ class TestCountryRepositoryPermanentDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Country not found"):
-            await repository.permanent_delete(country_id)
+            await repository.delete(country_id)
 
         mock_session.delete.assert_not_called()
         mock_session.commit.assert_not_awaited()

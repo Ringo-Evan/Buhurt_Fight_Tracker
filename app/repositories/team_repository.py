@@ -181,7 +181,7 @@ class TeamRepository:
 
     async def delete(self, team_id: UUID) -> None:
         """
-        Permanently delete a team from database.
+        Delete a team from database.
 
         Args:
             team_id: UUID of the team to delete

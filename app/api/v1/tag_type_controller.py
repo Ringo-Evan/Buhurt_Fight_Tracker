@@ -100,6 +100,25 @@ async def update_tag_type(
         return await service.update(tag_type_id, update_dict)
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+@router.patch(
+    "/{tag_type_id}/deactivate",
+    status_code=status.HTTP_200_OK,
+    summary="Deactivate a tag type",
+    description="Deactivate a tag type (sets is_deactivated flag)",
+    responses={
+        404: {"description": "Tag type not found"},
+    },
+)
+async def deactivate_tag_type(
+    tag_type_id: UUID,
+    service: TagTypeService = Depends(get_tag_type_service)
+):
+    """Deactivate a tag type."""
+    try:
+        return await service.deactivate(tag_type_id)
+    except ValidationError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.delete(

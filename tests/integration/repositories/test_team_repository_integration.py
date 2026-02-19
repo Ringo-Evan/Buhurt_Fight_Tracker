@@ -306,7 +306,7 @@ class TestTeamRepositoryIntegrationRetrieval:
             assert team.country.code == "POL"
 
 
-class TestTeamRepositoryIntegrationSoftDelete:
+class TestTeamRepositoryIntegrationDeactivate:
     """Integration tests for deactivate functionality."""
 
     @pytest.mark.asyncio
@@ -316,7 +316,7 @@ class TestTeamRepositoryIntegrationSoftDelete:
 
         Verifies:
         - is_deactivated flag is updated to True
-        - Team still exists in database (deactivate, not hard delete)
+        - Team still exists in database
         - Country relationship preserved for historical tracking
         - Default queries exclude deactivated team
 
@@ -358,8 +358,8 @@ class TestTeamRepositoryIntegrationSoftDelete:
 
         Verifies:
         - Active teams returned
-        - Soft-deleted teams excluded
-        - Can include deleted with flag
+        - Deactivated teams excluded
+        - Can include deactivated teams with flag
 
         Arrange: Create 3 teams, deactivate 1
         Act: Call list_all() with and without include_deactivate
@@ -400,7 +400,7 @@ class TestTeamRepositoryIntegrationSoftDelete:
 
         Verifies:
         - Filtering by country respects deactivate flag
-        - Can include deleted teams with flag
+        - Can include deactivated teams with flag
 
         Arrange: Create country with 3 teams, deactivate 1
         Act: Call list_by_country() with and without include_deactivate
@@ -469,6 +469,8 @@ class TestTeamRepositoryIntegrationUpdate:
 
         # Assert - persisted to database
         retrieved = await team_repository.get_by_id(team.id)
+        if retrieved is None:
+            pytest.fail("Updated team not found in database")
         assert retrieved.name == "Team Alpha Elite"
         assert retrieved.country.code == "BEL"
 
@@ -539,13 +541,13 @@ class TestTeamRepositoryIntegrationUpdate:
         assert retrieved.country.name == "Switzerland"
 
 
-class TestTeamRepositoryIntegrationPermanentDelete:
-    """Integration tests for permanent deletion."""
+class TestTeamRepositoryIntegrationDelete:
+    """Integration tests for team deletion."""
 
     @pytest.mark.asyncio
-    async def test_permanent_delete_removes_from_database(self, db_session):
+    async def test_delete_removes_from_database(self, db_session):
         """
-        Test that permanent delete removes team from database entirely.
+        Test thatdelete removes team from database entirely.
 
         Verifies:
         - Team removed from database (hard delete)
@@ -579,9 +581,9 @@ class TestTeamRepositoryIntegrationPermanentDelete:
         assert country_check is not None
 
     @pytest.mark.asyncio
-    async def test_permanent_delete_nonexistent_team_raises_error(self, db_session, random_uuid):
+    async def test_delete_nonexistent_team_raises_error(self, db_session, random_uuid):
         """
-        Test that permanent delete of nonexistent team raises ValueError.
+        Test that delete of nonexistent team raises ValueError.
 
         Verifies:
         - Error handling for missing team

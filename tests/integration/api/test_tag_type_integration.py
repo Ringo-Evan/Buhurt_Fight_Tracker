@@ -340,13 +340,13 @@ class TestTagTypeIntegration:
         Scenario 5: Deactivate a tag type
 
         Given the tag type "weapon" exists
-        When I delete the tag type "weapon"
+        When I deactivate the tag type "weapon"
         Then the tag type "weapon" should not appear in the list
         But the tag type "weapon" should still exist in the database with is_deactivated true
 
         Verifies:
-        - DELETE /tag-types/{id} deactivates tag type
-        - Deleted tag types don't appear in list
+        - PATCH /tag-types/{id}/deactivate deactivates tag type
+        - Deactivated tag types don't appear in list
         - is_deactivated flag set to true
         - Data still exists in database
         """
@@ -374,8 +374,8 @@ class TestTagTypeIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                delete_response = await client.delete(f"/api/v1/tag-types/{weapon.id}")
-                assert delete_response.status_code == 204
+                deactivate_response = await client.patch(f"/api/v1/tag-types/{weapon.id}/deactivate")
+                assert deactivate_response.status_code == 200
 
                 # Then: Verify not in list
                 list_response = await client.get("/api/v1/tag-types")
@@ -384,13 +384,15 @@ class TestTagTypeIntegration:
                 assert 'weapon' not in names
 
             # But: Still exists in database with is_deactivated=True
-            deleted_tag_type = await repo.get_by_id(weapon.id, include_deactivated=True)
-            assert deleted_tag_type is not None
-            assert deleted_tag_type.name == 'weapon'
-            assert deleted_tag_type.is_deactivated == True
+            deactivated_tag_type = await repo.get_by_id(weapon.id, include_deactivated=True)
+            assert deactivated_tag_type is not None
+            assert deactivated_tag_type.name == 'weapon'
+            assert deactivated_tag_type.is_deactivated == True
 
         finally:
             app.dependency_overrides.clear()
+
+
 
     @pytest.mark.asyncio
     async def test_create_tag_type_with_name_too_long_returns_422(self, db_session):

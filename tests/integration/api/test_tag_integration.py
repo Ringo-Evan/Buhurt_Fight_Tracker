@@ -323,6 +323,8 @@ class TestTagIntegration:
 
             # Verify persistence
             updated_tag = await tag_repo.get_by_id(tag.id)
+            if updated_tag is None:
+                raise AssertionError("Updated tag not found in database")
             assert updated_tag.value == 'profight'
 
         finally:
@@ -339,7 +341,7 @@ class TestTagIntegration:
         But the tag should still exist in the database with is_deactivated true
 
         Verifies:
-        - DELETE /tags/{id} deactivates tag
+        - PATCH /tags/{id}/deactivate deactivates tag
         - Deleted tag doesn't appear in list
         - is_deactivated flag set to true
         - Data still exists in database
@@ -376,8 +378,8 @@ class TestTagIntegration:
                 base_url="http://test"
             ) as client:
                 # Delete the tag
-                delete_response = await client.delete(f"/api/v1/tags/{tag.id}")
-                assert delete_response.status_code == 204
+                delete_response = await client.patch(f"/api/v1/tags/{tag.id}/deactivate")
+                assert delete_response.status_code == 200
 
                 # Verify not in list
                 list_response = await client.get("/api/v1/tags")

@@ -229,21 +229,21 @@ class TestCountryRepositoryIntegrationRetrieval:
         assert codes == {"USA", "CAN", "MEX", "DEU", "FRA"}
 
 
-class TestCountryRepositoryIntegrationSoftDelete:
-    """Integration tests for soft delete functionality."""
+class TestCountryRepositoryIntegrationDeactivate:
+    """Integration tests for deactivate functionality."""
 
     @pytest.mark.asyncio
     async def test_deactivate_sets_flag_in_database(self, db_session):
         """
-        Test that soft delete updates is_deactivated flag in database.
+        Test that deactivate updates is_deactivated flag in database.
 
         Verifies:
         - is_deactivated flag is updated to True
         - Country still exists in database
-        - Default queries exclude soft-deactivated country
+        - Default queries exclude deactivated country
 
         Arrange: Create country
-        Act: deactivate it (soft delete)
+        Act: deactivate it
         Assert: is_deactivated=True, excluded from default queries
         """
         # Arrange
@@ -270,11 +270,11 @@ class TestCountryRepositoryIntegrationSoftDelete:
 
         Verifies:
         - Active countries returned
-        - Soft-deleted countries excluded
-        - Can include deleted with flag
+        - Deactivated countries excluded
+        - Can include deactivated with flag
 
-        Arrange: Create 3 countries, soft delete 1
-        Act: Call list_all() with and without include_deactivate
+        Arrange: Create 3 countries, deactivate 1
+        Act: Call list_all() with and without include_deactivated
         Assert: Default returns 2, with flag returns 3
         """
         # Arrange
@@ -294,7 +294,7 @@ class TestCountryRepositoryIntegrationSoftDelete:
         codes = {c.code for c in active_countries}
         assert codes == {"ESP", "ITA"}
 
-        # Act - query including deleted
+        # Act - query including deactivated
         all_countries = await repository.list_all(include_deactivated=True)
 
         # Assert
@@ -357,13 +357,13 @@ class TestCountryRepositoryIntegrationUpdate:
             await repository.update(country2.id, {"code": "BEL"})
 
 
-class TestCountryRepositoryIntegrationPermanentDelete:
-    """Integration tests for permanent deletion."""
+class TestCountryRepositoryIntegrationDelete:
+    """Integration tests for deletion."""
 
     @pytest.mark.asyncio
-    async def test_permanent_delete_removes_from_database(self, db_session):
+    async def test_delete_removes_from_database(self, db_session):
         """
-        Test that permanent delete removes country from database entirely.
+        Test that delete removes country from database entirely.
 
         Verifies:
         - Country removed from database
@@ -379,23 +379,23 @@ class TestCountryRepositoryIntegrationPermanentDelete:
         country_id = country.id
 
         # Act
-        await repository.permanent_delete(country_id)
+        await repository.delete(country_id)
 
         # Assert - cannot retrieve even with include_deactivate
         retrieved = await repository.get_by_id(country_id, include_deactivated=True)
         assert retrieved is None
 
     @pytest.mark.asyncio
-    async def test_permanent_delete_nonexistent_country_raises_error(self, db_session, random_uuid):
+    async def test_delete_nonexistent_country_raises_error(self, db_session, random_uuid):
         """
-        Test that permanent delete of nonexistent country raises ValueError.
+        Test that delete of nonexistent country raises ValueError.
 
         Verifies:
         - Error handling for missing country
         - Consistent error behavior
 
         Arrange: Generate UUID that doesn't exist
-        Act: Attempt to permanently delete
+        Act: Attempt to delete
         Assert: ValueError raised
         """
         # Arrange
@@ -404,7 +404,7 @@ class TestCountryRepositoryIntegrationPermanentDelete:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Country not found"):
-            await repository.permanent_delete(nonexistent_id)
+            await repository.delete(nonexistent_id)
 
 
 # ============================================================================
