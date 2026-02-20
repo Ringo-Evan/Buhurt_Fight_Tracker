@@ -1,0 +1,9 @@
+# Copy this file to terraform.tfvars and fill in values
+# terraform.tfvars is gitignored for security
+
+resource_group_name = "buhurt-fight-tracker-rg"
+location            = "eastus2"
+app_name            = "buhurt-fight-tracker"
+sku_name            = "B1"
+python_version      = "3.13"
+database_url        = "postgresql+asyncpg://user:pass@host/db"  # Replace with actual Neon connection string
