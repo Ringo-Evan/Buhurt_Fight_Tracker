@@ -385,27 +385,33 @@ delete children first.
 
 ---
 
-### DD-013: Phase 4 Deployment Approach ❓ OPEN
+### DD-013: Phase 4 Deployment Approach ✅ DECIDED
 
-**Question**: Should Phase 4A deployment be done manually (Portal) or with Infrastructure as Code (Terraform)?
+**Decision**: Option B - Terraform First (Infrastructure as Code from day 1)
 
 **Context**: User reached deployment setup (Neon configured, Azure Portal open). No Azure resources created yet - perfect decision point.
 
-**Option A: Manual Setup First (Phase 4A → 4B)**
-- Deploy via Azure Portal (20 minutes)
-- Get API live immediately
-- Convert to Terraform later (Phase 4B)
-- **Pros**: Fast, see results now, can still add IaC later
-- **Cons**: If IaC desired for portfolio, will need to destroy/recreate anyway
-- **Interview story**: "Deployed manually to validate, then converted to IaC for reproducibility"
+**Rationale**:
+- **Better portfolio story**: "Deployed with IaC from the start, infrastructure is code-reviewed"
+- **Reproducible infrastructure**: Can destroy and recreate with `terraform apply` in ~3 minutes
+- **Version-controlled infrastructure**: All changes reviewed like code
+- **No import pain**: Clean slate, no manual resources to reconcile
+- **Learning investment**: Terraform skill applicable to all cloud providers
+- **Cost management**: Easy to destroy when not demoing, recreate for interviews
 
-**Option B: Terraform First (Skip Phase 4A, Go Straight to 4B)**
-- Write Terraform .tf files from scratch (1-2 hours)
-- `terraform apply` creates everything
-- IaC from day 1
-- **Pros**: Clean IaC story, no import pain, reproducible from start
-- **Cons**: Takes longer, steeper learning curve if new to Terraform
-- **Interview story**: "Deployed with IaC from the start, infrastructure is code-reviewed"
+**Implemented**: 2026-02-20
+- Created `terraform/` directory with complete configuration
+- Resources: Resource Group, App Service Plan, Linux Web App
+- Variables for customization (region, app name, SKU, database URL)
+- Documentation in `terraform/README.md` and `docs/planning/PHASE4B_IAC_IMPLEMENTATION.md`
+
+**Trade-offs Accepted**:
+- Takes longer than manual setup (~2 hours vs 20 minutes)
+- Requires Terraform CLI installation and learning
+- But: Portfolio value and reproducibility justify the investment
+
+**Interview Story**:
+"I deployed the production API using Terraform for Infrastructure as Code. All Azure resources are defined in version-controlled `.tf` files, so I can destroy and recreate the entire environment in 3 minutes. This demonstrates cloud platform expertise and IaC proficiency - critical skills for senior/lead roles."
 
 **Key Consideration**: Manual→IaC conversion usually means "destroy and recreate with Terraform" rather than importing existing resources (import is painful and error-prone).
 
