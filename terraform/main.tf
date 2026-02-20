@@ -40,6 +40,9 @@ resource "azurerm_linux_web_app" "main" {
 
     # Health check endpoint
     health_check_path = "/health"
+
+    # Startup command
+    app_command_line = "bash startup.sh"
   }
 
   app_settings = {
@@ -47,9 +50,6 @@ resource "azurerm_linux_web_app" "main" {
     "SCM_DO_BUILD_DURING_DEPLOYMENT"     = "true"
     "WEBSITE_HTTPLOGGING_RETENTION_DAYS" = "7"
   }
-
-  # Startup command
-  startup_command = "bash startup.sh"
 
   tags = {
     Project     = "Buhurt Fight Tracker"
