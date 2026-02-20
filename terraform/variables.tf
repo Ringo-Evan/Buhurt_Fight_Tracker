@@ -17,9 +17,9 @@ variable "app_name" {
 }
 
 variable "sku_name" {
-  description = "App Service SKU (B1 = Basic, ~$13/mo prorated)"
+  description = "App Service SKU (F1 = Free, B1 = Basic ~$13/mo)"
   type        = string
-  default     = "B1"
+  default     = "F1"  # Free tier - no cost, may avoid quota issues
 }
 
 variable "python_version" {
