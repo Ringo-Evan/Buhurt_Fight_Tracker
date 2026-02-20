@@ -25,7 +25,7 @@ variable "sku_name" {
 variable "python_version" {
   description = "Python runtime version"
   type        = string
-  default     = "3.13"
+  default     = "3.12"  # Azure App Service supports: 3.7, 3.8, 3.9, 3.10, 3.11, 3.12
 }
 
 variable "database_url" {

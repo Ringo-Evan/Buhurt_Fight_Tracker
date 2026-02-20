@@ -46,9 +46,17 @@ resource "azurerm_linux_web_app" "main" {
   }
 
   app_settings = {
-    "DATABASE_URL"                       = var.database_url
-    "SCM_DO_BUILD_DURING_DEPLOYMENT"     = "true"
-    "WEBSITE_HTTPLOGGING_RETENTION_DAYS" = "7"
+    "DATABASE_URL"                   = var.database_url
+    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"
+  }
+
+  logs {
+    http_logs {
+      file_system {
+        retention_in_days = 7
+        retention_in_mb   = 35
+      }
+    }
   }
 
   tags = {
