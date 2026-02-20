@@ -17,7 +17,23 @@ This directory contains Infrastructure as Code (IaC) for deploying the Buhurt Fi
 
 3. **Neon Database**: Connection string from Neon dashboard
 
-## Quick Start
+## Deployment Options
+
+You can run Terraform in two ways:
+
+**Option A: Local Terraform** (Traditional)
+- Install Terraform CLI locally
+- Run `terraform apply` from your machine
+- See "Quick Start" below
+
+**Option B: GitHub Actions Manual Workflow** (Recommended)
+- No local Terraform needed
+- Run from GitHub UI: Actions → Terraform (Manual) → Run workflow
+- See `GITHUB_WORKFLOW_SETUP.md` for configuration
+
+---
+
+## Quick Start (Local Terraform)
 
 ### 1. Configure Variables
 
