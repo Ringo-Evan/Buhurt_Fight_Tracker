@@ -385,6 +385,38 @@ delete children first.
 
 ---
 
+### DD-013: Phase 4 Deployment Approach ❓ OPEN
+
+**Question**: Should Phase 4A deployment be done manually (Portal) or with Infrastructure as Code (Terraform)?
+
+**Context**: User reached deployment setup (Neon configured, Azure Portal open). No Azure resources created yet - perfect decision point.
+
+**Option A: Manual Setup First (Phase 4A → 4B)**
+- Deploy via Azure Portal (20 minutes)
+- Get API live immediately
+- Convert to Terraform later (Phase 4B)
+- **Pros**: Fast, see results now, can still add IaC later
+- **Cons**: If IaC desired for portfolio, will need to destroy/recreate anyway
+- **Interview story**: "Deployed manually to validate, then converted to IaC for reproducibility"
+
+**Option B: Terraform First (Skip Phase 4A, Go Straight to 4B)**
+- Write Terraform .tf files from scratch (1-2 hours)
+- `terraform apply` creates everything
+- IaC from day 1
+- **Pros**: Clean IaC story, no import pain, reproducible from start
+- **Cons**: Takes longer, steeper learning curve if new to Terraform
+- **Interview story**: "Deployed with IaC from the start, infrastructure is code-reviewed"
+
+**Key Consideration**: Manual→IaC conversion usually means "destroy and recreate with Terraform" rather than importing existing resources (import is painful and error-prone).
+
+**Current Status**: Decision pending. User has time to choose, no resources created yet.
+
+**Recommendation**: Choose based on priority:
+- **Speed priority** (API live today): Manual now, Terraform later
+- **Portfolio quality priority** (IaC on resume): Terraform now (we're at perfect timing - nothing to import)
+
+---
+
 ## Open Questions
 
 ### OQ-001: Fighter.team_id Nullable? ❓ OPEN
@@ -573,6 +605,8 @@ delete children first.
 - High learning value
 - Not required for portfolio complete
 - Can add after basic deployment works
+
+**Update 2026-02-20**: Decision point reached during deployment setup. See DD-013 for deployment approach decision.
 
 ---
 

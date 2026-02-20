@@ -18,8 +18,8 @@
 | Phase 2D: Deactivate + Hard Delete | ✅ COMPLETE | 222 unit, 66+ integration | ~3 hrs |
 | Phase 3A: Tag MVP (supercategory/category/gender/custom) | ✅ COMPLETE | 242 unit, 75+ integration | ~6 hrs |
 | Phase 3B: Tag Expansion (weapon/league/ruleset + team size) | 📋 PLANNED | 0 | 0 |
-| Phase 4A: Basic Deployment | 🔧 INFRASTRUCTURE READY | N/A | ~1 hr |
-| Phase 4B: Infrastructure as Code | 📋 OPTIONAL | 0 | 0 |
+| Phase 4A: Basic Deployment (Manual) | ⏸️ DECISION PENDING | N/A | ~1 hr |
+| Phase 4B: Infrastructure as Code (Terraform) | ⏸️ DECISION PENDING | 0 | 0 |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
@@ -537,7 +537,7 @@ Types: feat, fix, test, docs, refactor
 
 See `planning/archive/SESSION_LOG_ARCHIVE.md` for historical sessions (Sessions 1-7).
 
-### 2026-02-20 (Session 8): Phase 3A Complete + Phase 4A Infrastructure
+### 2026-02-20 (Session 8): Phase 3A Complete + Phase 4 Deployment Decision
 
 - ✅ **Verified CI passing**: All 242 unit tests + 75+ integration tests green
 - ✅ **Pushed Phase 4A infrastructure** to remote:
@@ -546,11 +546,17 @@ See `planning/archive/SESSION_LOG_ARCHIVE.md` for historical sessions (Sessions 
   - `scripts/az_start.sh` and `az_stop.sh` — Cost management scripts
   - Updated README with deployment instructions
 - ✅ **Archived session logs**: Created `planning/archive/SESSION_LOG_ARCHIVE.md`
-- ✅ **Updated PROGRESS.md**: Streamlined to current status only
+- ✅ **Updated PROGRESS.md**: Streamlined to current status only (reduced 54%)
+- ✅ **Neon database configured**: Azure East US 2, direct connection string obtained
+- ❓ **Deployment approach decision**: Manual (Phase 4A) vs Terraform (Phase 4B)
+  - Reached perfect decision point: Neon ready, no Azure resources created yet
+  - DD-013 documented in DECISIONS.md
+  - Options: Quick manual deployment (20 min) vs IaC from day 1 (1-2 hrs)
+  - User deciding between speed (manual) vs portfolio quality (Terraform)
 - 📋 **Phase 3A: COMPLETE** — All tag management features implemented
-- 📋 **Phase 4A: Infrastructure ready** — Awaiting Azure/Neon setup from user
+- 📋 **Phase 4: BLOCKED** — Awaiting user decision on deployment approach
 
-**Status**: Backend development complete. Ready for cloud deployment.
+**Status**: Backend development complete. Deployment approach decision needed (DD-013).
 
 ---
 
@@ -608,15 +614,30 @@ See `planning/archive/SESSION_LOG_ARCHIVE.md` for historical sessions (Sessions 
 
 ## Next Actions
 
-### Immediate - Deploy to Production
-**Phase 4A** is ready for deployment. User needs to:
-1. [ ] Set up Neon PostgreSQL database (free tier)
-2. [ ] Create Azure App Service (Basic B1)
-3. [ ] Configure GitHub secrets (AZURE_WEBAPP_NAME, AZURE_WEBAPP_PUBLISH_PROFILE, DATABASE_URL)
-4. [ ] Merge `master` to `main` OR update deploy workflow to trigger on `master`
-5. [ ] Verify deployment at `https://<app-name>.azurewebsites.net/docs`
+### Immediate - Choose Deployment Approach (DD-013)
+**Decision needed**: Manual deployment (Phase 4A) or Terraform (Phase 4B)?
 
-See deployment checklist in Session 8 notes above.
+**Current state**:
+- ✅ Neon database configured (Azure East US 2)
+- ✅ Connection string obtained and converted
+- ❌ No Azure resources created (perfect timing for IaC decision)
+
+**Option A: Manual Deployment (~20 minutes)**
+1. [ ] Create Azure App Service via Portal (Basic B1, Python 3.13, Linux)
+2. [ ] Configure Application Settings (DATABASE_URL)
+3. [ ] Set Startup Command (`bash startup.sh`)
+4. [ ] Download publish profile
+5. [ ] Configure GitHub secrets (AZURE_WEBAPP_NAME, AZURE_WEBAPP_PUBLISH_PROFILE, DATABASE_URL)
+6. [ ] Merge `master` to `main` and verify deployment
+
+**Option B: Terraform/IaC (~1-2 hours)**
+1. [ ] Install Terraform
+2. [ ] Write .tf files (provider, app service, configuration)
+3. [ ] `terraform init` and `terraform apply`
+4. [ ] Configure GitHub secrets
+5. [ ] Merge `master` to `main` and verify deployment
+
+See DECISIONS.md DD-013 for detailed analysis.
 
 ### Optional - Phase 3B
 Phase 3B (weapon/league/ruleset tags + team size enforcement) does **NOT** block portfolio completion.
