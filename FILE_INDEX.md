@@ -203,6 +203,7 @@
 | `terraform/terraform.tfvars.example` | Example variable values (copy to terraform.tfvars and customize) |
 | `terraform/.gitignore` | Git ignore patterns for Terraform state files and secrets |
 | `terraform/README.md` | Complete Terraform usage guide with prerequisites, commands, and troubleshooting |
+| `terraform/GITHUB_WORKFLOW_SETUP.md` | Setup guide for running Terraform via GitHub Actions (Service Principal, remote state) |
 
 ---
 
@@ -254,7 +255,8 @@
 | File | Description |
 |------|-------------|
 | `.github/workflows/test.yml` | GitHub Actions CI/CD; unit + integration tests, coverage reporting to Codecov |
-| `.github/workflows/deploy.yml` | GitHub Actions deployment workflow for Azure |
+| `.github/workflows/deploy.yml` | GitHub Actions deployment workflow for Azure (deploys code on push to main) |
+| `.github/workflows/terraform-manual.yml` | Manual Terraform workflow (plan/apply/destroy from GitHub UI) |
 | `.vscode/settings.json` | VS Code editor settings |
 | `.vscode/launch.json` | VS Code debugger config for FastAPI |
 | `.vscode/tasks.json` | VS Code tasks for running tests and linting |
