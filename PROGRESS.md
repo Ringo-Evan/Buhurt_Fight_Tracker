@@ -1,6 +1,6 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-02-20 (Session 8 — Phase 3A complete, Phase 4A infrastructure ready)
+**Last Updated**: 2026-02-20 (Session 9 — Phase 4B IaC setup complete, ready for terraform apply)
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
 **Current Status**: Backend complete, ready for deployment
@@ -18,8 +18,8 @@
 | Phase 2D: Deactivate + Hard Delete | ✅ COMPLETE | 222 unit, 66+ integration | ~3 hrs |
 | Phase 3A: Tag MVP (supercategory/category/gender/custom) | ✅ COMPLETE | 242 unit, 75+ integration | ~6 hrs |
 | Phase 3B: Tag Expansion (weapon/league/ruleset + team size) | 📋 PLANNED | 0 | 0 |
-| Phase 4A: Basic Deployment (Manual) | ⏸️ DECISION PENDING | N/A | ~1 hr |
-| Phase 4B: Infrastructure as Code (Terraform) | ⏸️ DECISION PENDING | 0 | 0 |
+| Phase 4A: Basic Deployment (Manual) | ⏸️ SKIPPED | N/A | 0 |
+| Phase 4B: Infrastructure as Code (Terraform) | 🚧 IN PROGRESS | N/A (infrastructure) | ~0.5 hrs |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
@@ -28,7 +28,7 @@
 **CD**: ✅ Deploy workflow ready (triggers on `main` branch)
 
 **To Complete Portfolio**:
-- Phase 4A (Deployment): Azure + Neon setup required (user action) — **ready to deploy**
+- Phase 4B (IaC Deployment): Run `terraform apply` to create Azure infrastructure (user action) — **config ready**
 - Phase 3B (weapon/league/ruleset): optional — does NOT block portfolio
 
 ---
@@ -363,60 +363,62 @@ Without tags, Fight can't properly validate participant counts.
 
 ---
 
-### Phase 4A: Basic Deployment 📋 PLANNED
+### Phase 4A: Basic Deployment ⏸️ SKIPPED
 
-**Estimated Time**: 4-6 hours
-**Focus**: Get API running in cloud
-
-**Stack**:
-- Azure App Service (B1 tier, with stop/start scripts)
-- Neon PostgreSQL (free tier, serverless)
-- GitHub Actions (CI/CD)
-
-**Tasks**:
-- [ ] Set up Neon account and database
-- [ ] Create Azure App Service via portal
-- [ ] Configure environment variables (connection strings, secrets)
-- [ ] Create GitHub Actions workflow for deployment
-- [ ] Create start/stop shell scripts for cost management
-- [ ] Verify API accessible at public URL
-- [ ] Add basic health check endpoint
-
-**Cost Strategy**:
-- Neon free tier: $0/month
-- App Service B1 stopped: $0/month
-- App Service B1 running: ~$13/month (prorated by hour)
-- **Target**: <$5/month during development
-
-**Success Criteria**:
-- API deployed and accessible
-- Can stop/start to manage costs
-- CI/CD pipeline working
-- README updated with deployment info
+**Decision**: Skipped in favor of Phase 4B (Terraform IaC from day 1)
+**Rationale**: See DD-013 - IaC provides better portfolio story and reproducibility
 
 ---
 
-### Phase 4B: Infrastructure as Code 📋 OPTIONAL
+### Phase 4B: Infrastructure as Code 🚧 IN PROGRESS
 
-**Estimated Time**: 8-12 hours
-**Focus**: Reproducible infrastructure
+**Started**: 2026-02-20
+**Estimated Time**: 1-2 hours
+**Focus**: Reproducible infrastructure with Terraform
+**Decision**: DD-013 Option B (Terraform First)
 
 **Stack**:
-- Terraform (cloud-agnostic IaC)
-- Azure provider
-- GitHub Actions for apply/destroy
+- Terraform 1.7+ (Infrastructure as Code)
+- Azure App Service (Linux B1, Python 3.13)
+- Neon PostgreSQL (free tier, serverless)
+- GitHub Actions (CI/CD)
 
-**Tasks**:
-- [ ] Learn Terraform basics
-- [ ] Define App Service in Terraform
-- [ ] Define resource group, networking
-- [ ] Create terraform apply/destroy workflow
-- [ ] Document infrastructure in code
+**Completed**:
+- ✅ Terraform configuration files created (`terraform/*.tf`)
+  - `provider.tf`: Terraform and Azure provider config
+  - `variables.tf`: Input variables (region, app name, SKU, database URL)
+  - `main.tf`: Infrastructure resources (RG, App Service Plan, Web App)
+  - `outputs.tf`: Output values (app URL, resource group name)
+  - `terraform.tfvars.example`: Example configuration
+  - `.gitignore`: Ignore state files and secrets
+  - `README.md`: Complete usage guide
+- ✅ Implementation plan created (`docs/planning/PHASE4B_IAC_IMPLEMENTATION.md`)
+- ✅ Documentation updated (FILE_INDEX.md, DECISIONS.md)
 
-**Why Optional**:
-- Not required for portfolio
-- Can add after Phase 4A if time permits
-- Good stretch goal
+**Next Steps** (User Actions Required):
+- [ ] Install Terraform CLI (if not installed)
+- [ ] Authenticate with Azure CLI (`az login`)
+- [ ] Create `terraform/terraform.tfvars` with DATABASE_URL
+- [ ] Run `terraform init` (download Azure provider)
+- [ ] Run `terraform plan` (preview changes)
+- [ ] Run `terraform apply` (create infrastructure)
+- [ ] Configure GitHub Secrets (AZURE_WEBAPP_PUBLISH_PROFILE, DATABASE_URL)
+- [ ] Merge to `main` branch to trigger deployment
+- [ ] Verify API at https://buhurt-fight-tracker.azurewebsites.net
+
+**Success Criteria**:
+- ✅ Infrastructure defined as code (version-controlled)
+- [ ] Can destroy and recreate with `terraform apply`
+- [ ] GitHub Actions deploys on push to main
+- [ ] API accessible at public URL
+- [ ] All tests passing in production
+
+**Cost Strategy**:
+- Neon free tier: $0/month
+- App Service B1 (running): ~$13/month (prorated hourly)
+- App Service B1 (stopped): $0/month via scripts
+- **Destroy when not demoing**: `terraform destroy` (total cost: $0)
+- **Target**: <$5/month during development
 
 ---
 
@@ -537,6 +539,32 @@ Types: feat, fix, test, docs, refactor
 
 See `planning/archive/SESSION_LOG_ARCHIVE.md` for historical sessions (Sessions 1-7).
 
+### 2026-02-20 (Session 9): Phase 4B IaC Setup Complete
+
+- ✅ **Created comprehensive Terraform configuration**:
+  - `terraform/provider.tf`: Terraform 1.7+ and Azure provider setup
+  - `terraform/variables.tf`: Input variables (resource group, location, app name, SKU, database URL)
+  - `terraform/main.tf`: Infrastructure resources (Resource Group, App Service Plan, Linux Web App)
+  - `terraform/outputs.tf`: Outputs (app URL, app name, resource group name)
+  - `terraform/terraform.tfvars.example`: Example configuration with placeholders
+  - `terraform/.gitignore`: Ignore state files and secrets
+  - `terraform/README.md`: Complete usage guide with prerequisites, commands, troubleshooting
+- ✅ **Created implementation plan**: `docs/planning/PHASE4B_IAC_IMPLEMENTATION.md`
+  - 12-step implementation guide
+  - Architecture diagram
+  - Testing checklist
+  - Interview talking points
+- ✅ **Updated documentation**:
+  - FILE_INDEX.md: Added terraform/ section
+  - DECISIONS.md: Marked DD-013 as DECIDED (Option B: Terraform First)
+  - PROGRESS.md: Updated Phase 4B status
+- ✅ **Committed changes**: 2 commits (terraform config + docs)
+- 📋 **Next**: User needs to run `terraform apply` locally (requires Azure CLI auth + Terraform install)
+
+**Status**: Phase 4B configuration complete. Ready for user to apply infrastructure.
+
+---
+
 ### 2026-02-20 (Session 8): Phase 3A Complete + Phase 4 Deployment Decision
 
 - ✅ **Verified CI passing**: All 242 unit tests + 75+ integration tests green
@@ -614,30 +642,57 @@ See `planning/archive/SESSION_LOG_ARCHIVE.md` for historical sessions (Sessions 
 
 ## Next Actions
 
-### Immediate - Choose Deployment Approach (DD-013)
-**Decision needed**: Manual deployment (Phase 4A) or Terraform (Phase 4B)?
+### Immediate - Apply Terraform Infrastructure (Phase 4B)
+**Decision made**: DD-013 Option B (Terraform First) ✅
+**Configuration ready**: All Terraform files created ✅
 
-**Current state**:
-- ✅ Neon database configured (Azure East US 2)
-- ✅ Connection string obtained and converted
-- ❌ No Azure resources created (perfect timing for IaC decision)
+**Steps to Complete Deployment**:
 
-**Option A: Manual Deployment (~20 minutes)**
-1. [ ] Create Azure App Service via Portal (Basic B1, Python 3.13, Linux)
-2. [ ] Configure Application Settings (DATABASE_URL)
-3. [ ] Set Startup Command (`bash startup.sh`)
-4. [ ] Download publish profile
-5. [ ] Configure GitHub secrets (AZURE_WEBAPP_NAME, AZURE_WEBAPP_PUBLISH_PROFILE, DATABASE_URL)
-6. [ ] Merge `master` to `main` and verify deployment
+1. **Install Terraform** (if not installed):
+   ```bash
+   terraform version  # Check if installed
+   # If not: choco install terraform (Windows) or brew install terraform (macOS)
+   ```
 
-**Option B: Terraform/IaC (~1-2 hours)**
-1. [ ] Install Terraform
-2. [ ] Write .tf files (provider, app service, configuration)
-3. [ ] `terraform init` and `terraform apply`
-4. [ ] Configure GitHub secrets
-5. [ ] Merge `master` to `main` and verify deployment
+2. **Authenticate with Azure**:
+   ```bash
+   az login
+   az account show  # Verify correct subscription
+   ```
 
-See DECISIONS.md DD-013 for detailed analysis.
+3. **Create terraform.tfvars**:
+   ```bash
+   cd terraform/
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars - add Neon DATABASE_URL
+   ```
+
+4. **Apply Terraform**:
+   ```bash
+   terraform init      # Download Azure provider
+   terraform validate  # Check syntax
+   terraform plan      # Preview changes
+   terraform apply     # Create infrastructure (type 'yes')
+   ```
+
+5. **Configure GitHub Secrets**:
+   - Download publish profile from Azure Portal (App Service → Deployment Center)
+   - Add to GitHub: `AZURE_WEBAPP_PUBLISH_PROFILE`, `DATABASE_URL`, `AZURE_WEBAPP_NAME`
+
+6. **Deploy Code**:
+   ```bash
+   git checkout main
+   git merge master
+   git push origin main  # Triggers deployment workflow
+   ```
+
+7. **Verify**:
+   ```bash
+   curl https://buhurt-fight-tracker.azurewebsites.net/health
+   curl https://buhurt-fight-tracker.azurewebsites.net/api/v1/countries
+   ```
+
+See `terraform/README.md` and `docs/planning/PHASE4B_IAC_IMPLEMENTATION.md` for detailed guide.
 
 ### Optional - Phase 3B
 Phase 3B (weapon/league/ruleset tags + team size enforcement) does **NOT** block portfolio completion.
