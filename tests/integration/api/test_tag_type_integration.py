@@ -193,7 +193,7 @@ class TestTagTypeIntegration:
 
         await repo.create({'name': 'test_format', 'is_privileged': True, 'is_parent': False, 'has_children': False, 'display_order': 97})
         await repo.create({'name': 'test_category2', 'is_privileged': True, 'is_parent': True, 'has_children': False, 'display_order': 98})
-        await repo.create({'name': 'weapon', 'is_privileged': True, 'is_parent': False, 'has_children': False, 'display_order': 99})
+        await repo.create({'name': 'armor', 'is_privileged': True, 'is_parent': False, 'has_children': False, 'display_order': 99})
         await db_session.commit()
 
         try:
@@ -279,9 +279,9 @@ class TestTagTypeIntegration:
         """
         Scenario 4: Update an existing tag type
 
-        Given the tag type "weapon" exists
-        When I update the tag type "weapon" with display_order=10
-        Then the tag type "weapon" should have display_order equal to 10
+        Given the tag type "armor" exists
+        When I update the tag type "armor" with display_order=10
+        Then the tag type "armor" should have display_order equal to 10
 
         Verifies:
         - PATCH /tag-types/{id} updates tag type
@@ -297,8 +297,8 @@ class TestTagTypeIntegration:
         # Create the tag type
         from app.repositories.tag_type_repository import TagTypeRepository
         repo = TagTypeRepository(db_session)
-        weapon = await repo.create({
-            'name': 'weapon',
+        armor = await repo.create({
+            'name': 'armor',
             'is_privileged': True,
             'is_parent': False,
             'has_children': False,
@@ -313,7 +313,7 @@ class TestTagTypeIntegration:
                 base_url="http://test"
             ) as client:
                 response = await client.patch(
-                    f"/api/v1/tag-types/{weapon.id}",
+                    f"/api/v1/tag-types/{armor.id}",
                     json={'display_order': 10}
                 )
 
@@ -321,12 +321,12 @@ class TestTagTypeIntegration:
             assert response.status_code == 200
             updated_tag_type = response.json()
 
-            assert updated_tag_type['name'] == 'weapon'
+            assert updated_tag_type['name'] == 'armor'
             assert updated_tag_type['display_order'] == 10
             assert updated_tag_type['is_privileged'] == True  # Unchanged
 
             # Verify persistence
-            refreshed = await repo.get_by_id(weapon.id)
+            refreshed = await repo.get_by_id(armor.id)
             assert refreshed.display_order == 10
 
         finally:
@@ -337,10 +337,10 @@ class TestTagTypeIntegration:
         """
         Scenario 5: Deactivate a tag type
 
-        Given the tag type "weapon" exists
-        When I deactivate the tag type "weapon"
-        Then the tag type "weapon" should not appear in the list
-        But the tag type "weapon" should still exist in the database with is_deactivated true
+        Given the tag type "armor" exists
+        When I deactivate the tag type "armor"
+        Then the tag type "armor" should not appear in the list
+        But the tag type "armor" should still exist in the database with is_deactivated true
 
         Verifies:
         - PATCH /tag-types/{id}/deactivate deactivates tag type
@@ -357,8 +357,8 @@ class TestTagTypeIntegration:
         # Create the tag type
         from app.repositories.tag_type_repository import TagTypeRepository
         repo = TagTypeRepository(db_session)
-        weapon = await repo.create({
-            'name': 'weapon',
+        armor = await repo.create({
+            'name': 'armor',
             'is_privileged': True,
             'is_parent': False,
             'has_children': False,
@@ -372,19 +372,19 @@ class TestTagTypeIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                deactivate_response = await client.patch(f"/api/v1/tag-types/{weapon.id}/deactivate")
+                deactivate_response = await client.patch(f"/api/v1/tag-types/{armor.id}/deactivate")
                 assert deactivate_response.status_code == 200
 
                 # Then: Verify not in list
                 list_response = await client.get("/api/v1/tag-types")
                 tag_types = list_response.json()
                 names = [tt['name'] for tt in tag_types]
-                assert 'weapon' not in names
+                assert 'armor' not in names
 
             # But: Still exists in database with is_deactivated=True
-            deactivated_tag_type = await repo.get_by_id(weapon.id, include_deactivated=True)
+            deactivated_tag_type = await repo.get_by_id(armor.id, include_deactivated=True)
             assert deactivated_tag_type is not None
-            assert deactivated_tag_type.name == 'weapon'
+            assert deactivated_tag_type.name == 'armor'
             assert deactivated_tag_type.is_deactivated == True
 
         finally:

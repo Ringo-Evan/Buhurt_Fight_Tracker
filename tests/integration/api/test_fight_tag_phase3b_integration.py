@@ -114,7 +114,8 @@ class TestWeaponTagIntegration:
                 # Assert: weapon tag created
                 assert response.status_code == 201
                 weapon_tag = response.json()
-                assert weapon_tag["tag_type_name"] == "weapon"
+                #TODO: just hardcoded tag_type_id for now, could query for it in the future
+                assert weapon_tag["tag_type_id"] == "00000000-0000-0000-0000-000000000007"
                 assert weapon_tag["value"] == "Longsword"
                 assert weapon_tag["fight_id"] == fight_id
 
@@ -122,7 +123,8 @@ class TestWeaponTagIntegration:
                 response = await client.get(f"/api/v1/fights/{fight_id}")
                 assert response.status_code == 200
                 fight = response.json()
-                weapon_tags = [t for t in fight["tags"] if t["tag_type_name"] == "weapon"]
+                #TODO: just hardcoded tag_type_id for now, could query for it in the future
+                weapon_tags = [t for t in fight["tags"] if t["tag_type_id"] == "00000000-0000-0000-0000-000000000007"]
                 assert len(weapon_tags) == 1
                 assert weapon_tags[0]["value"] == "Longsword"
 
