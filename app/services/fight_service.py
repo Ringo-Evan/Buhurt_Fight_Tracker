@@ -106,7 +106,7 @@ class FightService:
     async def _validate_participations(
         self,
         participations_data: List[Dict[str, Any]],
-        supercategory: Optional[str] = None
+        fight_format: Optional[str] = None
     ) -> None:
         """
         Validate participation data before creating fight.
@@ -148,30 +148,30 @@ class FightService:
                     raise ValidationError(f"Fighter with ID {participation['fighter_id']} not found")
 
         # Format-dependent validation
-        if supercategory:
+        if fight_format:
             # Count fighters (not alternates/coaches) per side
             side_1_fighters = [p for p in participations_data if p["side"] == 1 and p.get("role") == "fighter"]
             side_2_fighters = [p for p in participations_data if p["side"] == 2 and p.get("role") == "fighter"]
 
-            if supercategory == "singles":
+            if fight_format == "singles":
                 if len(side_1_fighters) != 1 or len(side_2_fighters) != 1:
                     raise ValidationError("Singles fights require exactly 1 fighter per side")
-            elif supercategory == "melee":
+            elif fight_format == "melee":
                 if len(side_1_fighters) < 5 or len(side_2_fighters) < 5:
                     raise ValidationError("Melee fights require at least 5 fighters per side")
 
     async def create_with_participants(
         self,
         fight_data: Dict[str, Any],
-        supercategory: str,
+        fight_format: str,
         participations_data: List[Dict[str, Any]]
     ) -> Fight:
         """
-        Create a fight with participants and supercategory tag atomically.
+        Create a fight with participants and fight_format tag atomically.
 
         Args:
             fight_data: Dictionary with fight fields
-            supercategory: Supercategory of the fight ("singles" or "melee")
+            fight_format: Fight format ("singles" or "melee")
             participations_data: List of participation dictionaries
 
         Returns:
@@ -181,21 +181,21 @@ class FightService:
             ValidationError: If validation fails
         """
         self._validate_fight_data(fight_data, is_update=False)
-        await self._validate_participations(participations_data, supercategory)
+        await self._validate_participations(participations_data, fight_format)
 
         # Create the fight first
         fight = await self.fight_repository.create(fight_data)
 
-        # Create supercategory tag linked to this fight
+        # Create fight_format tag linked to this fight
         if self.tag_repository and self.tag_type_repository:
-            supercategory_tag_type = await self.tag_type_repository.get_by_name("supercategory")
-            if not supercategory_tag_type:
-                raise ValidationError("supercategory TagType not found")
+            fight_format_tag_type = await self.tag_type_repository.get_by_name("fight_format")
+            if not fight_format_tag_type:
+                raise ValidationError("fight_format TagType not found")
 
             await self.tag_repository.create({
                 "fight_id": fight.id,
-                "tag_type_id": supercategory_tag_type.id,
-                "value": supercategory
+                "tag_type_id": fight_format_tag_type.id,
+                "value": fight_format
             })
 
         # Create each participation
@@ -250,7 +250,7 @@ class FightService:
         """
         Update the value of a tag on a fight.
 
-        DD-011: Supercategory tags are immutable after creation.
+        DD-011: fight_format tags are immutable after creation.
 
         Args:
             fight_id: UUID of the fight owning the tag
@@ -262,7 +262,7 @@ class FightService:
 
         Raises:
             FightNotFoundError: If fight not found
-            ValidationError: If tag not on this fight, supercategory tag, or invalid new value
+            ValidationError: If tag not on this fight, fight_format tag, or invalid new value
         """
         # 1. Validate fight exists
         fight = await self.fight_repository.get_by_id(fight_id, include_deactivated=False)
@@ -274,10 +274,10 @@ class FightService:
         if tag is None or tag.fight_id != fight_id:
             raise ValidationError(f"Tag with ID {tag_id} not found on fight {fight_id}")
 
-        # 3. DD-011: Supercategory is immutable
-        if tag.tag_type and tag.tag_type.name == "supercategory":
+        # 3. DD-011: fight_format is immutable
+        if tag.tag_type and tag.tag_type.name == "fight_format":
             raise ValidationError(
-                "Cannot update supercategory tag: supercategory is immutable after fight creation."
+                "Cannot update fight_format tag: fight_format is immutable after fight creation."
             )
 
         # 4. Validate new value for this tag type
@@ -297,7 +297,7 @@ class FightService:
         return updated
 
     # Allowed tag values per tag type
-    _SUPERCATEGORY_VALUES = {"singles", "melee"}
+    _FIGHT_FORMAT_VALUES = {"singles", "melee"}
     _CATEGORY_VALUES = {
         "singles": {"duel", "profight"},
         "melee": {"3s", "5s", "10s", "12s", "16s", "21s", "30s", "mass"},
@@ -305,7 +305,7 @@ class FightService:
     _GENDER_VALUES = {"male", "female", "mixed"}
     # custom: any non-empty string up to 200 chars
     # Tag types that allow only one active instance per fight
-    _ONE_PER_FIGHT_TYPES = {"supercategory", "category", "gender", "weapon", "league", "ruleset"}
+    _ONE_PER_FIGHT_TYPES = {"fight_format", "category", "gender", "weapon", "league", "ruleset"}
 
     async def add_tag(
         self,
@@ -319,7 +319,7 @@ class FightService:
 
         Args:
             fight_id: UUID of the fight
-            tag_type_name: Name of the tag type (supercategory, category, gender, custom)
+            tag_type_name: Name of the tag type (fight_format, category, gender, custom)
             value: Tag value (validated per type)
             parent_tag_id: Optional parent tag UUID (for hierarchy)
 
@@ -358,14 +358,14 @@ class FightService:
         # 5. Auto-link to parent tag (hierarchy)
         if parent_tag_id is None:
             if tag_type_name == "category":
-                # Category links to supercategory
-                sc_tag = next(
+                # Category links to fight_format
+                ff_tag = next(
                     (t for t in fight.tags if not t.is_deactivated
-                     and t.tag_type and t.tag_type.name == "supercategory"),
+                     and t.tag_type and t.tag_type.name == "fight_format"),
                     None
                 )
-                if sc_tag:
-                    parent_tag_id = sc_tag.id
+                if ff_tag:
+                    parent_tag_id = ff_tag.id
             elif tag_type_name in ("weapon", "league", "ruleset"):
                 # Weapon/league/ruleset link to category
                 cat_tag = next(
@@ -412,7 +412,7 @@ class FightService:
         # 3. Deactivate tag
         await self.tag_repository.deactivate(tag_id)
 
-        # 4. Cascade deactivation to children (e.g., category tags when supercategory deactivated)
+        # 4. Cascade deactivation to children (e.g., category tags when fight_format deactivated)
         await self.tag_repository.cascade_deactivate_children(tag_id)
 
         # 5. Return the deactivated tag
@@ -425,30 +425,30 @@ class FightService:
         Args:
             tag_type_name: Tag type name
             value: Proposed tag value
-            fight: The fight (needed to check supercategory for category validation)
+            fight: The fight (needed to check fight_format for category validation)
 
         Raises:
             ValidationError: If value is invalid
         """
-        if tag_type_name == "supercategory":
-            if value not in self._SUPERCATEGORY_VALUES:
+        if tag_type_name == "fight_format":
+            if value not in self._FIGHT_FORMAT_VALUES:
                 raise ValidationError(
-                    f"Invalid supercategory value '{value}'. "
-                    f"Allowed: {sorted(self._SUPERCATEGORY_VALUES)}"
+                    f"Invalid fight_format value '{value}'. "
+                    f"Allowed: {sorted(self._FIGHT_FORMAT_VALUES)}"
                 )
 
         elif tag_type_name == "category":
-            # Determine fight's active supercategory value
-            sc_tag = next(
-                (t for t in fight.tags if not t.is_deactivated and t.tag_type and t.tag_type.name == "supercategory"),
+            # Determine fight's active fight_format value
+            ff_tag = next(
+                (t for t in fight.tags if not t.is_deactivated and t.tag_type and t.tag_type.name == "fight_format"),
                 None
             )
-            if sc_tag is None:
-                raise ValidationError("Fight has no active supercategory tag. Cannot add category.")
-            allowed = self._CATEGORY_VALUES.get(sc_tag.value, set())
+            if ff_tag is None:
+                raise ValidationError("Fight has no active fight_format tag. Cannot add category.")
+            allowed = self._CATEGORY_VALUES.get(ff_tag.value, set())
             if value not in allowed:
                 raise ValidationError(
-                    f"Category value '{value}' is not valid for supercategory '{sc_tag.value}'. "
+                    f"Category value '{value}' is not valid for fight_format '{ff_tag.value}'. "
                     f"Allowed: {sorted(allowed)}"
                 )
 
@@ -720,7 +720,7 @@ class FightService:
 
         for side in [1, 2]:
             count = len([p for p in fight.participations
-                         if p.side == side and not p.is_deleted])
+                         if p.side == side])
             if count < min_size:
                 raise InvalidParticipantCountError(
                     f"Cannot use category '{category}': requires {min_size}-{max_size if max_size else 'unlimited'} "

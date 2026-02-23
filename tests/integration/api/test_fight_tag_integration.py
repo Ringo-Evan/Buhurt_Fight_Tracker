@@ -21,7 +21,7 @@ pytestmark = pytest.mark.integration
 class TestFightTagIntegration:
     """Integration tests for fight-scoped tag management."""
 
-    async def _create_fight(self, db_session, client, supercategory="singles"):
+    async def _create_fight(self, db_session, client, fight_format="singles"):
         """Helper: create prerequisite data and a fight. Returns fight_id."""
         from app.repositories.country_repository import CountryRepository
         from app.repositories.team_repository import TeamRepository
@@ -40,7 +40,7 @@ class TestFightTagIntegration:
         fight_data = {
             "date": "2025-03-10",
             "location": "Vienna Stadium",
-            "supercategory": supercategory,
+            "fight_format": fight_format,
             "participations": [
                 {"fighter_id": str(fighter1.id), "side": 1, "role": "fighter"},
                 {"fighter_id": str(fighter2.id), "side": 2, "role": "fighter"},
@@ -51,17 +51,17 @@ class TestFightTagIntegration:
         return response.json()["id"]
 
     # -------------------------------------------------------------------------
-    # Scenario 1: Creating a fight links supercategory tag to the fight
+    # Scenario 1: Creating a fight links fight_format tag to the fight
     # -------------------------------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_create_fight_response_includes_supercategory_tag(self, db_session):
+    async def test_create_fight_response_includes_fight_format_tag(self, db_session):
         """
-        Scenario: Creating a fight links supercategory tag to the fight
+        Scenario: Creating a fight links fight_format tag to the fight
 
-        Given a valid fight is created with supercategory "singles"
+        Given a valid fight is created with fight_format "singles"
         When I retrieve the fight
-        Then the fight has an active supercategory tag with value "singles"
+        Then the fight has an active fight_format tag with value "singles"
         And the tag has the correct fight_id
         """
         async def get_db_override():
@@ -74,7 +74,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
 
                 # Act: retrieve the fight
                 response = await client.get(f"/api/v1/fights/{fight_id}")
@@ -85,14 +85,14 @@ class TestFightTagIntegration:
             # Assert: tags array is present
             assert "tags" in data, "FightResponse must include a 'tags' field"
             tags = data["tags"]
-            assert len(tags) >= 1, "Fight should have at least one tag (the supercategory)"
+            assert len(tags) >= 1, "Fight should have at least one tag (the fight_format)"
 
-            # Assert: supercategory tag exists with correct value
-            supercategory_tags = [t for t in tags if not t.get("is_deactivated", True)]
-            assert len(supercategory_tags) >= 1, "At least one active tag expected"
+            # Assert: fight_format tag exists with correct value
+            fight_format_tags = [t for t in tags if not t.get("is_deactivated", True)]
+            assert len(fight_format_tags) >= 1, "At least one active tag expected"
 
-            # Find the supercategory tag by value
-            sc_tag = next((t for t in supercategory_tags if t.get("value") == "singles"), None)
+            # Find the fight_format tag by value
+            sc_tag = next((t for t in fight_format_tags if t.get("value") == "singles"), None)
             assert sc_tag is not None, "Supercategory tag with value 'singles' not found in tags"
 
             # Assert: tag is linked to this fight
@@ -118,7 +118,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
                 response = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
                     json={"tag_type_name": "category", "value": "5s"}
@@ -144,7 +144,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
                 # Add first category tag
                 r1 = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
@@ -178,7 +178,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
                 response = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
                     json={"tag_type_name": "gender", "value": "male"}
@@ -207,7 +207,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
                 response = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
                     json={"tag_type_name": "gender", "value": "unknown"}
@@ -233,7 +233,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
                 response = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
                     json={"tag_type_name": "custom", "value": "great technique"}
@@ -261,7 +261,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
                 r1 = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
                     json={"tag_type_name": "custom", "value": "exciting"}
@@ -291,9 +291,9 @@ class TestFightTagIntegration:
     # -------------------------------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_deactivate_supercategory_cascades_to_category(self, db_session):
+    async def test_deactivate_fight_format_cascades_to_category(self, db_session):
         """
-        Scenario: Deactivating supercategory tag cascades deactivation to category tag
+        Scenario: Deactivating fight_format tag cascades deactivation to category tag
         """
         async def get_db_override():
             yield db_session
@@ -305,16 +305,16 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
 
-                # Add a category tag (child of supercategory)
+                # Add a category tag (child of fight_format)
                 cat_response = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
                     json={"tag_type_name": "category", "value": "duel"}
                 )
                 assert cat_response.status_code == 201, cat_response.text
 
-                # Find the supercategory tag id
+                # Find the fight_format tag id
                 fight_data = (await client.get(f"/api/v1/fights/{fight_id}")).json()
                 sc_tag = next(
                     t for t in fight_data["tags"]
@@ -322,7 +322,7 @@ class TestFightTagIntegration:
                 )
                 sc_tag_id = sc_tag["id"]
 
-                # Deactivate the supercategory tag
+                # Deactivate the fight_format tag
                 deactivate_response = await client.patch(
                     f"/api/v1/fights/{fight_id}/tags/{sc_tag_id}/deactivate"
                 )
@@ -360,7 +360,7 @@ class TestFightTagIntegration:
                 base_url="http://test"
             ) as client:
                 # Create fight A with a gender tag
-                fight_a_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_a_id = await self._create_fight(db_session, client, fight_format="singles")
                 tag_response = await client.post(
                     f"/api/v1/fights/{fight_a_id}/tags",
                     json={"tag_type_name": "gender", "value": "male"}
@@ -383,7 +383,7 @@ class TestFightTagIntegration:
                 fight_b_data = {
                     "date": "2025-04-20",
                     "location": "Warsaw Arena",
-                    "supercategory": "singles",
+                    "fight_format": "singles",
                     "participations": [
                         {"fighter_id": str(f1.id), "side": 1, "role": "fighter"},
                         {"fighter_id": str(f2.id), "side": 2, "role": "fighter"},
@@ -403,7 +403,7 @@ class TestFightTagIntegration:
             app.dependency_overrides.clear()
     # -------------------------------------------------------------------------
     # Scenario 2: Add valid category tag to a singles fight
-    # Scenario 3: Category-supercategory validation
+    # Scenario 3: Category-fight_format validation
     # Scenario 4: One-per-type rule
     # Scenario 5: Gender tag
     # Scenario 6: Custom tag (multiple allowed)
@@ -428,7 +428,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
 
                 # Act: add a category tag
                 response = await client.post(
@@ -468,7 +468,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
                 tag_resp = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
                     json={"tag_type_name": "gender", "value": "male"}
@@ -496,9 +496,9 @@ class TestFightTagIntegration:
         Scenario: Cannot delete a tag that has active children
 
         Given a singles fight with an active category tag "duel"
-        When I hard delete the supercategory tag
+        When I hard delete the fight_format tag
         Then I receive a 422 validation error
-        And the supercategory tag still exists
+        And the fight_format tag still exists
         """
         async def get_db_override():
             yield db_session
@@ -510,21 +510,21 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
 
-                # Add a category tag (child of supercategory)
+                # Add a category tag (child of fight_format)
                 cat_resp = await client.post(
                     f"/api/v1/fights/{fight_id}/tags",
                     json={"tag_type_name": "category", "value": "duel"}
                 )
                 assert cat_resp.status_code == 201, cat_resp.text
 
-                # Find supercategory tag
+                # Find fight_format tag
                 fight_data = (await client.get(f"/api/v1/fights/{fight_id}")).json()
                 sc_tag = next(t for t in fight_data["tags"] if t["value"] == "singles")
                 sc_tag_id = sc_tag["id"]
 
-                # Attempt to hard-delete supercategory (which has a child)
+                # Attempt to hard-delete fight_format (which has a child)
                 delete_resp = await client.delete(
                     f"/api/v1/fights/{fight_id}/tags/{sc_tag_id}"
                 )
@@ -545,12 +545,12 @@ class TestFightTagIntegration:
     # -------------------------------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_cannot_update_supercategory_tag(self, db_session):
+    async def test_cannot_update_fight_format_tag(self, db_session):
         """
-        Scenario: Cannot update supercategory tag after fight creation
+        Scenario: Cannot update fight_format tag after fight creation
 
         Given a singles fight exists
-        When I update the supercategory tag to "melee"
+        When I update the fight_format tag to "melee"
         Then I receive a 422 validation error
         """
         async def get_db_override():
@@ -563,7 +563,7 @@ class TestFightTagIntegration:
                 transport=ASGITransport(app=app),
                 base_url="http://test"
             ) as client:
-                fight_id = await self._create_fight(db_session, client, supercategory="singles")
+                fight_id = await self._create_fight(db_session, client, fight_format="singles")
 
                 fight_data = (await client.get(f"/api/v1/fights/{fight_id}")).json()
                 sc_tag = next(t for t in fight_data["tags"] if t["value"] == "singles")

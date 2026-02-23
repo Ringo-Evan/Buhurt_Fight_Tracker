@@ -80,7 +80,7 @@ class FightCreate(BaseModel):
     """
     date: datetime.date = Field(..., description="Date of the fight (cannot be in the future)")
     location: str = Field(..., min_length=1, max_length=200, description="Event name or location")
-    supercategory: str = Field(..., pattern="^(singles|melee)$", description="Supercategory: 'singles' or 'melee'")
+    fight_format: str = Field(..., pattern="^(singles|melee)$", description="Fight format: 'singles' or 'melee'")
     video_url: str | None = Field(None, max_length=500, description="URL to fight video recording")
     winner_side: int | None = Field(None, description="Winning side (1, 2, or null for draw/unknown)")
     notes: str | None = Field(None, description="Additional notes about the fight")
@@ -99,7 +99,7 @@ class FightCreate(BaseModel):
             "examples": [{
                 "date": "2025-06-15",
                 "location": "Battle of the Nations 2025",
-                "supercategory": "melee",
+                "fight_format": "melee",
                 "video_url": "https://example.com/fight-video",
                 "winner_side": 1,
                 "notes": "Semi-final round"
@@ -113,7 +113,7 @@ class TagAddRequest(BaseModel):
     Schema for adding a tag to a fight via POST /fights/{id}/tags.
 
     Attributes:
-        tag_type_name: Name of the tag type (supercategory, category, gender, custom)
+        tag_type_name: Name of the tag type (fight_format, category, gender, custom)
         value: Tag value (validated per type)
         parent_tag_id: Optional parent tag UUID (for hierarchy)
     """

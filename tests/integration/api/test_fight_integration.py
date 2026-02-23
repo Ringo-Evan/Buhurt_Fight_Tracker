@@ -94,7 +94,7 @@ class TestFightIntegration:
         fight_data = {
             'date': '2025-06-15',
             'location': 'Battle Arena Denver',
-            'supercategory': 'singles',  # Required field for format validation
+            'fight_format': 'singles',  # Required field for format validation
             'participations': [
                 {
                     'fighter_id': str(fighter1.id),
@@ -205,7 +205,7 @@ class TestFightIntegration:
         fight_data = {
             'date': '2025-07-20',
             'location': 'Melee Arena',
-            'supercategory': 'melee',
+            'fight_format': 'melee',
             'participations': participations
         }
 
@@ -269,7 +269,7 @@ class TestFightIntegration:
         fight_data = {
             'date': '2030-12-31',  # Future date
             'location': 'Test Arena',
-            'supercategory': 'singles',
+            'fight_format': 'singles',
             'participations': [
                 {'fighter_id': str(fighter1.id), 'side': 1, 'role': 'fighter'},
                 {'fighter_id': str(fighter2.id), 'side': 2, 'role': 'fighter'}
@@ -327,7 +327,7 @@ class TestFightIntegration:
         fight_data = {
             'date': '2025-06-15',
             'location': 'Test Arena',
-            'supercategory': 'singles',
+            'fight_format': 'singles',
             'participations': [
                 {'fighter_id': str(fighter1.id), 'side': 1, 'role': 'fighter'}
             ]
@@ -388,7 +388,7 @@ class TestFightIntegration:
         fight_data = {
             'date': '2025-06-15',
             'location': 'Test Arena',
-            'supercategory': 'singles',
+            'fight_format': 'singles',
             'participations': [
                 {'fighter_id': str(fighters[0].id), 'side': 1, 'role': 'fighter'},
                 {'fighter_id': str(fighters[1].id), 'side': 1, 'role': 'fighter'},  # 2 on side 1
@@ -452,7 +452,7 @@ class TestFightIntegration:
         fight_data = {
             'date': '2025-06-15',
             'location': 'Test Arena',
-            'supercategory': 'melee',
+            'fight_format': 'melee',
             'participations': [
                 {'fighter_id': str(fighters[0].id), 'side': 1, 'role': 'fighter'},
                 {'fighter_id': str(fighters[1].id), 'side': 1, 'role': 'fighter'},
@@ -527,7 +527,7 @@ class TestFightIntegration:
                 fight1_data = {
                     'date': '2025-06-15',
                     'location': 'Arena A',
-                    'supercategory': 'singles',
+                    'fight_format': 'singles',
                     'participations': [
                         {'fighter_id': str(fighter1.id), 'side': 1, 'role': 'fighter'},
                         {'fighter_id': str(fighter2.id), 'side': 2, 'role': 'fighter'}
@@ -540,7 +540,7 @@ class TestFightIntegration:
                 fight2_data = {
                     'date': '2025-07-20',
                     'location': 'Arena B',
-                    'supercategory': 'singles',
+                    'fight_format': 'singles',
                     'participations': [
                         {'fighter_id': str(fighter1.id), 'side': 1, 'role': 'fighter'},
                         {'fighter_id': str(fighter2.id), 'side': 2, 'role': 'fighter'}

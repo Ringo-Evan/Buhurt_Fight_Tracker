@@ -16,7 +16,7 @@
 | Phase 2B: Fight Core Validation | ✅ COMPLETE | 24 unit (FightService), 1 integration | ~4 hrs |
 | Phase 2C: CI/CD Pipeline + Integration Tests | ✅ COMPLETE | 206 unit, 61 integration (1 skipped) | ~3 hrs |
 | Phase 2D: Deactivate + Hard Delete | ✅ COMPLETE | 222 unit, 66+ integration | ~3 hrs |
-| Phase 3A: Tag MVP (supercategory/category/gender/custom) | ✅ COMPLETE | 242 unit, 75+ integration | ~6 hrs |
+| Phase 3A: Tag MVP (fight_format/category/gender/custom) | ✅ COMPLETE | 242 unit, 75+ integration | ~6 hrs |
 | Phase 3B: Tag Expansion (weapon/league/ruleset + team size) | ✅ COMPLETE | 257 unit, 76 integration | ~2 hrs |
 | Phase 4A: Basic Deployment (Manual) | ⏸️ SKIPPED | N/A | 0 |
 | Phase 4B: Infrastructure as Code (Terraform) | ✅ COMPLETE | N/A (infrastructure) | ~3 hrs |
@@ -295,15 +295,15 @@ Without tags, Fight can't properly validate participant counts.
 **Scope delivered**:
 | TagType | Parent | Cardinality | Values |
 |---------|--------|-------------|--------|
-| supercategory | none | exactly 1 | singles, melee |
-| category | supercategory | 0 or 1 | singles→duel/profight, melee→3s/5s/10s/12s/16s/21s/30s/mass |
+| fight_format | none | exactly 1 | singles, melee |
+| category | fight_format | 0 or 1 | singles→duel/profight, melee→3s/5s/10s/12s/16s/21s/30s/mass |
 | gender | none | 0 or 1 | male, female, mixed |
 | custom | none | unlimited | any string ≤200 chars |
 
 **All endpoints implemented**:
 | Endpoint | Business rules |
 |----------|----------------|
-| `POST /fights/{id}/tags` | Category/supercategory compatibility, one-per-type, allowed values |
+| `POST /fights/{id}/tags` | Category/fight_format compatibility, one-per-type, allowed values |
 | `PATCH /fights/{id}/tags/{tag_id}` | Supercategory immutable (DD-011), validates new value |
 | `PATCH /fights/{id}/tags/{tag_id}/deactivate` | Cascades to children |
 | `DELETE /fights/{id}/tags/{tag_id}` | 422 if active children exist (DD-012) |
@@ -312,10 +312,10 @@ Without tags, Fight can't properly validate participant counts.
 - Tag writes moved to fight-scoped endpoints — DD-009 ✅
 - Standalone `/tags` write endpoints removed — DD-009 ✅
 - `tags.fight_id` NOT NULL — DD-008 ✅
-- fight_format renamed → supercategory — DD-007 ✅
+- fight_format renamed → fight_format — DD-007 ✅
 - Supercategory immutable after creation — DD-011 ✅
 - DELETE rejects if children exist — DD-012 ✅
-- Category auto-linked to supercategory via `parent_tag_id` (hierarchy for cascade/delete) ✅
+- Category auto-linked to fight_format via `parent_tag_id` (hierarchy for cascade/delete) ✅
 
 **Tests**:
 - 20 unit tests added (10 add_tag, 3 deactivate_tag, 4 delete_tag, 2 update_tag, 1 deactivated fight guard)

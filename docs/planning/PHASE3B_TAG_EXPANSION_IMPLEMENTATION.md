@@ -2,7 +2,7 @@
 
 **Status**: Ready for implementation
 **Decisions**: DD-014 through DD-021
-**Prerequisites**: Phase 3A complete (supercategory, category, gender, custom tags working)
+**Prerequisites**: Phase 3A complete (fight_format, category, gender, custom tags working)
 **Scope**: weapon, league, ruleset tags + team size min/max enforcement
 
 ---
@@ -128,7 +128,7 @@ async def add_tag(self, fight_id: UUID, tag_type_name: str, value: str, ...) -> 
 #### 2. `update_tag()` — Extended cascade + team size check
 
 When category changes:
-1. Validate new category is compatible with supercategory (existing)
+1. Validate new category is compatible with fight_format (existing)
 2. **NEW**: Validate participation count satisfies new category's team size rules
 3. **NEW**: Cascade-delete ALL child tags (weapon, league, ruleset)
 
@@ -151,12 +151,12 @@ async def update_tag(self, fight_id: UUID, tag_id: UUID, new_value: str) -> Tag:
 When fight is created with category, enforce team size:
 
 ```python
-async def create_with_participants(self, fight_data, supercategory, participations,
+async def create_with_participants(self, fight_data, fight_format, participations,
                                     category: str | None = None, ...) -> Fight:
     # ... existing validation ...
 
     # NEW: If category provided, validate team size
-    if category and supercategory == "melee":
+    if category and fight_format == "melee":
         self._validate_team_size_for_category_at_creation(participations, category)
 
     # ... create fight, tags, participations ...
@@ -281,7 +281,7 @@ Phase 3A endpoints handle all tag operations:
 class FightCreate(BaseModel):
     date: date
     location: str
-    supercategory: str  # "singles" or "melee" (existing, renamed from fight_format)
+    fight_format: str  # "singles" or "melee" (existing, renamed from fight_format)
     category: str | None = None  # NEW: optional, e.g. "5s", "duel"
     participations: list[ParticipationCreate]
 ```

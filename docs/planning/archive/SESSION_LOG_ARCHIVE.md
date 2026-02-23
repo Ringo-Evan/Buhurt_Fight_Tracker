@@ -17,8 +17,8 @@
   - Supercategory immutability enforced (422 if attempted)
   - Validates new value for tag type
   - 2 unit tests
-- ✅ **Auto-link category → supercategory**:
-  - When adding category tag, automatically sets parent_tag_id to supercategory tag
+- ✅ **Auto-link category → fight_format**:
+  - When adding category tag, automatically sets parent_tag_id to fight_format tag
   - Simplifies API usage (no manual parent_tag_id lookup needed)
 - ✅ **Wired up controller endpoints**:
   - `PATCH /fights/{id}/tags/{tag_id}` → `update_tag()` → 200 TagResponse
@@ -39,7 +39,7 @@
 ## 2026-02-19 (Session 6): Phase 3 Started - Fight Tag Management
 
 - ✅ **Phase 3 pre-work** (all complete):
-  - Renamed `fight_format` → `supercategory` throughout (DD-007)
+  - Renamed `fight_format` → `fight_format` throughout (DD-007)
   - Fixed bug: `FightService.create_with_participants` was creating tag without `fight_id`
   - Removed standalone `tag_controller.py` write endpoints and integration tests (DD-009)
   - Created migration `k6f7g8h9i0j1_phase3_tag_setup.py`: fight_id NOT NULL, rename, seed TagTypes
@@ -47,8 +47,8 @@
   - Seeded TagTypes in `conftest.db_engine` fixture so all integration tests have reference data
 - ✅ **BDD Feature File**: `tests/features/fight_tag_management.feature` (16 scenarios)
 - ✅ **Implemented `FightService.add_tag()`**:
-  - Category-supercategory compatibility validation
-  - One-per-type enforcement (supercategory/category/gender; unlimited custom)
+  - Category-fight_format compatibility validation
+  - One-per-type enforcement (fight_format/category/gender; unlimited custom)
   - Cross-fight access guard
   - 11 unit tests
 - ✅ **Implemented `FightService.deactivate_tag()`**:
@@ -62,7 +62,7 @@
 - ✅ **Integration tests written** (Scenarios 1-8):
   - `tests/integration/api/test_fight_tag_integration.py`
 - ✅ **Unit tests**: 236/236 passing (up from 222)
-- 📋 **Remaining**: Implement DELETE + supercategory immutability (completed in Session 7)
+- 📋 **Remaining**: Implement DELETE + fight_format immutability (completed in Session 7)
 
 ---
 

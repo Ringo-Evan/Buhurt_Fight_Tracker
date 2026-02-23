@@ -1,4 +1,4 @@
-"""Phase 3 tag setup: fight_id NOT NULL, rename supercategory, seed tag types
+"""Phase 3 tag setup: fight_id NOT NULL, keep fight_format, seed tag types
 
 Revision ID: k6f7g8h9i0j1
 Revises: j5e6f7g8h9i0
@@ -6,7 +6,7 @@ Create Date: 2026-02-19 00:00:00.000000
 
 Changes:
 - tags.fight_id becomes NOT NULL (was nullable during Phase 2 development)
-- Renames fight_format TagType to supercategory (DD-007)
+- Ensures fight_format TagType name is correct (DD-002)
 - Seeds category, gender, custom TagTypes (DD-010)
 """
 from typing import Sequence, Union
@@ -30,9 +30,10 @@ def upgrade() -> None:
     # 1. Make tags.fight_id NOT NULL
     op.alter_column('tags', 'fight_id', nullable=False)
 
-    # 2. Rename fight_format -> supercategory (DD-007)
+    # 2. Ensure fight_format name is correct (DD-002)
+    # Rename supercategory to fight_format if it exists (from older migrations)
     op.execute(
-        sa.text("UPDATE tag_types SET name = 'supercategory' WHERE name = 'fight_format'")
+        sa.text("UPDATE tag_types SET name = 'fight_format' WHERE name = 'supercategory'")
     )
 
     # 3. Seed category, gender, custom TagTypes (DD-010)
@@ -61,9 +62,9 @@ def downgrade() -> None:
         )
     )
 
-    # Rename supercategory back to fight_format
+    # Rename fight_format back to supercategory (reverse of upgrade)
     op.execute(
-        sa.text("UPDATE tag_types SET name = 'fight_format' WHERE name = 'supercategory'")
+        sa.text("UPDATE tag_types SET name = 'supercategory' WHERE name = 'fight_format'")
     )
 
     # Make tags.fight_id nullable again

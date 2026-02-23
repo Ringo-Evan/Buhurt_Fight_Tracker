@@ -61,7 +61,7 @@ Country → Team → Fighter
                     ↓
               Fight ← FightParticipation
                 ↓
-              Tag (supercategory, category, gender, custom)
+              Tag (fight_format, category, gender, custom)
                ↑
             TagType
 ```
@@ -196,7 +196,7 @@ Note: `sslmode=require` → `ssl=require` (asyncpg parameter name differs from p
 |-------|--------|
 | Phase 1: Country, Team, Fighter | ✅ Complete |
 | Phase 2: Fight Tracking + CI/CD | ✅ Complete |
-| Phase 3: Tag System (supercategory/category/gender/custom) | ✅ Complete |
+| Phase 3: Tag System (fight_format/category/gender/custom) | ✅ Complete |
 | Phase 4: Deployment | ✅ Complete |
 | Phase 5: Auth (v2) | Planned |
 | Phase 6: Frontend (v3) | Planned |

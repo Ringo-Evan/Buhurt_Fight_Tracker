@@ -244,7 +244,7 @@ async def create_fight_with_participants(self, fight_data, fight_format, partici
 ### DD-007: fight_format Tag IS the Supercategory ✅ DECIDED
 
 **Decision**: The existing `fight_format` TagType (values: `"singles"`, `"melee"`) is the Supercategory
-level of the tag hierarchy described in `tag-rules.md`. It will be renamed `supercategory` in Phase 3.
+level of the tag hierarchy described in `tag-rules.md`. It will be renamed `fight_format` in Phase 3.
 
 **Rationale**:
 - `tag-rules.md` defines the hierarchy root as "Supercategory" with values Singles and Melee
@@ -253,12 +253,12 @@ level of the tag hierarchy described in `tag-rules.md`. It will be renamed `supe
 - Renaming via migration in Phase 3 aligns code with domain language
 
 **Migration plan**:
-- Rename TagType `name = "fight_format"` → `name = "supercategory"` in a data migration
-- Update any hardcoded `"fight_format"` references in service/test code to `"supercategory"`
+- Rename TagType `name = "fight_format"` → `name = "fight_format"` in a data migration
+- Update any hardcoded `"fight_format"` references in service/test code to `"fight_format"`
 
 **Alternatives Rejected**:
-- Keep `fight_format` and introduce separate `supercategory` (two things representing the same concept)
-- Use `fight_format` as a parent of `supercategory` (unnecessary indirection)
+- Keep `fight_format` and introduce separate `fight_format` (two things representing the same concept)
+- Use `fight_format` as a parent of `fight_format` (unnecessary indirection)
 
 ---
 
@@ -332,8 +332,8 @@ fight_format tag creation). TagService methods remain available as internal util
 **In scope for Phase 3**:
 | TagType | Parent Required | Cardinality per Fight |
 |---------|----------------|----------------------|
-| supercategory (rename fight_format) | none | exactly 1 |
-| category | supercategory | 0 or 1 |
+| fight_format (rename fight_format) | none | exactly 1 |
+| category | fight_format | 0 or 1 |
 | gender | none | 0 or 1 |
 | custom | none | unlimited |
 
@@ -348,22 +348,22 @@ fight_format tag creation). TagService methods remain available as internal util
 - Supercategory + category + gender + custom covers the core hierarchy demonstration
 - Weapon/league/ruleset require category-value-dependent allowed-values logic — significant complexity
 - Team size / Missing Fighter changes fight creation logic deeply — separate phase
-- The cascading deactivation pattern is fully demonstrated by supercategory → category alone
+- The cascading deactivation pattern is fully demonstrated by fight_format → category alone
 
 ---
 
 ### DD-011: Supercategory Tag is Immutable After Creation ✅ DECIDED
 
-**Decision**: Once a fight is created with a supercategory ("singles" or "melee"), that value
+**Decision**: Once a fight is created with a fight_format ("singles" or "melee"), that value
 cannot be changed. `PATCH /fights/{id}/tags/{tag_id}` returns 422 if the tag type is
-supercategory.
+fight_format.
 
 **Rationale**:
-- The supercategory determines participant count rules (1v1 vs 5v5+). Changing it after
+- The fight_format determines participant count rules (1v1 vs 5v5+). Changing it after
   participants are recorded would invalidate all existing validation.
 - In practice, the wrong format on a fight is a data entry error — the fight should be
   deleted and re-created, not mutated.
-- Simplifies cascade logic: no need to handle "supercategory changed" cascade in Phase 3.
+- Simplifies cascade logic: no need to handle "fight_format changed" cascade in Phase 3.
 
 **Deferred**: If a genuine use case emerges (e.g. reclassification of historical data), a
 dedicated `PATCH /fights/{id}/reclassify` endpoint with explicit business logic is the right
@@ -430,7 +430,7 @@ delete children first.
 for the new category.
 
 **Rationale**:
-- Consistent with existing supercategory → category cascade behavior (DD-011 precedent)
+- Consistent with existing fight_format → category cascade behavior (DD-011 precedent)
 - Simpler implementation: no need to check compatibility of each child tag
 - Avoids "sometimes cascades, sometimes doesn't" confusion
 - User can re-add valid tags after category change
@@ -445,7 +445,7 @@ After:  category="profight", weapon=DELETED, league=DELETED
 **Alternative Rejected**: Keep compatible children (e.g., league="BI" is valid for both duel
 and profight). Rejected because:
 - Adds validation complexity for marginal UX benefit
-- Inconsistent with supercategory cascade behavior
+- Inconsistent with fight_format cascade behavior
 - User intent when changing category is ambiguous
 
 ---
@@ -495,9 +495,9 @@ applies. Category-specific team size rules only apply when a category tag exists
 - Provides graceful degradation: add category for stricter rules
 
 **Validation Priority**:
-1. If `supercategory == "singles"`: exactly 1 per side (DD-003)
-2. If `supercategory == "melee"` AND category exists: use category-specific min/max
-3. If `supercategory == "melee"` AND no category: minimum 5 per side (DD-004)
+1. If `fight_format == "singles"`: exactly 1 per side (DD-003)
+2. If `fight_format == "melee"` AND category exists: use category-specific min/max
+3. If `fight_format == "melee"` AND no category: minimum 5 per side (DD-004)
 
 ---
 
@@ -957,7 +957,7 @@ These don't need answers now, but should be considered eventually:
 |------|--------|
 | 2026-02-23 | Added DD-014 through DD-021 (Phase 3B: category cascade, team size validation, validation matrix, weapon/duel, max enforcement, error messages, placeholder deferral) |
 | 2026-02-23 | Updated DF-002 from DEFERRED to IMPLEMENTING |
-| 2026-02-19 | Added DD-007 through DD-010 (fight_format=supercategory, tag one-to-many, standalone endpoints, Phase 3 scope) |
+| 2026-02-19 | Added DD-007 through DD-010 (fight_format=fight_format, tag one-to-many, standalone endpoints, Phase 3 scope) |
 | 2026-01-18 | Added DD-001 through DD-006 (tags before fights, fight_format, validation rules) |
 | 2026-01-18 | Added SD-003 (deployment strategy with Neon + Azure) |
 | 2026-01-18 | Added DF-005, DF-006 (Azure Postgres deferred, IaC optional) |

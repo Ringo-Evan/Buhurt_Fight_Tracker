@@ -21,8 +21,8 @@ pytestmark = pytest.mark.integration
 class TestWeaponTagIntegration:
     """Integration tests for weapon tag management (Phase 3B)."""
 
-    async def _create_fight_with_category(self, db_session, client, supercategory="singles", category="duel"):
-        """Helper: create a fight with supercategory and category. Returns (fight_id, category_tag_id)."""
+    async def _create_fight_with_category(self, db_session, client, fight_format="singles", category="duel"):
+        """Helper: create a fight with fight_format and category. Returns (fight_id, category_tag_id)."""
         from app.repositories.country_repository import CountryRepository
         from app.repositories.team_repository import TeamRepository
         from app.repositories.fighter_repository import FighterRepository
@@ -34,7 +34,7 @@ class TestWeaponTagIntegration:
         country = await country_repo.create({"code": "GER", "name": "Germany"})
         team = await team_repo.create({"name": "German Knights", "country_id": country.id})
 
-        if supercategory == "singles":
+        if fight_format == "singles":
             # Singles: need exactly 1 fighter per side
             fighter1 = await fighter_repo.create({"name": "Hans Mueller", "team_id": team.id})
             fighter2 = await fighter_repo.create({"name": "Karl Schmidt", "team_id": team.id})
@@ -58,7 +58,7 @@ class TestWeaponTagIntegration:
         fight_data = {
             "date": "2025-04-15",
             "location": "Berlin Arena",
-            "supercategory": supercategory,
+            "fight_format": fight_format,
             "participations": participations,
         }
         response = await client.post("/api/v1/fights", json=fight_data)
@@ -101,7 +101,7 @@ class TestWeaponTagIntegration:
             ) as client:
                 # Arrange: create fight with category="duel"
                 fight_id, _ = await self._create_fight_with_category(
-                    db_session, client, supercategory="singles", category="duel"
+                    db_session, client, fight_format="singles", category="duel"
                 )
 
                 # Act: add weapon tag

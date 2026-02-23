@@ -5,10 +5,10 @@ Feature: Fight Tag Management
 
   # --- Supercategory ---
 
-  Scenario: Creating a fight links supercategory tag to the fight
-    Given a valid fight is created with supercategory "singles"
+  Scenario: Creating a fight links fight_format tag to the fight
+    Given a valid fight is created with fight_format "singles"
     When I retrieve the fight
-    Then the fight has an active supercategory tag with value "singles"
+    Then the fight has an active fight_format tag with value "singles"
     And the tag has the correct fight_id
 
   # --- Category tags ---
@@ -40,16 +40,16 @@ Feature: Fight Tag Management
 
   # --- Supercategory immutability ---
 
-  Scenario: Cannot update supercategory tag after fight creation
+  Scenario: Cannot update fight_format tag after fight creation
     Given a singles fight exists
-    When I update the supercategory tag to "melee"
+    When I update the fight_format tag to "melee"
     Then I receive a 422 validation error
 
   # --- Cascade deactivation ---
 
-  Scenario: Changing supercategory deactivates the category tag
+  Scenario: Changing fight_format deactivates the category tag
     Given a singles fight with an active category tag "duel"
-    When I deactivate the supercategory tag
+    When I deactivate the fight_format tag
     Then the category tag "duel" is also deactivated
 
   # --- Gender tags ---
@@ -99,9 +99,9 @@ Feature: Fight Tag Management
 
   Scenario: Cannot delete a tag that has active children
     Given a singles fight with an active category tag "duel"
-    When I hard delete the supercategory tag
+    When I hard delete the fight_format tag
     Then I receive a 422 validation error
-    And the supercategory tag still exists
+    And the fight_format tag still exists
 
   # --- Cross-fight access guard ---
 

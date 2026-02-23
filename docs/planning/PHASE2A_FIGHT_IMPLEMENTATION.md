@@ -88,7 +88,7 @@ This document outlines the TDD implementation plan for the remaining core domain
 
 ### DD-008: Voting Threshold
 **Decision**: Default threshold of 10 votes, stored in TagChangeRequest
-**Rationale**: Per-request threshold allows future flexibility (e.g., higher threshold for supercategory changes).
+**Rationale**: Per-request threshold allows future flexibility (e.g., higher threshold for fight_format changes).
 
 ### DD-009: Session-Based Anonymous Voting
 **Decision**: Track votes by session_id (UUID), not user_id

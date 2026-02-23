@@ -35,7 +35,7 @@ class TestFightDeleteIntegration:
         fight_data = {
             "date": "2025-01-15",
             "location": "Berlin Arena",
-            "supercategory": "singles",
+            "fight_format": "singles",
             "participations": [
                 {"fighter_id": str(fighter1.id), "side": 1, "role": "fighter"},
                 {"fighter_id": str(fighter2.id), "side": 2, "role": "fighter"},

@@ -94,7 +94,7 @@ async def db_engine(postgres_container):
         await conn.execute(sa.text("""
             INSERT INTO tag_types (id, name, is_privileged, is_parent, has_children, display_order, is_deactivated, created_at)
             VALUES
-                ('00000000-0000-0000-0000-000000000001', 'supercategory', true,  true,  true,  0, false, :now),
+                ('00000000-0000-0000-0000-000000000001', 'fight_format', true,  true,  true,  0, false, :now),
                 ('00000000-0000-0000-0000-000000000004', 'category',      true,  false, false, 1, false, :now),
                 ('00000000-0000-0000-0000-000000000005', 'gender',        false, false, false, 2, false, :now),
                 ('00000000-0000-0000-0000-000000000006', 'custom',        false, false, false, 3, false, :now),

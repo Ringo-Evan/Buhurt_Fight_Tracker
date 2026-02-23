@@ -2,7 +2,7 @@
 
 **Status**: Ready for review
 **Decisions**: DD-007, DD-008, DD-009, DD-010
-**Scope**: supercategory (rename) + category + gender + custom tags + fight-scoped tag API
+**Scope**: fight_format (rename) + category + gender + custom tags + fight-scoped tag API
 
 ---
 
@@ -31,14 +31,14 @@ tags.fight_id: nullable=True  →  nullable=False
 The column exists and the relationship is already wired. This is a constraint-only migration.
 Requires verifying no NULL fight_ids exist in the database before applying.
 
-### 2. Data Migration: Rename fight_format → supercategory
+### 2. Data Migration: Rename fight_format → fight_format
 
 ```sql
-UPDATE tag_types SET name = 'supercategory' WHERE name = 'fight_format';
+UPDATE tag_types SET name = 'fight_format' WHERE name = 'fight_format';
 ```
 
 Code references to `"fight_format"` in `fight_service.py` and tests must be updated to
-`"supercategory"`.
+`"fight_format"`.
 
 ### 3. Data Migration: Seed new TagTypes
 
@@ -53,8 +53,8 @@ INSERT INTO tag_types (id, name) VALUES
 
 The Tag model already has everything needed:
 - `fight_id` — links tag to its fight
-- `tag_type_id` — discriminates supercategory / category / gender / custom
-- `parent_tag_id` — hierarchy (category's parent is the supercategory tag instance)
+- `tag_type_id` — discriminates fight_format / category / gender / custom
+- `parent_tag_id` — hierarchy (category's parent is the fight_format tag instance)
 - `value` — the string value ("singles", "duel", "male", etc.)
 - `is_deactivated` — soft deactivation for cascade
 
@@ -85,7 +85,7 @@ await self.tag_repository.create({
 # After (correct):
 await self.tag_repository.create({
     "fight_id": fight.id,
-    "tag_type_id": supercategory_tag_type.id,
+    "tag_type_id": fight_format_tag_type.id,
     "value": fight_format
 })
 ```
@@ -99,8 +99,8 @@ async def add_tag(self, fight_id: UUID, tag_type_name: str, value: str,
 - Validates fight exists and is active
 - Validates tag_type_name is a known type
 - Validates value is allowed for that tag type
-- Enforces one-per-type rule (supercategory, category, gender)
-- Enforces parent requirements (category requires supercategory tag on fight)
+- Enforces one-per-type rule (fight_format, category, gender)
+- Enforces parent requirements (category requires fight_format tag on fight)
 - Creates tag with fight_id set
 
 ```python
@@ -108,7 +108,7 @@ async def update_tag(self, fight_id: UUID, tag_id: UUID, new_value: str) -> Tag
 ```
 - Validates tag belongs to this fight
 - Validates new_value is allowed for the tag's type
-- If tag is supercategory or category: deactivates child tags (cascade)
+- If tag is fight_format or category: deactivates child tags (cascade)
 - Updates value
 
 ```python
@@ -155,7 +155,7 @@ be deleted.
 
 | tag_type | allowed values |
 |----------|---------------|
-| supercategory | "singles", "melee" |
+| fight_format | "singles", "melee" |
 | category (parent=singles) | "duel", "profight" |
 | category (parent=melee) | "3s", "5s", "10s", "12s", "16s", "21s", "30s", "mass" |
 | gender | "male", "female", "mixed" |
@@ -168,20 +168,20 @@ A fight may have at most ONE active (non-deactivated) tag of each type, EXCEPT c
 
 ### Parent requirement for category
 
-A fight must have an active supercategory tag before a category tag can be added.
-Since supercategory is required at fight creation, this is always satisfied.
+A fight must have an active fight_format tag before a category tag can be added.
+Since fight_format is required at fight creation, this is always satisfied.
 
-### Category-supercategory compatibility
+### Category-fight_format compatibility
 
-The category value must be valid for the fight's active supercategory value:
-- supercategory="singles" → category must be "duel" or "profight"
-- supercategory="melee" → category must be one of the size values ("3s", "5s", etc.)
+The category value must be valid for the fight's active fight_format value:
+- fight_format="singles" → category must be "duel" or "profight"
+- fight_format="melee" → category must be one of the size values ("3s", "5s", etc.)
 
 ### Cascade deactivation
 
 | Tag being deactivated/changed | Children deactivated |
 |-------------------------------|---------------------|
-| supercategory | all active category tags on this fight |
+| fight_format | all active category tags on this fight |
 | category | none (weapon/league/ruleset deferred to Phase 3B) |
 | gender | none |
 | custom | none |
@@ -218,10 +218,10 @@ Feature: Fight Tag Management
 
   # --- Supercategory (bug fix + rename) ---
 
-  Scenario: Creating a fight links supercategory tag to the fight
-    Given a valid fight is created with supercategory "singles"
+  Scenario: Creating a fight links fight_format tag to the fight
+    Given a valid fight is created with fight_format "singles"
     When I retrieve the fight
-    Then the fight has an active supercategory tag with value "singles"
+    Then the fight has an active fight_format tag with value "singles"
     And the tag has the correct fight_id
 
   # --- Category tags ---
@@ -253,11 +253,11 @@ Feature: Fight Tag Management
 
   # --- Cascade ---
 
-  Scenario: Changing supercategory deactivates the category tag
+  Scenario: Changing fight_format deactivates the category tag
     Given a singles fight with an active category tag "duel"
-    When I update the supercategory tag to "melee"
+    When I update the fight_format tag to "melee"
     Then the category tag "duel" is deactivated
-    And the supercategory tag value is "melee"
+    And the fight_format tag value is "melee"
 
   # --- Gender tags ---
 
@@ -303,12 +303,12 @@ Feature: Fight Tag Management
 
 For each BDD scenario, follow strict RED → GREEN:
 
-1. Fix supercategory bug + rename fight_format → these are prep work, not a new scenario
+1. Fix fight_format bug + rename fight_format → these are prep work, not a new scenario
 2. `FightResponse` includes tags → write integration test first
 3. Add category tag (valid) → repo/service/controller TDD
-4. Add category tag (invalid supercategory mismatch) → validation test
+4. Add category tag (invalid fight_format mismatch) → validation test
 5. One-per-type rule → validation test
-6. Cascade on supercategory change → service test + integration test
+6. Cascade on fight_format change → service test + integration test
 7. Gender tag → follows same pattern as category
 8. Custom tag → simpler (no parent, no allowed values restriction)
 9. Deactivate tag → should be mostly done by cascade infrastructure
@@ -336,9 +336,9 @@ For each BDD scenario, follow strict RED → GREEN:
 ## Resolved Design Questions
 
 1. **Supercategory is immutable after creation.** ✅ DECIDED
-   Once a fight is created as "singles" or "melee" it cannot be changed. The supercategory tag
+   Once a fight is created as "singles" or "melee" it cannot be changed. The fight_format tag
    value is locked. `PATCH /fights/{id}/tags/{tag_id}` must reject attempts to update a
-   supercategory tag with 422.
+   fight_format tag with 422.
 
 2. **DELETE rejects if children exist.** ✅ DECIDED
    `DELETE /fights/{id}/tags/{tag_id}` returns 422 if the tag has any active children

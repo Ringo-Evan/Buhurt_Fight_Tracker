@@ -657,11 +657,11 @@ class TestFightServiceCreateWithParticipants:
         mock_fight_repo.create.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_create_fight_creates_supercategory_tag(self):
+    async def test_create_fight_creates_fight_format_tag(self):
         """
-        Test that creating a fight also creates the supercategory tag linked to the fight.
+        Test that creating a fight also creates the fight_format tag linked to the fight.
 
-        Scenario: Fight must have exactly one supercategory tag (DD-007)
+        Scenario: Fight must have exactly one fight_format tag (DD-007)
         """
         # Arrange
         from app.repositories.fight_participation_repository import FightParticipationRepository
@@ -680,22 +680,22 @@ class TestFightServiceCreateWithParticipants:
         fight_id = uuid4()
         fighter1_id = uuid4()
         fighter2_id = uuid4()
-        supercategory_tag_type_id = uuid4()
+        fight_format_tag_type_id = uuid4()
 
         # Mock fighter lookups
         fighter1 = Fighter(id=fighter1_id, name="John Smith", is_deactivated=False, created_at=datetime.now(UTC))
         fighter2 = Fighter(id=fighter2_id, name="Jane Doe", is_deactivated=False, created_at=datetime.now(UTC))
         mock_fighter_repo.get_by_id.side_effect = lambda fid: fighter1 if fid == fighter1_id else fighter2
 
-        # Mock supercategory TagType lookup
-        supercategory_tag_type = TagType(
-            id=supercategory_tag_type_id,
-            name="supercategory",
+        # Mock fight_format TagType lookup
+        fight_format_tag_type = TagType(
+            id=fight_format_tag_type_id,
+            name="fight_format",
             is_privileged=True,
             is_deactivated=False,
             created_at=datetime.now(UTC)
         )
-        mock_tag_type_repo.get_by_name.return_value = supercategory_tag_type
+        mock_tag_type_repo.get_by_name.return_value = fight_format_tag_type
 
         # Mock fight creation
         fight = Fight(
@@ -720,14 +720,14 @@ class TestFightServiceCreateWithParticipants:
             "date": date(2025, 6, 15),
             "location": "Battle Arena Denver"
         }
-        supercategory = "singles"
+        fight_format = "singles"
         participations_data = [
             {"fighter_id": fighter1_id, "side": 1, "role": "fighter"},
             {"fighter_id": fighter2_id, "side": 2, "role": "fighter"}
         ]
 
         # Act
-        result = await service.create_with_participants(fight_data, supercategory, participations_data)
+        result = await service.create_with_participants(fight_data, fight_format, participations_data)
 
         # Assert
         assert result.id == fight_id
@@ -736,7 +736,7 @@ class TestFightServiceCreateWithParticipants:
         # Verify tag created with correct data including fight_id (DD-008)
         tag_call_args = mock_tag_repo.create.call_args[0][0]
         assert tag_call_args["fight_id"] == fight_id
-        assert tag_call_args["tag_type_id"] == supercategory_tag_type_id
+        assert tag_call_args["tag_type_id"] == fight_format_tag_type_id
         assert tag_call_args["value"] == "singles"
 
     @pytest.mark.asyncio
@@ -973,11 +973,11 @@ class TestFightServiceAddTag:
             created_at=datetime.now(UTC)
         )
 
-        # The existing supercategory tag on the fight (needed for compatibility check)
-        supercategory_tag_type_id = uuid4()
-        supercategory_tag_type = TagType(
-            id=supercategory_tag_type_id,
-            name="supercategory",
+        # The existing fight_format tag on the fight (needed for compatibility check)
+        fight_format_tag_type_id = uuid4()
+        fight_format_tag_type = TagType(
+            id=fight_format_tag_type_id,
+            name="fight_format",
             is_privileged=True,
             is_deactivated=False,
             created_at=datetime.now(UTC)
@@ -986,12 +986,12 @@ class TestFightServiceAddTag:
         sc_tag = TagModel(
             id=uuid4(),
             fight_id=fight_id,
-            tag_type_id=supercategory_tag_type_id,
+            tag_type_id=fight_format_tag_type_id,
             value="singles",
             is_deactivated=False,
             created_at=datetime.now(UTC)
         )
-        sc_tag.tag_type = supercategory_tag_type
+        sc_tag.tag_type = fight_format_tag_type
         fight.tags = [sc_tag]
 
         expected_tag = TagModel(
@@ -1047,20 +1047,20 @@ class TestFightServiceAddTag:
         with pytest.raises(ValidationError, match="[Uu]nknown tag type|tag.type.*not found"):
             await service.add_tag(uuid4(), tag_type_name="bogus", value="whatever")
 
-    def _make_fight_with_supercategory(self, supercategory_value: str):
-        """Build a Fight instance with an active supercategory tag attached."""
+    def _make_fight_with_fight_format(self, fight_format_value: str):
+        """Build a Fight instance with an active fight_format tag attached."""
         from app.models.tag import Tag as TagModel
         from app.models.tag_type import TagType
 
         fight_id = uuid4()
         sc_tag_type = TagType(
-            id=uuid4(), name="supercategory",
+            id=uuid4(), name="fight_format",
             is_privileged=True, is_deactivated=False, created_at=datetime.now(UTC)
         )
         sc_tag = TagModel(
             id=uuid4(), fight_id=fight_id,
             tag_type_id=sc_tag_type.id,
-            value=supercategory_value,
+            value=fight_format_value,
             is_deactivated=False, created_at=datetime.now(UTC)
         )
         sc_tag.tag_type = sc_tag_type
@@ -1078,14 +1078,14 @@ class TestFightServiceAddTag:
         Scenario: Cannot add a melee category to a singles fight
         """
         from app.models.tag_type import TagType
-        fight = self._make_fight_with_supercategory("singles")
+        fight = self._make_fight_with_fight_format("singles")
         category_tag_type = TagType(
             id=uuid4(), name="category", is_privileged=True,
             is_deactivated=False, created_at=datetime.now(UTC)
         )
         service, _, _, _ = self._make_service(fight=fight, tag_type=category_tag_type)
 
-        with pytest.raises(ValidationError, match="5s|not valid for supercategory 'singles'"):
+        with pytest.raises(ValidationError, match="5s|not valid for fight_format 'singles'"):
             await service.add_tag(fight.id, tag_type_name="category", value="5s")
 
     @pytest.mark.asyncio
@@ -1094,14 +1094,14 @@ class TestFightServiceAddTag:
         Scenario: Cannot add a singles category to a melee fight
         """
         from app.models.tag_type import TagType
-        fight = self._make_fight_with_supercategory("melee")
+        fight = self._make_fight_with_fight_format("melee")
         category_tag_type = TagType(
             id=uuid4(), name="category", is_privileged=True,
             is_deactivated=False, created_at=datetime.now(UTC)
         )
         service, _, _, _ = self._make_service(fight=fight, tag_type=category_tag_type)
 
-        with pytest.raises(ValidationError, match="duel|not valid for supercategory 'melee'"):
+        with pytest.raises(ValidationError, match="duel|not valid for fight_format 'melee'"):
             await service.add_tag(fight.id, tag_type_name="category", value="duel")
 
     @pytest.mark.asyncio
@@ -1112,7 +1112,7 @@ class TestFightServiceAddTag:
         from app.models.tag import Tag as TagModel
         from app.models.tag_type import TagType
 
-        fight = self._make_fight_with_supercategory("singles")
+        fight = self._make_fight_with_fight_format("singles")
         category_tag_type_id = uuid4()
         category_tag_type = TagType(
             id=category_tag_type_id, name="category", is_privileged=True,
@@ -1140,7 +1140,7 @@ class TestFightServiceAddTag:
         from app.models.tag import Tag as TagModel
         from app.models.tag_type import TagType
 
-        fight = self._make_fight_with_supercategory("singles")
+        fight = self._make_fight_with_fight_format("singles")
         gender_tag_type_id = uuid4()
         gender_tag_type = TagType(
             id=gender_tag_type_id, name="gender", is_privileged=False,
@@ -1166,7 +1166,7 @@ class TestFightServiceAddTag:
         Scenario: Cannot add an invalid gender value
         """
         from app.models.tag_type import TagType
-        fight = self._make_fight_with_supercategory("singles")
+        fight = self._make_fight_with_fight_format("singles")
         gender_tag_type = TagType(
             id=uuid4(), name="gender", is_privileged=False,
             is_deactivated=False, created_at=datetime.now(UTC)
@@ -1184,7 +1184,7 @@ class TestFightServiceAddTag:
         from app.models.tag import Tag as TagModel
         from app.models.tag_type import TagType
 
-        fight = self._make_fight_with_supercategory("singles")
+        fight = self._make_fight_with_fight_format("singles")
         custom_tag_type_id = uuid4()
         custom_tag_type = TagType(
             id=custom_tag_type_id, name="custom", is_privileged=False,
@@ -1221,7 +1221,7 @@ class TestFightServiceAddTag:
         from app.models.tag import Tag as TagModel
         from app.models.tag_type import TagType
 
-        fight = self._make_fight_with_supercategory("singles")
+        fight = self._make_fight_with_fight_format("singles")
         custom_tag_type_id = uuid4()
         custom_tag_type = TagType(
             id=custom_tag_type_id, name="custom", is_privileged=False,
@@ -1318,13 +1318,13 @@ class TestFightServiceDeactivateTag:
     @pytest.mark.asyncio
     async def test_deactivate_tag_cascades_to_children(self):
         """
-        Test that deactivating a supercategory tag also deactivates its child tags.
+        Test that deactivating a fight_format tag also deactivates its child tags.
         """
         from app.models.tag import Tag as TagModel
         from app.models.tag_type import TagType
 
         fight_id = uuid4()
-        sc_tag_type = TagType(id=uuid4(), name="supercategory", is_privileged=True,
+        sc_tag_type = TagType(id=uuid4(), name="fight_format", is_privileged=True,
                               is_deactivated=False, created_at=datetime.now(UTC))
         cat_tag_type = TagType(id=uuid4(), name="category", is_privileged=True,
                                is_deactivated=False, created_at=datetime.now(UTC))
@@ -1444,7 +1444,7 @@ class TestFightServiceDeleteTag:
         fight_id = uuid4()
         sc_tag_id = uuid4()
 
-        sc_tag_type = TagType(id=uuid4(), name="supercategory", is_privileged=True,
+        sc_tag_type = TagType(id=uuid4(), name="fight_format", is_privileged=True,
                               is_deactivated=False, created_at=datetime.now(UTC))
         sc_tag = TagModel(
             id=sc_tag_id, fight_id=fight_id,
@@ -1504,7 +1504,7 @@ class TestFightServiceDeleteTag:
 
 
 class TestFightServiceUpdateTag:
-    """Test suite for FightService.update_tag() - DD-011: supercategory immutability."""
+    """Test suite for FightService.update_tag() - DD-011: fight_format immutability."""
 
     def _make_service(self, fight=None, tag=None):
         """Build a FightService with mocked repos for update_tag tests."""
@@ -1529,16 +1529,16 @@ class TestFightServiceUpdateTag:
         return service, mock_fight_repo, mock_tag_repo
 
     @pytest.mark.asyncio
-    async def test_update_supercategory_tag_raises_validation_error(self):
+    async def test_update_fight_format_tag_raises_validation_error(self):
         """
-        DD-011: Supercategory is immutable after creation.
-        PATCH /fights/{id}/tags/{tag_id} must reject attempts to update a supercategory tag.
+        DD-011: fight_format is immutable after creation.
+        PATCH /fights/{id}/tags/{tag_id} must reject attempts to update a fight_format tag.
         """
         from app.models.tag import Tag as TagModel
         from app.models.tag_type import TagType
 
         fight_id = uuid4()
-        sc_tag_type = TagType(id=uuid4(), name="supercategory", is_privileged=True,
+        sc_tag_type = TagType(id=uuid4(), name="fight_format", is_privileged=True,
                               is_deactivated=False, created_at=datetime.now(UTC))
         sc_tag = TagModel(
             id=uuid4(), fight_id=fight_id,
@@ -1555,7 +1555,7 @@ class TestFightServiceUpdateTag:
 
         service, _, _ = self._make_service(fight=fight, tag=sc_tag)
 
-        with pytest.raises(ValidationError, match="[Ss]upercategory.*immutable|[Cc]annot update supercategory"):
+        with pytest.raises(ValidationError, match="[Ss]upercategory.*immutable|[Cc]annot update fight_format"):
             await service.update_tag(fight_id, sc_tag.id, new_value="melee")
 
     @pytest.mark.asyncio
@@ -1901,12 +1901,24 @@ class TestCategoryChangeCascade:
         category_tag_id = uuid4()
         weapon_tag_id = uuid4()
         league_tag_id = uuid4()
-        
+
         # Mock fight with tags
         fight = MagicMock()
         fight.id = fight_id
         fight.is_deactivated = False
-        
+
+        # Create fight_format tag (required for category validation)
+        fight_format_type = TagType(id=uuid4(), name="fight_format")
+        fight_format_tag = Tag(
+            id=uuid4(),
+            fight_id=fight_id,
+            tag_type_id=fight_format_type.id,
+            value="singles",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        fight_format_tag.tag_type = fight_format_type
+
         category_type = TagType(id=uuid4(), name="category")
         category_tag = Tag(
             id=category_tag_id,
@@ -1917,6 +1929,9 @@ class TestCategoryChangeCascade:
             created_at=datetime.now(UTC)
         )
         category_tag.tag_type = category_type
+
+        # Add tags to fight
+        fight.tags = [fight_format_tag, category_tag]
         
         # Mock repositories
         mock_fight_repo = AsyncMock()
@@ -2059,7 +2074,6 @@ class TestTeamSizeEnforcement:
                 fighter_id=uuid4(),
                 side=side,
                 role="fighter",
-                is_deleted=False,
                 created_at=datetime.now(UTC)
             )
             for side in [1, 2]
