@@ -1,9 +1,9 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-02-23 (Session 11 — Infrastructure deployed successfully via Terraform)
+**Last Updated**: 2026-02-23 (Session 12 — Full deployment live on Azure)
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
-**Current Status**: Backend complete, infrastructure deployed, ready for code deployment
+**Current Status**: Backend complete, deployed to Azure, live API accessible at public URL
 
 ---
 
@@ -19,7 +19,7 @@
 | Phase 3A: Tag MVP (supercategory/category/gender/custom) | ✅ COMPLETE | 242 unit, 75+ integration | ~6 hrs |
 | Phase 3B: Tag Expansion (weapon/league/ruleset + team size) | 📋 PLANNED | 0 | 0 |
 | Phase 4A: Basic Deployment (Manual) | ⏸️ SKIPPED | N/A | 0 |
-| Phase 4B: Infrastructure as Code (Terraform) | ✅ COMPLETE | N/A (infrastructure) | ~2 hrs |
+| Phase 4B: Infrastructure as Code (Terraform) | ✅ COMPLETE | N/A (infrastructure) | ~3 hrs |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
@@ -27,10 +27,11 @@
 **CI**: ✅ Green (GitHub Actions)
 **CD**: ✅ Deploy workflow ready (triggers on `main` branch)
 
-**To Complete Portfolio**:
+**Portfolio Status**: ✅ COMPLETE (v1)
 - ✅ Phase 4B (IaC Deployment): Infrastructure deployed to Azure (Canada East)
-- Deploy application code to Azure App Service
-- Configure GitHub Actions CD pipeline
+- ✅ Application deployed and live: https://buhurt-fight-tracker.azurewebsites.net
+- ✅ GitHub Actions CD pipeline: deploys on push to `master` or `main`
+- ✅ Alembic migrations run automatically on startup
 - Phase 3B (weapon/league/ruleset): optional — does NOT block portfolio
 
 ---
@@ -414,17 +415,26 @@ Without tags, Fight can't properly validate participant counts.
 - ✅ Resource group created: `buhurt-fight-tracker-rg` (Canada East)
 - ✅ App Service Plan created: `buhurt-fight-tracker-plan` (Linux, F1 Free tier)
 - ✅ Web App created: `buhurt-fight-tracker` (Python 3.12)
-- ✅ Neon PostgreSQL database ready (eastus2, ~50ms latency from Canada East)
+- ✅ Neon PostgreSQL database (eastus2, ~50ms latency from Canada East)
+- ✅ GitHub Actions CD: tests → deploy on push to `master`/`main` (~2 min total)
+- ✅ Alembic migrations run on startup via `python -m alembic upgrade head`
+- ✅ Live API: https://buhurt-fight-tracker.azurewebsites.net
 
 **Success Criteria**:
 - ✅ Infrastructure defined as code (version-controlled)
 - ✅ Subscription upgraded, quota restrictions lifted
 - ✅ Can destroy and recreate with `terraform apply`
-- [ ] DATABASE_URL configured in Azure App Service settings
-- [ ] Application code deployed to Azure
-- [ ] GitHub Actions CD configured (deploys on push to main)
-- [ ] API accessible at public URL
-- [ ] Health check endpoint responding
+- ✅ DATABASE_URL configured in Azure App Service settings
+- ✅ Application code deployed to Azure
+- ✅ GitHub Actions CD configured (deploys on push to master/main)
+- ✅ API accessible at public URL
+- ✅ Health check endpoint responding
+
+**Deployment fixes required (Session 12)**:
+- `az webapp up` broken in Azure CLI 2.83.0 → switched to publish-profile via GitHub Actions
+- `testcontainers` in prod requirements caused 19-min Azure Oryx build → split `requirements-dev.txt`
+- `sslmode` URL param rejected by asyncpg → strip in `database.py`, pass `ssl.SSLContext` via `connect_args`
+- CRLF in `startup.sh` corrupted `alembic upgrade head` to `head\r` → `.gitattributes` + `python -m alembic`
 
 **Cost Strategy**:
 - Neon free tier: $0/month
@@ -552,6 +562,20 @@ Types: feat, fix, test, docs, refactor
 
 See `planning/archive/SESSION_LOG_ARCHIVE.md` for historical sessions (Sessions 1-8).
 
+### 2026-02-23 (Session 12): Full Deployment Live ✅
+
+- ✅ Fixed `az webapp up` bug (Azure CLI 2.83.0) — switched to publish-profile GitHub Actions
+- ✅ Fixed pipeline timeout (19+ min) — split `requirements-dev.txt`, prod-only `requirements.txt`
+- ✅ Fixed asyncpg `sslmode` rejection — `_parse_engine_args()` in `database.py` passes `ssl.SSLContext` via `connect_args`
+- ✅ Fixed silent migration failure — CRLF in `startup.sh` corrupted `alembic upgrade head\r`; added `.gitattributes`, rewrote with `python -m alembic`
+- ✅ Verified live: `/health`, `/api/v1/countries`, `/api/v1/fighters` all responding correctly
+- ✅ CD pipeline: push to master → tests pass → deploy in ~2 min
+
+**Live URL**: https://buhurt-fight-tracker.azurewebsites.net
+**Docs**: https://buhurt-fight-tracker.azurewebsites.net/docs
+
+---
+
 ### 2026-02-23 (Session 11): Infrastructure Deployed Successfully ✅
 
 - ✅ **Identified root cause**: Azure "Basic" subscription type (not Pay-As-You-Go) had hard quota limits
@@ -608,68 +632,25 @@ See `planning/archive/SESSION_LOG_ARCHIVE.md` for Sessions 6–8 details.
 
 ## Next Actions
 
-### Immediate — Deploy Application Code (Phase 4B Completion)
+### Portfolio is v1-Complete ✅
 
-Infrastructure is ready, now deploy the FastAPI application.
+The API is live and all portfolio criteria are met (see "What Portfolio Complete Means" above).
 
-**Step 1 — Configure App Settings in Azure**:
+**To redeploy after changes**: push to `master` — GitHub Actions handles the rest.
+
+**To check logs if something breaks**:
 ```bash
-# Set DATABASE_URL (already in terraform.tfvars, but need to verify it's in Azure)
-az webapp config appsettings set \
+az webapp log download \
   --resource-group buhurt-fight-tracker-rg \
   --name buhurt-fight-tracker \
-  --settings DATABASE_URL="<your-neon-connection-string>"
-
-# Verify settings
-az webapp config appsettings list \
-  --resource-group buhurt-fight-tracker-rg \
-  --name buhurt-fight-tracker \
-  --query "[?name=='DATABASE_URL']"
+  --log-file /tmp/buhurt-logs.zip
+# Then inspect LogFiles/*_default_docker.log
 ```
 
-**Step 2 — Deploy Code to Azure**:
-
-Option A: Deploy via Azure CLI (quickest):
+**To destroy infra when not demoing** (saves $0 but frees quota):
 ```bash
-cd /c/Users/adict/Documents/dev/Buhurt_Webpage
-az webapp up \
-  --name buhurt-fight-tracker \
-  --resource-group buhurt-fight-tracker-rg \
-  --runtime "PYTHON:3.12"
+cd terraform && terraform destroy
 ```
-
-Option B: Deploy via GitHub Actions:
-1. Download publish profile: Azure Portal → App Service → Deployment Center → Manage Publish Profile
-2. Add GitHub Secret: `AZURE_WEBAPP_PUBLISH_PROFILE` (paste XML content)
-3. Push to main: `git push origin master` (triggers deploy workflow)
-
-**Step 3 — Verify Deployment**:
-```bash
-# Check health endpoint
-curl https://buhurt-fight-tracker.azurewebsites.net/health
-
-# Check API root
-curl https://buhurt-fight-tracker.azurewebsites.net/
-
-# Test CRUD (should return empty list)
-curl https://buhurt-fight-tracker.azurewebsites.net/api/v1/countries
-```
-
-**Step 4 — Monitor Logs** (if issues):
-```bash
-# Stream logs
-az webapp log tail \
-  --resource-group buhurt-fight-tracker-rg \
-  --name buhurt-fight-tracker
-
-# Check if migrations ran
-# Look for "Running Alembic migrations..." in logs
-```
-
-**Reference Documentation**:
-- `terraform/README.md` - Terraform usage guide
-- `terraform/TROUBLESHOOTING.md` - Common errors and fixes
-- Terraform outputs will show the app URL after apply
 
 ---
 
@@ -681,8 +662,8 @@ Can be implemented later as a portfolio enhancement.
 - [x] Complete Phase 2D (Deactivate + Hard Delete) ✅
 - [x] Complete Phase 3A (Tag Expansion MVP) ✅
 - [x] Build Phase 4B Terraform IaC configuration ✅
-- [x] **Infrastructure deployed to Azure** (Canada East) ✅
-- [ ] **Deploy application code to production** ← in progress
+- [x] Infrastructure deployed to Azure (Canada East) ✅
+- [x] **Application deployed and live** ✅ https://buhurt-fight-tracker.azurewebsites.net
 
 ---
 
