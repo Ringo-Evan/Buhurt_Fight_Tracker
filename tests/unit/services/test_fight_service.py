@@ -1699,3 +1699,102 @@ class TestWeaponTagValidation:
             service._validate_weapon_tag(category_tag, weapon_value)
         except Exception as e:
             pytest.fail(f"_validate_weapon_tag raised unexpected exception: {e}")
+
+
+# =============================================================================
+# Phase 3B: League Tag Validation Tests
+# =============================================================================
+
+
+class TestLeagueTagValidation:
+    """Test suite for league tag validation (Phase 3B)."""
+
+    @pytest.mark.asyncio
+    async def test_validate_league_tag_rejects_missing_category(self):
+        """
+        Test that _validate_league_tag raises error when no category tag exists.
+        
+        Given no category tag on the fight
+        When I try to validate a league tag
+        Then a MissingParentTagError is raised
+        """
+        # Arrange
+        from app.exceptions import MissingParentTagError
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        category_tag = None  # No category tag
+        league_value = "IMCF"
+        
+        # Act & Assert
+        with pytest.raises(MissingParentTagError) as exc_info:
+            service._validate_league_tag(category_tag, league_value)
+        
+        assert "League requires a category tag" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_validate_league_tag_rejects_invalid_value_for_category(self):
+        """
+        Test that _validate_league_tag raises error for invalid league for category.
+        
+        Given a category tag with value "3s"
+        When I try to validate league "HMB" (not valid for 3s)
+        Then an InvalidTagValueError is raised with valid options
+        """
+        # Arrange
+        from app.models.tag import Tag
+        from app.exceptions import InvalidTagValueError
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        category_tag = Tag(
+            id=uuid4(),
+            fight_id=uuid4(),
+            tag_type_id=uuid4(),
+            value="3s",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        league_value = "HMB"  # Not valid for 3s
+        
+        # Act & Assert
+        with pytest.raises(InvalidTagValueError) as exc_info:
+            service._validate_league_tag(category_tag, league_value)
+        
+        error_msg = str(exc_info.value)
+        assert "Invalid league 'HMB' for category '3s'" in error_msg
+        assert "Valid options:" in error_msg
+        assert "IMCF" in error_msg  # Valid for 3s
+
+    @pytest.mark.asyncio
+    async def test_validate_league_tag_accepts_valid_value(self):
+        """
+        Test that _validate_league_tag accepts valid league value.
+        
+        Given a category tag with value "5s"
+        When I validate league "HMB" (valid for 5s)
+        Then no exception is raised
+        """
+        # Arrange
+        from app.models.tag import Tag
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        category_tag = Tag(
+            id=uuid4(),
+            fight_id=uuid4(),
+            tag_type_id=uuid4(),
+            value="5s",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        league_value = "HMB"  # Valid for 5s
+        
+        # Act & Assert
+        try:
+            service._validate_league_tag(category_tag, league_value)
+        except Exception as e:
+            pytest.fail(f"Unexpected exception: {e}")

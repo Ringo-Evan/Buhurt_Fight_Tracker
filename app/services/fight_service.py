@@ -459,6 +459,14 @@ class FightService:
             )
             self._validate_weapon_tag(category_tag, value)
 
+        elif tag_type_name == "league":
+            # Get active category tag for league validation
+            category_tag = next(
+                (t for t in fight.tags if not t.is_deactivated and t.tag_type and t.tag_type.name == "category"),
+                None
+            )
+            self._validate_league_tag(category_tag, value)
+
         elif tag_type_name == "custom":
             if not value or not value.strip():
                 raise ValidationError("Custom tag value cannot be empty")
@@ -594,3 +602,29 @@ class FightService:
         if value not in VALID_WEAPONS:
             valid = ", ".join(VALID_WEAPONS)
             raise InvalidTagValueError(f"Invalid weapon '{value}'. Valid options: {valid}")
+
+    def _validate_league_tag(self, category_tag: Optional[Tag], value: str) -> None:
+        """
+        Validate league tag value for the current category.
+
+        Args:
+            category_tag: The current category tag (or None)
+            value: The league value to validate
+
+        Raises:
+            MissingParentTagError: If no category tag exists
+            InvalidTagError: If category doesn't support leagues
+            InvalidTagValueError: If value is not valid for this category
+        """
+        if not category_tag:
+            raise MissingParentTagError("League requires a category tag")
+
+        category = category_tag.value
+        if category not in VALID_LEAGUES:
+            raise InvalidTagError(f"League tags not valid for category '{category}'")
+
+        if value not in VALID_LEAGUES[category]:
+            valid = ", ".join(VALID_LEAGUES[category])
+            raise InvalidTagValueError(
+                f"Invalid league '{value}' for category '{category}'. Valid options: {valid}"
+            )
