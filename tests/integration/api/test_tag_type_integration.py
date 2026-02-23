@@ -212,13 +212,13 @@ class TestTagTypeIntegration:
             names = [tt['name'] for tt in tag_types]
             assert 'test_format' in names
             assert 'test_category2' in names
-            assert 'weapon' in names
+            assert 'armor' in names
 
-            # Verify display_order ordering (test_format < test_category2 < weapon)
+            # Verify display_order ordering (test_format < test_category2 < armor)
             idx_format = names.index('test_format')
             idx_category2 = names.index('test_category2')
-            idx_weapon = names.index('weapon')
-            assert idx_format < idx_category2 < idx_weapon
+            idx_armor = names.index('armor')
+            assert idx_format < idx_category2 < idx_armor
 
         finally:
             app.dependency_overrides.clear()
