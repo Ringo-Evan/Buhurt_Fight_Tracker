@@ -1,6 +1,6 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-02-23 (Session 12 — Full deployment live on Azure)
+**Last Updated**: 2026-02-23 (Session 13 — Phase 3B complete: weapon/league/ruleset tags + team size enforcement)
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
 **Current Status**: Backend complete, deployed to Azure, live API accessible at public URL
@@ -17,13 +17,13 @@
 | Phase 2C: CI/CD Pipeline + Integration Tests | ✅ COMPLETE | 206 unit, 61 integration (1 skipped) | ~3 hrs |
 | Phase 2D: Deactivate + Hard Delete | ✅ COMPLETE | 222 unit, 66+ integration | ~3 hrs |
 | Phase 3A: Tag MVP (supercategory/category/gender/custom) | ✅ COMPLETE | 242 unit, 75+ integration | ~6 hrs |
-| Phase 3B: Tag Expansion (weapon/league/ruleset + team size) | 📋 PLANNED | 0 | 0 |
+| Phase 3B: Tag Expansion (weapon/league/ruleset + team size) | ✅ COMPLETE | 257 unit, 76 integration | ~2 hrs |
 | Phase 4A: Basic Deployment (Manual) | ⏸️ SKIPPED | N/A | 0 |
 | Phase 4B: Infrastructure as Code (Terraform) | ✅ COMPLETE | N/A (infrastructure) | ~3 hrs |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
-**Total Tests**: 242 unit (all passing) + 75+ integration + 98 BDD scenarios
+**Total Tests**: 257 unit (all passing) + 76 integration + 98 BDD scenarios
 **CI**: ✅ Green (GitHub Actions)
 **CD**: ✅ Deploy workflow ready (triggers on `main` branch)
 
@@ -330,35 +330,49 @@ Without tags, Fight can't properly validate participant counts.
 
 ---
 
-### Phase 3B: Tag Expansion 📋 READY TO IMPLEMENT
+### Phase 3B: Tag Expansion ✅ COMPLETE
 
+**Started**: 2026-02-23
+**Completed**: 2026-02-23 (Session 13)
+**Time Spent**: ~2 hours
 **Prerequisites**: Phase 3A complete ✅
 **Design doc**: `docs/planning/PHASE3B_TAG_EXPANSION_IMPLEMENTATION.md`
 **Decisions**: DD-014 through DD-021
 **Complexity**: High (category-value-dependent validation, fighter count enforcement)
-**Does NOT block portfolio** — deployment already complete
 
-**Scope**:
+**Implemented Features**:
 
-| Feature | Description | Decision |
-|---------|-------------|----------|
-| `weapon` tag type | Only valid for category="duel" | DD-018 |
-| `league` tag type | Valid values depend on category | DD-017 |
-| `ruleset` tag type | Valid values depend on category | DD-017 |
-| Team size min/max | Per category: 3s=3-5, 5s=5-8, etc. | DD-019 |
-| Category change cascade | Delete ALL child tags on category change | DD-014 |
-| Category change validation | Reject if team size invalid for new category | DD-015 |
-| No-category fallback | Use DD-004 (min 5) when no category | DD-016 |
-| Error messages | Include valid options in errors | DD-020 |
+| Feature | Status | Decision | Tests |
+|---------|--------|----------|-------|
+| `weapon` tag type | ✅ COMPLETE | DD-018 | 4 unit |
+| `league` tag type | ✅ COMPLETE | DD-017 | 3 unit |
+| `ruleset` tag type | ✅ COMPLETE | DD-017 | 3 unit |
+| Team size min/max | ✅ COMPLETE | DD-019 | 3 unit |
+| Category change cascade | ✅ COMPLETE | DD-014 | 1 unit |
+| Category change validation | ✅ COMPLETE | DD-015 | 1 unit |
+| No-category fallback | ✅ VERIFIED | DD-016 | existing |
+| Error messages | ✅ COMPLETE | DD-020 | all tests |
 
 **Deferred** (per DD-021):
 - Missing Fighter placeholders — reject under-minimum instead of auto-creating
 
-**Estimated tests**:
-- ~20 new unit tests
-- ~15 new integration tests
+**Test Summary**:
+- 15 new unit tests added (strict TDD, one at a time)
+- 1 integration test added (weapon tag happy path)
+- All tests follow RED → GREEN → REFACTOR discipline
 
-**Implementation order**: See `docs/planning/PHASE3B_TAG_EXPANSION_IMPLEMENTATION.md`
+**Implementation Details**:
+- Created `app/core/constants.py` with validation matrices
+- Added 4 new exception types to `app/exceptions.py`
+- Implemented 5 new validation methods in `FightService`:
+  - `_validate_weapon_tag()` - DD-018
+  - `_validate_league_tag()` - DD-017
+  - `_validate_ruleset_tag()` - DD-017
+  - `_validate_team_size_for_category_at_creation()` - DD-019
+  - `_validate_team_size_for_category()` - DD-015
+- Modified `update_tag()` to cascade-delete children on category change - DD-014
+- Extended `_ONE_PER_FIGHT_TYPES` to include weapon, league, ruleset
+- Added auto-linking for weapon/league/ruleset to parent category tag
 
 ---
 
@@ -657,6 +671,7 @@ Can be implemented later as a portfolio enhancement.
 ### Completed This Month (February 2026)
 - [x] Complete Phase 2D (Deactivate + Hard Delete) ✅
 - [x] Complete Phase 3A (Tag Expansion MVP) ✅
+- [x] **Complete Phase 3B (Tag Expansion: weapon/league/ruleset + team size)** ✅
 - [x] Build Phase 4B Terraform IaC configuration ✅
 - [x] Infrastructure deployed to Azure (Canada East) ✅
 - [x] **Application deployed and live** ✅ https://buhurt-fight-tracker.azurewebsites.net
