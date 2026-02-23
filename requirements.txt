@@ -9,21 +9,11 @@ httpx
 # Database
 sqlalchemy[asyncio]
 asyncpg
-psycopg2-binary  # Required for Alembic migrations (synchronous driver)
+psycopg2-binary
 alembic
-
-# Testing
-#pytest==8.3.4 
-pytest
-pytest_asyncio
-#pytest-asyncio==0.25.2
-pytest-cov
-pytest-bdd
-testcontainers
 
 # Validation
 pycountry
 
 # Utilities
 python-dotenv
-psycopg2

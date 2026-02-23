@@ -1,0 +1,8 @@
+-r requirements.txt
+
+# Testing
+pytest
+pytest-asyncio
+pytest-cov
+pytest-bdd
+testcontainers
