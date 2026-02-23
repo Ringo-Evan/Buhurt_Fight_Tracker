@@ -1798,3 +1798,78 @@ class TestLeagueTagValidation:
             service._validate_league_tag(category_tag, league_value)
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
+
+
+# =============================================================================
+# Phase 3B: Ruleset Tag Validation Tests
+# =============================================================================
+
+
+class TestRulesetTagValidation:
+    """Test suite for ruleset tag validation (Phase 3B)."""
+
+    @pytest.mark.asyncio
+    async def test_validate_ruleset_tag_rejects_missing_category(self):
+        """Test that _validate_ruleset_tag raises error when no category tag exists."""
+        # Arrange
+        from app.exceptions import MissingParentTagError
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        # Act & Assert
+        with pytest.raises(MissingParentTagError) as exc_info:
+            service._validate_ruleset_tag(None, "IMCF")
+        
+        assert "Ruleset requires a category tag" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_validate_ruleset_tag_rejects_invalid_value_for_category(self):
+        """Test that _validate_ruleset_tag raises error for invalid ruleset for category."""
+        # Arrange
+        from app.models.tag import Tag
+        from app.exceptions import InvalidTagValueError
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        category_tag = Tag(
+            id=uuid4(),
+            fight_id=uuid4(),
+            tag_type_id=uuid4(),
+            value="3s",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        
+        # Act & Assert
+        with pytest.raises(InvalidTagValueError) as exc_info:
+            service._validate_ruleset_tag(category_tag, "HMBIA")
+        
+        error_msg = str(exc_info.value)
+        assert "Invalid ruleset 'HMBIA' for category '3s'" in error_msg
+        assert "Valid options:" in error_msg
+
+    @pytest.mark.asyncio
+    async def test_validate_ruleset_tag_accepts_valid_value(self):
+        """Test that _validate_ruleset_tag accepts valid ruleset value."""
+        # Arrange
+        from app.models.tag import Tag
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        category_tag = Tag(
+            id=uuid4(),
+            fight_id=uuid4(),
+            tag_type_id=uuid4(),
+            value="5s",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        
+        # Act & Assert - should not raise
+        try:
+            service._validate_ruleset_tag(category_tag, "HMBIA")
+        except Exception as e:
+            pytest.fail(f"Unexpected exception: {e}")

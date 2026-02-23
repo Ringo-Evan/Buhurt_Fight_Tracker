@@ -467,6 +467,14 @@ class FightService:
             )
             self._validate_league_tag(category_tag, value)
 
+        elif tag_type_name == "ruleset":
+            # Get active category tag for ruleset validation
+            category_tag = next(
+                (t for t in fight.tags if not t.is_deactivated and t.tag_type and t.tag_type.name == "category"),
+                None
+            )
+            self._validate_ruleset_tag(category_tag, value)
+
         elif tag_type_name == "custom":
             if not value or not value.strip():
                 raise ValidationError("Custom tag value cannot be empty")
@@ -627,4 +635,30 @@ class FightService:
             valid = ", ".join(VALID_LEAGUES[category])
             raise InvalidTagValueError(
                 f"Invalid league '{value}' for category '{category}'. Valid options: {valid}"
+            )
+
+    def _validate_ruleset_tag(self, category_tag: Optional[Tag], value: str) -> None:
+        """
+        Validate ruleset tag value for the current category.
+
+        Args:
+            category_tag: The current category tag (or None)
+            value: The ruleset value to validate
+
+        Raises:
+            MissingParentTagError: If no category tag exists
+            InvalidTagError: If category doesn't support rulesets
+            InvalidTagValueError: If value is not valid for this category
+        """
+        if not category_tag:
+            raise MissingParentTagError("Ruleset requires a category tag")
+
+        category = category_tag.value
+        if category not in VALID_RULESETS:
+            raise InvalidTagError(f"Ruleset tags not valid for category '{category}'")
+
+        if value not in VALID_RULESETS[category]:
+            valid = ", ".join(VALID_RULESETS[category])
+            raise InvalidTagValueError(
+                f"Invalid ruleset '{value}' for category '{category}'. Valid options: {valid}"
             )
