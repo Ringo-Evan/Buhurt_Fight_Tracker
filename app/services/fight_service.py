@@ -284,7 +284,11 @@ class FightService:
         if tag.tag_type:
             self._validate_tag_value(tag.tag_type.name, new_value, fight)
 
-        # 5. Update
+        # 5. DD-014: Cascade-delete children when category changes
+        if tag.tag_type and tag.tag_type.name == "category":
+            await self.tag_repository.cascade_deactivate_children(tag_id)
+
+        # 6. Update
         updated = await self.tag_repository.update(tag_id, {"value": new_value})
         return updated
 

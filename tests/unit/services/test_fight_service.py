@@ -1873,3 +1873,67 @@ class TestRulesetTagValidation:
             service._validate_ruleset_tag(category_tag, "HMBIA")
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
+
+
+# =============================================================================
+# Phase 3B: Category Change Cascade Tests
+# =============================================================================
+
+
+class TestCategoryChangeCascade:
+    """Test suite for category change cascade (Phase 3B DD-014)."""
+
+    @pytest.mark.asyncio
+    async def test_update_category_tag_cascades_delete_children(self):
+        """
+        Test that updating category tag cascades deactivation to child tags.
+        
+        Given a fight with category="duel", weapon="Longsword", league="BI"
+        When I update the category tag to "profight"
+        Then the weapon and league child tags are deactivated
+        And the category value is updated to "profight"
+        """
+        # Arrange
+        from app.models.tag import Tag
+        from app.models.tag_type import TagType
+        
+        fight_id = uuid4()
+        category_tag_id = uuid4()
+        weapon_tag_id = uuid4()
+        league_tag_id = uuid4()
+        
+        # Mock fight with tags
+        fight = MagicMock()
+        fight.id = fight_id
+        fight.is_deactivated = False
+        
+        category_type = TagType(id=uuid4(), name="category")
+        category_tag = Tag(
+            id=category_tag_id,
+            fight_id=fight_id,
+            tag_type_id=category_type.id,
+            value="duel",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        category_tag.tag_type = category_type
+        
+        # Mock repositories
+        mock_fight_repo = AsyncMock()
+        mock_fight_repo.get_by_id.return_value = fight
+        
+        mock_tag_repo = AsyncMock()
+        mock_tag_repo.get_by_id.return_value = category_tag
+        mock_tag_repo.update.return_value = category_tag
+        mock_tag_repo.cascade_deactivate_children = AsyncMock(return_value=2)  # 2 children deactivated
+        
+        service = FightService(
+            mock_fight_repo,
+            tag_repository=mock_tag_repo
+        )
+        
+        # Act
+        await service.update_tag(fight_id, category_tag_id, "profight")
+        
+        # Assert: cascade_deactivate_children was called
+        mock_tag_repo.cascade_deactivate_children.assert_awaited_once_with(category_tag_id)
