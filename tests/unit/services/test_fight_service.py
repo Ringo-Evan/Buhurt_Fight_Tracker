@@ -1937,3 +1937,161 @@ class TestCategoryChangeCascade:
         
         # Assert: cascade_deactivate_children was called
         mock_tag_repo.cascade_deactivate_children.assert_awaited_once_with(category_tag_id)
+
+
+# =============================================================================
+# Phase 3B: Team Size Enforcement Tests
+# =============================================================================
+
+
+class TestTeamSizeEnforcement:
+    """Test suite for team size enforcement (Phase 3B DD-019)."""
+
+    @pytest.mark.asyncio
+    async def test_create_fight_rejects_under_minimum_for_category(self):
+        """
+        Test that creating a 5s fight with < 5 fighters per side is rejected.
+        
+        Given 4 fighters per side
+        When I try to create a melee fight with category "5s"
+        Then an InvalidParticipantCountError is raised
+        """
+        # Arrange
+        from app.exceptions import InvalidParticipantCountError
+        
+        mock_fight_repo = AsyncMock()
+        mock_participation_repo = AsyncMock()
+        service = FightService(
+            mock_fight_repo,
+            participation_repository=mock_participation_repo
+        )
+        
+        fight_data = {"date": date.today(), "location": "Arena"}
+        participations = [
+            {"fighter_id": uuid4(), "side": 1, "role": "fighter"},
+            {"fighter_id": uuid4(), "side": 1, "role": "fighter"},
+            {"fighter_id": uuid4(), "side": 1, "role": "fighter"},
+            {"fighter_id": uuid4(), "side": 1, "role": "fighter"},  # Only 4 on side 1
+            {"fighter_id": uuid4(), "side": 2, "role": "fighter"},
+            {"fighter_id": uuid4(), "side": 2, "role": "fighter"},
+            {"fighter_id": uuid4(), "side": 2, "role": "fighter"},
+            {"fighter_id": uuid4(), "side": 2, "role": "fighter"},
+            {"fighter_id": uuid4(), "side": 2, "role": "fighter"},  # 5 on side 2
+        ]
+        
+        # Act & Assert
+        with pytest.raises(InvalidParticipantCountError) as exc_info:
+            service._validate_team_size_for_category_at_creation(participations, "5s")
+        
+        assert "requires 5-8 fighters per side" in str(exc_info.value)
+        assert "side 1 has 4" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_create_fight_rejects_over_maximum_for_category(self):
+        """
+        Test that creating a 5s fight with > 8 fighters per side is rejected.
+        """
+        # Arrange
+        from app.exceptions import InvalidParticipantCountError
+        
+        mock_fight_repo = AsyncMock()
+        service = FightService(mock_fight_repo)
+        
+        participations = [
+            {"fighter_id": uuid4(), "side": side, "role": "fighter"}
+            for side in [1, 2]
+            for _ in range(10)  # 10 per side (exceeds max of 8)
+        ]
+        
+        # Act & Assert
+        with pytest.raises(InvalidParticipantCountError) as exc_info:
+            service._validate_team_size_for_category_at_creation(participations, "5s")
+        
+        assert "requires 5-8 fighters per side" in str(exc_info.value)
+        assert "has 10" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_create_fight_accepts_valid_team_size(self):
+        """
+        Test that creating a 5s fight with 6 fighters per side succeeds.
+        """
+        # Arrange
+        mock_fight_repo = AsyncMock()
+        service = FightService(mock_fight_repo)
+        
+        participations = [
+            {"fighter_id": uuid4(), "side": side, "role": "fighter"}
+            for side in [1, 2]
+            for _ in range(6)  # 6 per side (within 5-8 range)
+        ]
+        
+        # Act & Assert - should not raise
+        try:
+            service._validate_team_size_for_category_at_creation(participations, "5s")
+        except Exception as e:
+            pytest.fail(f"Unexpected exception: {e}")
+
+    @pytest.mark.asyncio
+    async def test_update_category_validates_team_size(self):
+        """
+        Test that updating category validates current participation count.
+        
+        Given a fight with 6 fighters per side and category="5s"
+        When I try to update category to "10s" (requires 10-15)
+        Then an InvalidParticipantCountError is raised
+        """
+        # Arrange
+        from app.models.tag import Tag
+        from app.models.tag_type import TagType
+        from app.models.fight_participation import FightParticipation
+        from app.exceptions import InvalidParticipantCountError
+        
+        fight_id = uuid4()
+        category_tag_id = uuid4()
+        
+        # Mock fight with 6 participations per side
+        fight = MagicMock()
+        fight.id = fight_id
+        fight.participations = [
+            FightParticipation(
+                id=uuid4(),
+                fight_id=fight_id,
+                fighter_id=uuid4(),
+                side=side,
+                role="fighter",
+                is_deleted=False,
+                created_at=datetime.now(UTC)
+            )
+            for side in [1, 2]
+            for _ in range(6)  # 6 per side
+        ]
+        
+        category_type = TagType(id=uuid4(), name="category")
+        category_tag = Tag(
+            id=category_tag_id,
+            fight_id=fight_id,
+            tag_type_id=category_type.id,
+            value="5s",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        category_tag.tag_type = category_type
+        
+        mock_fight_repo = AsyncMock()
+        mock_fight_repo.get_by_id.return_value = fight
+        
+        mock_tag_repo = AsyncMock()
+        mock_tag_repo.get_by_id.return_value = category_tag
+        
+        service = FightService(
+            mock_fight_repo,
+            tag_repository=mock_tag_repo
+        )
+        
+        # Act & Assert
+        with pytest.raises(InvalidParticipantCountError) as exc_info:
+            # Calling _validate_team_size_for_category directly
+            service._validate_team_size_for_category(fight, "10s")
+        
+        assert "requires 10-15 fighters per side" in str(exc_info.value)
+        assert "side 1 has 6" in str(exc_info.value)

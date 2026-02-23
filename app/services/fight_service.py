@@ -284,11 +284,15 @@ class FightService:
         if tag.tag_type:
             self._validate_tag_value(tag.tag_type.name, new_value, fight)
 
-        # 5. DD-014: Cascade-delete children when category changes
+        # 5. DD-015: Validate team size if category is changing
+        if tag.tag_type and tag.tag_type.name == "category":
+            self._validate_team_size_for_category(fight, new_value)
+
+        # 6. DD-014: Cascade-delete children when category changes
         if tag.tag_type and tag.tag_type.name == "category":
             await self.tag_repository.cascade_deactivate_children(tag_id)
 
-        # 6. Update
+        # 7. Update
         updated = await self.tag_repository.update(tag_id, {"value": new_value})
         return updated
 
@@ -666,3 +670,64 @@ class FightService:
             raise InvalidTagValueError(
                 f"Invalid ruleset '{value}' for category '{category}'. Valid options: {valid}"
             )
+
+    def _validate_team_size_for_category_at_creation(
+        self, participations: List[Dict[str, Any]], category: str
+    ) -> None:
+        """
+        Validate participations at fight creation time against category team size rules.
+
+        Args:
+            participations: List of participation dictionaries
+            category: Category value (e.g., "5s", "10s")
+
+        Raises:
+            InvalidParticipantCountError: If team size doesn't meet category requirements
+        """
+        if category not in TEAM_SIZE_RULES:
+            return  # No team size rule for this category (e.g., singles categories)
+
+        min_size, max_size = TEAM_SIZE_RULES[category]
+
+        for side in [1, 2]:
+            count = len([p for p in participations if p["side"] == side])
+            if count < min_size:
+                raise InvalidParticipantCountError(
+                    f"Category '{category}' requires {min_size}-{max_size if max_size else 'unlimited'} "
+                    f"fighters per side, but side {side} has {count}"
+                )
+            if max_size and count > max_size:
+                raise InvalidParticipantCountError(
+                    f"Category '{category}' requires {min_size}-{max_size} "
+                    f"fighters per side, but side {side} has {count}"
+                )
+
+    def _validate_team_size_for_category(self, fight: Fight, category: str) -> None:
+        """
+        Validate fight's current participations satisfy category team size rules.
+
+        Args:
+            fight: The fight with participations
+            category: Category value to validate against
+
+        Raises:
+            InvalidParticipantCountError: If team size doesn't meet category requirements
+        """
+        if category not in TEAM_SIZE_RULES:
+            return  # No team size rule for this category
+
+        min_size, max_size = TEAM_SIZE_RULES[category]
+
+        for side in [1, 2]:
+            count = len([p for p in fight.participations
+                         if p.side == side and not p.is_deleted])
+            if count < min_size:
+                raise InvalidParticipantCountError(
+                    f"Cannot use category '{category}': requires {min_size}-{max_size if max_size else 'unlimited'} "
+                    f"fighters per side, but side {side} has {count}"
+                )
+            if max_size and count > max_size:
+                raise InvalidParticipantCountError(
+                    f"Cannot use category '{category}': requires {min_size}-{max_size} "
+                    f"fighters per side, but side {side} has {count}"
+                )
