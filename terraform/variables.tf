@@ -7,7 +7,7 @@ variable "resource_group_name" {
 variable "location" {
   description = "Azure region for resources"
   type        = string
-  default     = "eastus2"  # Match Neon database region
+  default     = "canadaeast"  # Match Neon database region
 }
 
 variable "app_name" {

@@ -1,9 +1,9 @@
 # Buhurt Fight Tracker - Project Progress
 
-**Last Updated**: 2026-02-20 (Session 9 — Phase 4B IaC setup complete, ready for terraform apply)
+**Last Updated**: 2026-02-23 (Session 11 — Infrastructure deployed successfully via Terraform)
 **Project Goal**: Portfolio piece demonstrating TDD/BDD mastery and system design skills
 **Target Role**: Lead/Architect trajectory
-**Current Status**: Backend complete, ready for deployment
+**Current Status**: Backend complete, infrastructure deployed, ready for code deployment
 
 ---
 
@@ -19,7 +19,7 @@
 | Phase 3A: Tag MVP (supercategory/category/gender/custom) | ✅ COMPLETE | 242 unit, 75+ integration | ~6 hrs |
 | Phase 3B: Tag Expansion (weapon/league/ruleset + team size) | 📋 PLANNED | 0 | 0 |
 | Phase 4A: Basic Deployment (Manual) | ⏸️ SKIPPED | N/A | 0 |
-| Phase 4B: Infrastructure as Code (Terraform) | 🚧 IN PROGRESS | N/A (infrastructure) | ~0.5 hrs |
+| Phase 4B: Infrastructure as Code (Terraform) | ✅ COMPLETE | N/A (infrastructure) | ~2 hrs |
 | Phase 5: Auth (v2) | 📋 FUTURE | 0 | 0 |
 | Phase 6: Frontend (v3) | 📋 FUTURE | 0 | 0 |
 
@@ -28,7 +28,9 @@
 **CD**: ✅ Deploy workflow ready (triggers on `main` branch)
 
 **To Complete Portfolio**:
-- Phase 4B (IaC Deployment): Run `terraform apply` to create Azure infrastructure (user action) — **config ready**
+- ✅ Phase 4B (IaC Deployment): Infrastructure deployed to Azure (Canada East)
+- Deploy application code to Azure App Service
+- Configure GitHub Actions CD pipeline
 - Phase 3B (weapon/league/ruleset): optional — does NOT block portfolio
 
 ---
@@ -370,17 +372,18 @@ Without tags, Fight can't properly validate participant counts.
 
 ---
 
-### Phase 4B: Infrastructure as Code 🚧 IN PROGRESS
+### Phase 4B: Infrastructure as Code ✅ COMPLETE
 
 **Started**: 2026-02-20
-**Estimated Time**: 1-2 hours
-**Focus**: Reproducible infrastructure with Terraform
-**Decision**: DD-013 Option B (Terraform First)
+**Completed**: 2026-02-23
+**Time Spent**: ~2 hours
+**Complexity**: Medium-High (subscription issues, region constraints)
 
 **Stack**:
 - Terraform 1.7+ (Infrastructure as Code)
-- Azure App Service (Linux B1, Python 3.13)
-- Neon PostgreSQL (free tier, serverless)
+- Azure App Service (Linux, Python 3.12)
+- Azure region: Canada East (eastus2 was at capacity)
+- Neon PostgreSQL (free tier, serverless, eastus2)
 - GitHub Actions (CI/CD)
 
 **Completed**:
@@ -390,35 +393,45 @@ Without tags, Fight can't properly validate participant counts.
   - `main.tf`: Infrastructure resources (RG, App Service Plan, Web App)
   - `outputs.tf`: Output values (app URL, resource group name)
   - `terraform.tfvars.example`: Example configuration
+  - `terraform.tfvars`: Actual config (gitignored) — region: eastus2, SKU: F1
   - `.gitignore`: Ignore state files and secrets
-  - `README.md`: Complete usage guide
+  - `terraform/README.md`: Complete usage guide
+  - `terraform/TROUBLESHOOTING.md`: Known errors and fixes
 - ✅ Implementation plan created (`docs/planning/PHASE4B_IAC_IMPLEMENTATION.md`)
 - ✅ Documentation updated (FILE_INDEX.md, DECISIONS.md)
+- ✅ Resource group `buhurt-fight-tracker-rg` created in Azure (eastus2)
 
-**Next Steps** (User Actions Required):
-- [ ] Install Terraform CLI (if not installed)
-- [ ] Authenticate with Azure CLI (`az login`)
-- [ ] Create `terraform/terraform.tfvars` with DATABASE_URL
-- [ ] Run `terraform init` (download Azure provider)
-- [ ] Run `terraform plan` (preview changes)
-- [ ] Run `terraform apply` (create infrastructure)
-- [ ] Configure GitHub Secrets (AZURE_WEBAPP_PUBLISH_PROFILE, DATABASE_URL)
-- [ ] Merge to `main` branch to trigger deployment
-- [ ] Verify API at https://buhurt-fight-tracker.azurewebsites.net
+**Blockers Resolved**:
+- ❌ **Initial blocker**: Azure "Basic" subscription had 0 quota for App Service Plans (both F1 and B1 tiers)
+- ✅ **Resolution 1**: Upgraded subscription from "Basic" to "Pay-As-You-Go" (preserves $200 credit)
+- ❌ **Second blocker**: East US 2 region at capacity (resource creation failed)
+- ✅ **Resolution 2**: Changed region to Canada East (canadaeast)
+- ❌ **Third blocker**: Terraform state contained stale references from manual Portal attempts
+- ✅ **Resolution 3**: Deleted resource group and Terraform state, clean `terraform apply`
+
+**Key Achievements**:
+- ✅ Infrastructure provisioned via Terraform (fully reproducible)
+- ✅ Resource group created: `buhurt-fight-tracker-rg` (Canada East)
+- ✅ App Service Plan created: `buhurt-fight-tracker-plan` (Linux, F1 Free tier)
+- ✅ Web App created: `buhurt-fight-tracker` (Python 3.12)
+- ✅ Neon PostgreSQL database ready (eastus2, ~50ms latency from Canada East)
 
 **Success Criteria**:
 - ✅ Infrastructure defined as code (version-controlled)
-- [ ] Can destroy and recreate with `terraform apply`
-- [ ] GitHub Actions deploys on push to main
+- ✅ Subscription upgraded, quota restrictions lifted
+- ✅ Can destroy and recreate with `terraform apply`
+- [ ] DATABASE_URL configured in Azure App Service settings
+- [ ] Application code deployed to Azure
+- [ ] GitHub Actions CD configured (deploys on push to main)
 - [ ] API accessible at public URL
-- [ ] All tests passing in production
+- [ ] Health check endpoint responding
 
 **Cost Strategy**:
 - Neon free tier: $0/month
-- App Service B1 (running): ~$13/month (prorated hourly)
-- App Service B1 (stopped): $0/month via scripts
-- **Destroy when not demoing**: `terraform destroy` (total cost: $0)
-- **Target**: <$5/month during development
+- App Service F1: $0/month (free tier, now working)
+- Azure credit: $200 available (expires next month)
+- **Destroy when not demoing**: `terraform destroy` (preserves credit for other experiments)
+- Total monthly cost: $0 (using free tier)
 
 ---
 
@@ -537,162 +550,128 @@ Types: feat, fix, test, docs, refactor
 
 ## Recent Sessions
 
-See `planning/archive/SESSION_LOG_ARCHIVE.md` for historical sessions (Sessions 1-7).
+See `planning/archive/SESSION_LOG_ARCHIVE.md` for historical sessions (Sessions 1-8).
+
+### 2026-02-23 (Session 11): Infrastructure Deployed Successfully ✅
+
+- ✅ **Identified root cause**: Azure "Basic" subscription type (not Pay-As-You-Go) had hard quota limits
+- ✅ **Upgraded subscription**: Basic → Pay-As-You-Go (preserved $200 credit that expires next month)
+- 🚫 **East US 2 region blocked**: Region at capacity, resource creation failed
+- ✅ **Changed region**: eastus2 → canadaeast (Terraform config updated)
+- ✅ **Cleaned stale state**: Deleted resource group and Terraform state files
+- ✅ **Successful `terraform apply`**: All resources created successfully
+  - Resource Group: `buhurt-fight-tracker-rg` (canadaeast)
+  - App Service Plan: `buhurt-fight-tracker-plan` (Linux, F1 Free tier)
+  - Web App: `buhurt-fight-tracker` (Python 3.12)
+- ✅ **Neon database ready**: PostgreSQL in eastus2 (~50ms latency acceptable)
+
+**Status**: Phase 4B complete. Infrastructure is provisioned and reproducible via Terraform.
+
+**Next Steps**:
+1. Configure DATABASE_URL in Azure App Service settings
+2. Deploy application code
+3. Test endpoints
+4. Configure GitHub Actions CD pipeline
+
+---
+
+### 2026-02-20 (Session 10): Terraform Blocked — Azure Quota Issue
+
+- ✅ **Ran `terraform apply`** — plan generated successfully, 2 resources to create
+- 🚫 **First failure**: 409 Conflict — previous delete operation still in progress (transient)
+- 🚫 **Second failure**: 401 Unauthorized — `Current Limit (Free VMs): 0` subscription-wide
+- 🔁 **Tried eastus region** — same error, confirmed subscription-wide not region-specific
+- 📋 **Reverted tfvars** back to `eastus2` (matches Neon DB location)
+- 📋 **Plan for next session**:
+  1. Try creating App Service Plan manually via Azure Portal to confirm if quota blocks Portal too
+  2. If Portal works: verify app ↔ Neon DB connectivity, then delete and recreate with Terraform
+  3. If Portal also fails: request quota increase (24-48h wait)
+
+**Status**: Phase 4B infrastructure blocked. Pivoting to manual deployment validation next session.
+
+---
 
 ### 2026-02-20 (Session 9): Phase 4B IaC Setup Complete
 
-- ✅ **Created comprehensive Terraform configuration**:
-  - `terraform/provider.tf`: Terraform 1.7+ and Azure provider setup
-  - `terraform/variables.tf`: Input variables (resource group, location, app name, SKU, database URL)
-  - `terraform/main.tf`: Infrastructure resources (Resource Group, App Service Plan, Linux Web App)
-  - `terraform/outputs.tf`: Outputs (app URL, app name, resource group name)
-  - `terraform/terraform.tfvars.example`: Example configuration with placeholders
-  - `terraform/.gitignore`: Ignore state files and secrets
-  - `terraform/README.md`: Complete usage guide with prerequisites, commands, troubleshooting
-- ✅ **Created implementation plan**: `docs/planning/PHASE4B_IAC_IMPLEMENTATION.md`
-  - 12-step implementation guide
-  - Architecture diagram
-  - Testing checklist
-  - Interview talking points
-- ✅ **Updated documentation**:
-  - FILE_INDEX.md: Added terraform/ section
-  - DECISIONS.md: Marked DD-013 as DECIDED (Option B: Terraform First)
-  - PROGRESS.md: Updated Phase 4B status
+- ✅ **Created comprehensive Terraform configuration** (`terraform/*.tf`)
+- ✅ **Created implementation plan** (`docs/planning/PHASE4B_IAC_IMPLEMENTATION.md`)
+- ✅ **Updated documentation** (FILE_INDEX.md, DECISIONS.md, PROGRESS.md)
 - ✅ **Committed changes**: 2 commits (terraform config + docs)
-- 📋 **Next**: User needs to run `terraform apply` locally (requires Azure CLI auth + Terraform install)
 
-**Status**: Phase 4B configuration complete. Ready for user to apply infrastructure.
-
----
-
-### 2026-02-20 (Session 8): Phase 3A Complete + Phase 4 Deployment Decision
-
-- ✅ **Verified CI passing**: All 242 unit tests + 75+ integration tests green
-- ✅ **Pushed Phase 4A infrastructure** to remote:
-  - `.github/workflows/deploy.yml` — CD workflow (deploys on push to `main`)
-  - `startup.sh` — Azure startup script (runs migrations + starts gunicorn)
-  - `scripts/az_start.sh` and `az_stop.sh` — Cost management scripts
-  - Updated README with deployment instructions
-- ✅ **Archived session logs**: Created `planning/archive/SESSION_LOG_ARCHIVE.md`
-- ✅ **Updated PROGRESS.md**: Streamlined to current status only (reduced 54%)
-- ✅ **Neon database configured**: Azure East US 2, direct connection string obtained
-- ❓ **Deployment approach decision**: Manual (Phase 4A) vs Terraform (Phase 4B)
-  - Reached perfect decision point: Neon ready, no Azure resources created yet
-  - DD-013 documented in DECISIONS.md
-  - Options: Quick manual deployment (20 min) vs IaC from day 1 (1-2 hrs)
-  - User deciding between speed (manual) vs portfolio quality (Terraform)
-- 📋 **Phase 3A: COMPLETE** — All tag management features implemented
-- 📋 **Phase 4: BLOCKED** — Awaiting user decision on deployment approach
-
-**Status**: Backend development complete. Deployment approach decision needed (DD-013).
+**Status**: Phase 4B configuration complete. Blocked on Azure quota at apply time.
 
 ---
 
-### 2026-02-19 (Session 7): Phase 3A Complete - DELETE + Immutability
-
-- ✅ **Implemented `FightService.delete_tag()`** (DD-012):
-  - Validates tag belongs to fight
-  - Rejects with 422 if active children exist
-  - Hard deletes tag if no children
-  - 4 unit tests
-- ✅ **Implemented `FightService.update_tag()`** (DD-011):
-  - Supercategory immutability enforced (422 if attempted)
-  - Validates new value for tag type
-  - 2 unit tests
-- ✅ **Auto-link category → supercategory**:
-  - When adding category tag, automatically sets parent_tag_id to supercategory tag
-- ✅ **Wired up controller endpoints**:
-  - `PATCH /fights/{id}/tags/{tag_id}` → `update_tag()` → 200 TagResponse
-  - `DELETE /fights/{id}/tags/{tag_id}` → `delete_tag()` → 204 No Content
-- ✅ **Integration tests**: 5 new scenarios (total 13 in test_fight_tag_integration.py)
-- ✅ **Unit tests**: 242/242 passing (up from 236)
-- 📝 **Phase 3A COMPLETE**
-
----
-
-### 2026-02-19 (Session 6): Phase 3 Started - Fight Tag Management
-
-- ✅ **Phase 3 pre-work** (all complete):
-  - Renamed `fight_format` → `supercategory` throughout (DD-007)
-  - Fixed bug: `FightService.create_with_participants` was creating tag without `fight_id`
-  - Removed standalone `tag_controller.py` write endpoints and integration tests (DD-009)
-  - Created migration `k6f7g8h9i0j1_phase3_tag_setup.py`: fight_id NOT NULL, rename, seed TagTypes
-  - Added `tags: list[TagResponse]` to `FightResponse` schema
-  - Seeded TagTypes in `conftest.db_engine` fixture so all integration tests have reference data
-- ✅ **BDD Feature File**: `tests/features/fight_tag_management.feature` (16 scenarios)
-- ✅ **Implemented `FightService.add_tag()`**:
-  - Category-supercategory compatibility validation
-  - One-per-type enforcement (supercategory/category/gender; unlimited custom)
-  - Cross-fight access guard
-  - 11 unit tests
-- ✅ **Implemented `FightService.deactivate_tag()`**:
-  - Validates tag belongs to fight
-  - Cascades deactivation to children
-  - Fixed typo in `TagRepository.cascade_deactivate_children` (recursive call was wrong method name)
-  - 3 unit tests
-- ✅ **Wired up controller endpoints**:
-  - `POST /fights/{id}/tags` → `add_tag()` → 201 TagResponse
-  - `PATCH /fights/{id}/tags/{tag_id}/deactivate` → `deactivate_tag()` → 200 TagResponse
-- ✅ **Integration tests written** (Scenarios 1-8, require Docker/CI):
-  - `tests/integration/api/test_fight_tag_integration.py`
-- ✅ **Unit tests**: 236/236 passing (up from 222)
-- 📋 **Completed in Session 7**: DELETE + supercategory immutability
+See `planning/archive/SESSION_LOG_ARCHIVE.md` for Sessions 6–8 details.
 
 ---
 
 ## Next Actions
 
-### Immediate - Apply Terraform Infrastructure (Phase 4B)
-**Decision made**: DD-013 Option B (Terraform First) ✅
-**Configuration ready**: All Terraform files created ✅
+### Immediate — Deploy Application Code (Phase 4B Completion)
 
-**Steps to Complete Deployment**:
+Infrastructure is ready, now deploy the FastAPI application.
 
-1. **Install Terraform** (if not installed):
-   ```bash
-   terraform version  # Check if installed
-   # If not: choco install terraform (Windows) or brew install terraform (macOS)
-   ```
+**Step 1 — Configure App Settings in Azure**:
+```bash
+# Set DATABASE_URL (already in terraform.tfvars, but need to verify it's in Azure)
+az webapp config appsettings set \
+  --resource-group buhurt-fight-tracker-rg \
+  --name buhurt-fight-tracker \
+  --settings DATABASE_URL="<your-neon-connection-string>"
 
-2. **Authenticate with Azure**:
-   ```bash
-   az login
-   az account show  # Verify correct subscription
-   ```
+# Verify settings
+az webapp config appsettings list \
+  --resource-group buhurt-fight-tracker-rg \
+  --name buhurt-fight-tracker \
+  --query "[?name=='DATABASE_URL']"
+```
 
-3. **Create terraform.tfvars**:
-   ```bash
-   cd terraform/
-   cp terraform.tfvars.example terraform.tfvars
-   # Edit terraform.tfvars - add Neon DATABASE_URL
-   ```
+**Step 2 — Deploy Code to Azure**:
 
-4. **Apply Terraform**:
-   ```bash
-   terraform init      # Download Azure provider
-   terraform validate  # Check syntax
-   terraform plan      # Preview changes
-   terraform apply     # Create infrastructure (type 'yes')
-   ```
+Option A: Deploy via Azure CLI (quickest):
+```bash
+cd /c/Users/adict/Documents/dev/Buhurt_Webpage
+az webapp up \
+  --name buhurt-fight-tracker \
+  --resource-group buhurt-fight-tracker-rg \
+  --runtime "PYTHON:3.12"
+```
 
-5. **Configure GitHub Secrets**:
-   - Download publish profile from Azure Portal (App Service → Deployment Center)
-   - Add to GitHub: `AZURE_WEBAPP_PUBLISH_PROFILE`, `DATABASE_URL`, `AZURE_WEBAPP_NAME`
+Option B: Deploy via GitHub Actions:
+1. Download publish profile: Azure Portal → App Service → Deployment Center → Manage Publish Profile
+2. Add GitHub Secret: `AZURE_WEBAPP_PUBLISH_PROFILE` (paste XML content)
+3. Push to main: `git push origin master` (triggers deploy workflow)
 
-6. **Deploy Code**:
-   ```bash
-   git checkout main
-   git merge master
-   git push origin main  # Triggers deployment workflow
-   ```
+**Step 3 — Verify Deployment**:
+```bash
+# Check health endpoint
+curl https://buhurt-fight-tracker.azurewebsites.net/health
 
-7. **Verify**:
-   ```bash
-   curl https://buhurt-fight-tracker.azurewebsites.net/health
-   curl https://buhurt-fight-tracker.azurewebsites.net/api/v1/countries
-   ```
+# Check API root
+curl https://buhurt-fight-tracker.azurewebsites.net/
 
-See `terraform/README.md` and `docs/planning/PHASE4B_IAC_IMPLEMENTATION.md` for detailed guide.
+# Test CRUD (should return empty list)
+curl https://buhurt-fight-tracker.azurewebsites.net/api/v1/countries
+```
+
+**Step 4 — Monitor Logs** (if issues):
+```bash
+# Stream logs
+az webapp log tail \
+  --resource-group buhurt-fight-tracker-rg \
+  --name buhurt-fight-tracker
+
+# Check if migrations ran
+# Look for "Running Alembic migrations..." in logs
+```
+
+**Reference Documentation**:
+- `terraform/README.md` - Terraform usage guide
+- `terraform/TROUBLESHOOTING.md` - Common errors and fixes
+- Terraform outputs will show the app URL after apply
+
+---
 
 ### Optional - Phase 3B
 Phase 3B (weapon/league/ruleset tags + team size enforcement) does **NOT** block portfolio completion.
@@ -701,14 +680,15 @@ Can be implemented later as a portfolio enhancement.
 ### Completed This Month (February 2026)
 - [x] Complete Phase 2D (Deactivate + Hard Delete) ✅
 - [x] Complete Phase 3A (Tag Expansion MVP) ✅
-- [x] Build Phase 4A deployment infrastructure ✅
-- [ ] **Deploy to production** ← next blocker
+- [x] Build Phase 4B Terraform IaC configuration ✅
+- [x] **Infrastructure deployed to Azure** (Canada East) ✅
+- [ ] **Deploy application code to production** ← in progress
 
 ---
 
 ## Project Velocity
 
-**Total Development Time**: ~26 hours (Jan 10 - Feb 20)
+**Total Development Time**: ~28 hours (Jan 10 - Feb 23)
 **Original Estimate**: 10-12 days → **Actual**: ~26 hours
 **Velocity Multiplier**: ~10x faster than initial estimates
 

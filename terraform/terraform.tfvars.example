@@ -4,6 +4,6 @@
 resource_group_name = "buhurt-fight-tracker-rg"
 location            = "eastus2"
 app_name            = "buhurt-fight-tracker"
-sku_name            = "B1"
+sku_name            = "F1"
 python_version      = "3.12"  # Azure supports: 3.7, 3.8, 3.9, 3.10, 3.11, 3.12
 database_url        = "postgresql+asyncpg://user:pass@host/db"  # Replace with actual Neon connection string
