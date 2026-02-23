@@ -124,3 +124,35 @@ class DuplicateVoteError(Exception):
     def __init__(self, message: str = "Already voted on this request"):
         self.message = message
         super().__init__(self.message)
+
+
+class MissingParentTagError(Exception):
+    """Raised when attempting to add a tag that requires a parent tag."""
+
+    def __init__(self, message: str = "Parent tag required"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class InvalidTagError(Exception):
+    """Raised when a tag is invalid for the current context."""
+
+    def __init__(self, message: str = "Invalid tag"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class InvalidTagValueError(Exception):
+    """Raised when a tag value is not in the allowed list."""
+
+    def __init__(self, message: str = "Invalid tag value"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class InvalidParticipantCountError(Exception):
+    """Raised when participation count doesn't meet requirements."""
+
+    def __init__(self, message: str = "Invalid participant count"):
+        self.message = message
+        super().__init__(self.message)

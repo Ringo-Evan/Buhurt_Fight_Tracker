@@ -1565,3 +1565,137 @@ class TestFightServiceUpdateTag:
 
         with pytest.raises(FightNotFoundError):
             await service.update_tag(uuid4(), uuid4(), new_value="duel")
+
+# =============================================================================
+# Phase 3B: Weapon Tag Validation Tests
+# =============================================================================
+
+
+class TestWeaponTagValidation:
+    """Test suite for weapon tag validation (Phase 3B)."""
+
+    @pytest.mark.asyncio
+    async def test_validate_weapon_tag_rejects_missing_category(self):
+        """
+        Test that _validate_weapon_tag raises error when no category tag exists.
+        
+        Given no category tag on the fight
+        When I try to validate a weapon tag
+        Then a MissingParentTagError is raised
+        """
+        # Arrange
+        from app.exceptions import MissingParentTagError
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        category_tag = None  # No category tag
+        weapon_value = "Longsword"
+        
+        # Act & Assert
+        with pytest.raises(MissingParentTagError) as exc_info:
+            service._validate_weapon_tag(category_tag, weapon_value)
+        
+        assert "Weapon requires a category tag" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_validate_weapon_tag_rejects_non_duel_category(self):
+        """
+        Test that _validate_weapon_tag raises error when category is not 'duel'.
+        
+        Given a category tag with value "profight" (not duel)
+        When I try to validate a weapon tag
+        Then an InvalidTagError is raised
+        """
+        # Arrange
+        from app.models.tag import Tag
+        from app.exceptions import InvalidTagError
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        # Create a mock category tag that is NOT "duel"
+        category_tag = Tag(
+            id=uuid4(),
+            fight_id=uuid4(),
+            tag_type_id=uuid4(),
+            value="profight",  # Not "duel"
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        weapon_value = "Longsword"
+        
+        # Act & Assert
+        with pytest.raises(InvalidTagError) as exc_info:
+            service._validate_weapon_tag(category_tag, weapon_value)
+        
+        assert "only valid for 'duel' category" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_validate_weapon_tag_rejects_invalid_value(self):
+        """
+        Test that _validate_weapon_tag raises error for invalid weapon value.
+        
+        Given a category tag with value "duel"
+        When I try to validate a weapon tag with invalid value "Trebuchet"
+        Then an InvalidTagValueError is raised with valid options
+        """
+        # Arrange
+        from app.models.tag import Tag
+        from app.exceptions import InvalidTagValueError
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        # Create a mock category tag with value "duel"
+        category_tag = Tag(
+            id=uuid4(),
+            fight_id=uuid4(),
+            tag_type_id=uuid4(),
+            value="duel",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        weapon_value = "Trebuchet"  # Invalid weapon
+        
+        # Act & Assert
+        with pytest.raises(InvalidTagValueError) as exc_info:
+            service._validate_weapon_tag(category_tag, weapon_value)
+        
+        # Error message should include valid options (DD-020)
+        error_msg = str(exc_info.value)
+        assert "Invalid weapon" in error_msg
+        assert "Valid options:" in error_msg
+        assert "Longsword" in error_msg  # One of the valid weapons
+
+    @pytest.mark.asyncio
+    async def test_validate_weapon_tag_accepts_valid_value(self):
+        """
+        Test that _validate_weapon_tag accepts valid weapon value for duel category.
+        
+        Given a category tag with value "duel"
+        When I validate a weapon tag with valid value "Longsword"
+        Then no exception is raised
+        """
+        # Arrange
+        from app.models.tag import Tag
+        
+        mock_fight_repo = AsyncMock(spec=FightRepository)
+        service = FightService(mock_fight_repo)
+        
+        # Create a mock category tag with value "duel"
+        category_tag = Tag(
+            id=uuid4(),
+            fight_id=uuid4(),
+            tag_type_id=uuid4(),
+            value="duel",
+            is_deactivated=False,
+            created_at=datetime.now(UTC)
+        )
+        weapon_value = "Longsword"  # Valid weapon
+        
+        # Act & Assert - should not raise any exception
+        try:
+            service._validate_weapon_tag(category_tag, weapon_value)
+        except Exception as e:
+            pytest.fail(f"_validate_weapon_tag raised unexpected exception: {e}")

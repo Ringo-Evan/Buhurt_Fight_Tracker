@@ -330,39 +330,35 @@ Without tags, Fight can't properly validate participant counts.
 
 ---
 
-### Phase 3B: Tag Expansion 📋 PLANNED
+### Phase 3B: Tag Expansion 📋 READY TO IMPLEMENT
 
 **Prerequisites**: Phase 3A complete ✅
+**Design doc**: `docs/planning/PHASE3B_TAG_EXPANSION_IMPLEMENTATION.md`
+**Decisions**: DD-014 through DD-021
 **Complexity**: High (category-value-dependent validation, fighter count enforcement)
-**Does NOT block portfolio** — Phase 4A (deployment) can proceed without this
+**Does NOT block portfolio** — deployment already complete
 
 **Scope**:
 
-| Feature | Description | Complexity |
-|---------|-------------|------------|
-| `weapon` tag type | Valid values depend on category (duel → sword types, etc.) | Medium |
-| `league` tag type | Valid values depend on category | Medium |
-| `ruleset` tag type | Valid values depend on category | Medium |
-| Team size enforcement | Per category: 3s=3-5, 5s=5-8, 10s=10-15, etc. | High |
-| Missing Fighter placeholders | `FightParticipation` with `fighter_id = NULL` to fill minimum counts | High |
+| Feature | Description | Decision |
+|---------|-------------|----------|
+| `weapon` tag type | Only valid for category="duel" | DD-018 |
+| `league` tag type | Valid values depend on category | DD-017 |
+| `ruleset` tag type | Valid values depend on category | DD-017 |
+| Team size min/max | Per category: 3s=3-5, 5s=5-8, etc. | DD-019 |
+| Category change cascade | Delete ALL child tags on category change | DD-014 |
+| Category change validation | Reject if team size invalid for new category | DD-015 |
+| No-category fallback | Use DD-004 (min 5) when no category | DD-016 |
+| Error messages | Include valid options in errors | DD-020 |
 
-**Key design questions to resolve before starting**:
-1. What are the allowed weapon values per category? (needs doc)
-2. What are the allowed league values? (needs doc)
-3. Should team size enforcement happen at fight creation, or separately?
-4. Should missing-fighter placeholders be auto-created or require explicit API call?
+**Deferred** (per DD-021):
+- Missing Fighter placeholders — reject under-minimum instead of auto-creating
 
-**What this unlocks**:
-- More complete fight descriptions (weapon type adds significant value to the data model)
-- Stricter data integrity for melee size categories
-- Closer to real buhurt tournament data requirements
+**Estimated tests**:
+- ~20 new unit tests
+- ~15 new integration tests
 
-**Implementation order** (when ready):
-1. Write BDD feature file for weapon/league/ruleset scenarios
-2. Add new TagTypes to migration + conftest seed
-3. Extend `_validate_tag_value` and `_CATEGORY_VALUES` in `FightService`
-4. Add team size enforcement to `create_with_participants` and/or `add_tag`
-5. Implement Missing Fighter placeholder logic
+**Implementation order**: See `docs/planning/PHASE3B_TAG_EXPANSION_IMPLEMENTATION.md`
 
 ---
 

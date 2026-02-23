@@ -1,7 +1,7 @@
 # Buhurt Fight Tracker - Decisions & Open Questions
 
 **Purpose**: Single location for all architectural decisions, open questions, and their resolutions.
-**Last Updated**: 2026-01-18
+**Last Updated**: 2026-02-23
 
 ---
 
@@ -423,6 +423,232 @@ delete children first.
 
 ---
 
+### DD-014: Category Change Cascades All Child Tags 📋 DECIDED
+
+**Decision**: When a fight's category tag is updated to a different value, ALL child tags
+(weapon, league, ruleset) are cascade-deleted, regardless of whether they would be valid
+for the new category.
+
+**Rationale**:
+- Consistent with existing supercategory → category cascade behavior (DD-011 precedent)
+- Simpler implementation: no need to check compatibility of each child tag
+- Avoids "sometimes cascades, sometimes doesn't" confusion
+- User can re-add valid tags after category change
+
+**Example**:
+```
+Before: category="duel", weapon="longsword", league="BI"
+Action: PATCH category to "profight"
+After:  category="profight", weapon=DELETED, league=DELETED
+```
+
+**Alternative Rejected**: Keep compatible children (e.g., league="BI" is valid for both duel
+and profight). Rejected because:
+- Adds validation complexity for marginal UX benefit
+- Inconsistent with supercategory cascade behavior
+- User intent when changing category is ambiguous
+
+---
+
+### DD-015: Category Change Requires Valid Participation Count 📋 DECIDED
+
+**Decision**: `PATCH /fights/{id}/tags/{tag_id}` rejects category value changes if the
+fight's current participation count violates the new category's team size rules.
+Returns 422 with descriptive error.
+
+**Rationale**:
+- Prevents data integrity violations (fight tagged "10s" with only 5 fighters per side)
+- Category determines team size rules; changing category must validate existing data
+- Simpler than auto-adjusting participations or allowing invalid state
+
+**Validation Logic**:
+```python
+if new_category in TEAM_SIZE_RULES:
+    min_size, max_size = TEAM_SIZE_RULES[new_category]
+    for side in [1, 2]:
+        count = len([p for p in fight.participations if p.side == side])
+        if count < min_size or count > max_size:
+            raise InvalidParticipantCountError(
+                f"Cannot change to '{new_category}': requires {min_size}-{max_size} "
+                f"fighters per side, but side {side} has {count}"
+            )
+```
+
+**Example**:
+```
+Fight has 5 fighters per side, category="5s" ✅
+User tries to change category to "10s" (requires 10-15)
+→ 422: "Cannot change to '10s': requires 10-15 fighters per side, but side 1 has 5"
+```
+
+---
+
+### DD-016: Melee Without Category Uses DD-004 Fallback 📋 DECIDED
+
+**Decision**: When a melee fight has no category tag, the generic minimum-5 rule (DD-004)
+applies. Category-specific team size rules only apply when a category tag exists.
+
+**Rationale**:
+- Category is optional (per DD-010)
+- Must have some validation for melee fights without category
+- DD-004 (minimum 5) is already implemented and tested
+- Provides graceful degradation: add category for stricter rules
+
+**Validation Priority**:
+1. If `supercategory == "singles"`: exactly 1 per side (DD-003)
+2. If `supercategory == "melee"` AND category exists: use category-specific min/max
+3. If `supercategory == "melee"` AND no category: minimum 5 per side (DD-004)
+
+---
+
+### DD-017: Tag Validation Matrix Stored in Code 📋 DECIDED
+
+**Decision**: Valid values for category-dependent tags (weapon, league, ruleset) are stored
+as Python constants in the service layer, not in the database.
+
+**Rationale**:
+- Simpler implementation: no migration, no extra queries
+- Version-controlled: changes reviewed in PRs
+- Type-safe: IDE autocomplete, static analysis
+- Sufficient for v1 scope (~20 validation lists)
+- Can migrate to DB in v2 if admin-editable values needed
+
+**Implementation**:
+```python
+# In fight_service.py or constants.py
+VALID_LEAGUES = {
+    "duel": ["BI", "IMCF", "ACL", "ACW", "ACS", "HMB"],
+    "profight": ["AMMA", "PWR", "BI", "IMCF", "ACL", "ACW", "ACS", "HMB", "Golden Ring"],
+    "3s": ["IMCF", "ACS", "ACL", "ACW"],
+    "5s": ["HMB", "IMCF", "ACL", "ACS", "BI", "ACW"],
+    # ... etc
+}
+
+VALID_RULESETS = {
+    "duel": ["AMMA", "Outrance", "Championship Fights", "Knight Fight", "Other"],
+    # ... etc
+}
+
+VALID_WEAPONS = ["Longsword", "Polearm", "Sword & Shield", "Sword & Buckler", "Other"]
+# Weapon only valid when category == "duel"
+```
+
+**Trade-off Accepted**: Adding a new league/ruleset requires code change + deployment.
+Acceptable for portfolio project; revisit for production.
+
+---
+
+### DD-018: Weapon Tag Requires Duel Category 📋 DECIDED
+
+**Decision**: Weapon tags can ONLY be added when the fight has `category = "duel"`.
+All other categories (profight, 3s, 5s, 10s, etc.) reject weapon tags with 422.
+
+**Rationale**:
+- Per `tag-rules.md`: weapon is a subcategory of Duel only
+- Profight and melee formats don't have weapon-specific rules
+- Enforcing at tag creation prevents invalid data
+
+**Validation**:
+```python
+if tag_type == "weapon":
+    category_tag = get_active_tag_by_type(fight, "category")
+    if not category_tag:
+        raise MissingParentTagError("Weapon requires a category tag")
+    if category_tag.value != "duel":
+        raise InvalidTagError("Weapon tags only valid for 'duel' category")
+```
+
+---
+
+### DD-019: Team Size Includes Maximum Enforcement 📋 DECIDED
+
+**Decision**: Category-specific team size rules enforce both minimum AND maximum fighters
+per side. Exceeding maximum is rejected at fight creation and category change.
+
+**Team Size Rules** (from tag-rules.md):
+| Category | Min | Max |
+|----------|-----|-----|
+| 3s | 3 | 5 |
+| 5s | 5 | 8 |
+| 10s | 10 | 15 |
+| 12s | 12 | 20 |
+| 16s | 16 | 21 |
+| 21s | 21 | 30 |
+| 30s | 30 | 50 |
+| mass | 5 | unlimited (None) |
+
+**Validation**:
+```python
+TEAM_SIZE_RULES = {
+    "3s": (3, 5),
+    "5s": (5, 8),
+    "10s": (10, 15),
+    "12s": (12, 20),
+    "16s": (16, 21),
+    "21s": (21, 30),
+    "30s": (30, 50),
+    "mass": (5, None),  # None = no max
+}
+```
+
+**When Enforced**:
+1. Fight creation with category in payload
+2. Adding category tag to existing fight
+3. Changing category tag value
+
+---
+
+### DD-020: Validation Errors Include Valid Options 📋 DECIDED
+
+**Decision**: When tag validation fails due to invalid value, the error response includes
+the list of valid options for that context.
+
+**Rationale**:
+- Actionable errors reduce trial-and-error
+- Self-documenting API behavior
+- Especially helpful for category-dependent values
+
+**Error Format**:
+```json
+{
+  "detail": "Invalid league 'XYZ' for category '3s'. Valid options: IMCF, ACS, ACL, ACW"
+}
+```
+
+**Implementation**:
+```python
+if value not in VALID_LEAGUES[category]:
+    valid = ", ".join(VALID_LEAGUES[category])
+    raise InvalidTagValueError(
+        f"Invalid league '{value}' for category '{category}'. Valid options: {valid}"
+    )
+```
+
+---
+
+### DD-021: Missing Fighter Placeholders Deferred 📋 DECIDED
+
+**Decision**: The "Missing Fighter" placeholder feature (auto-creating FightParticipation
+records with `fighter_id = NULL`) is deferred. Fights that don't meet minimum team size
+are rejected instead.
+
+**Rationale**:
+- Simpler implementation for v1
+- Placeholder logic adds complexity to participation model
+- Rejection with clear error is sufficient for portfolio demonstration
+- Can be added in v2 if real users need partial fight data entry
+
+**Deferred Scope**:
+- `FightParticipation` with `fighter_id = NULL`
+- `role = "Missing Fighter"` enumeration
+- Auto-creation logic when under minimum
+- Update endpoint to "fill in" placeholders
+
+**Documentation Update**: `tag-rules.md` will be updated to mark placeholder behavior as
+TODO/future enhancement.
+
+---
+
 ## Open Questions
 
 ### OQ-001: Fighter.team_id Nullable? ❓ OPEN
@@ -552,15 +778,17 @@ delete children first.
 
 ---
 
-### DF-002: Team Size Maximums ⏸️ DEFERRED
+### DF-002: Team Size Maximums ✅ IMPLEMENTING
 
 **Original Plan**: Enforce exact team sizes (3s = 3-5, 5s = 5-8, etc.)
 
 **v1 Approach**: Just minimum 5 for melee, no maximum
 
-**Deferred To**: Phase 3 (when category tag added)
+**Implementing In**: Phase 3B
 
-**Rationale**: Minimum validation proves the pattern; maximums are straightforward extension
+**Decisions**: See DD-019 (max enforcement), DD-015 (category change validation), DD-016 (fallback)
+
+**Status**: Moving from deferred to active implementation
 
 ---
 
@@ -727,6 +955,8 @@ These don't need answers now, but should be considered eventually:
 
 | Date | Change |
 |------|--------|
+| 2026-02-23 | Added DD-014 through DD-021 (Phase 3B: category cascade, team size validation, validation matrix, weapon/duel, max enforcement, error messages, placeholder deferral) |
+| 2026-02-23 | Updated DF-002 from DEFERRED to IMPLEMENTING |
 | 2026-02-19 | Added DD-007 through DD-010 (fight_format=supercategory, tag one-to-many, standalone endpoints, Phase 3 scope) |
 | 2026-01-18 | Added DD-001 through DD-006 (tags before fights, fight_format, validation rules) |
 | 2026-01-18 | Added SD-003 (deployment strategy with Neon + Azure) |

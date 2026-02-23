@@ -97,7 +97,10 @@ async def db_engine(postgres_container):
                 ('00000000-0000-0000-0000-000000000001', 'supercategory', true,  true,  true,  0, false, :now),
                 ('00000000-0000-0000-0000-000000000004', 'category',      true,  false, false, 1, false, :now),
                 ('00000000-0000-0000-0000-000000000005', 'gender',        false, false, false, 2, false, :now),
-                ('00000000-0000-0000-0000-000000000006', 'custom',        false, false, false, 3, false, :now)
+                ('00000000-0000-0000-0000-000000000006', 'custom',        false, false, false, 3, false, :now),
+                ('00000000-0000-0000-0000-000000000007', 'weapon',        true,  false, false, 4, false, :now),
+                ('00000000-0000-0000-0000-000000000008', 'league',        true,  false, false, 5, false, :now),
+                ('00000000-0000-0000-0000-000000000009', 'ruleset',       true,  false, false, 6, false, :now)
             ON CONFLICT (name) DO NOTHING
         """).bindparams(now=now))
 

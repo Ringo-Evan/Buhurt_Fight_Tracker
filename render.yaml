@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: buhurt-fight-tracker
+    runtime: python
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: bash startup.sh
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Set manually in Render dashboard
+      - key: PYTHON_VERSION
+        value: 3.12.0
+    healthCheckPath: /health

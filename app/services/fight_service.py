@@ -15,7 +15,15 @@ from app.repositories.tag_repository import TagRepository
 from app.repositories.tag_type_repository import TagTypeRepository
 from app.models.fight import Fight
 from app.models.tag import Tag
-from app.exceptions import FightNotFoundError, ValidationError
+from app.exceptions import (
+    FightNotFoundError,
+    ValidationError,
+    MissingParentTagError,
+    InvalidTagError,
+    InvalidTagValueError,
+    InvalidParticipantCountError,
+)
+from app.core.constants import VALID_WEAPONS, VALID_LEAGUES, VALID_RULESETS, TEAM_SIZE_RULES
 
 
 class FightService:
@@ -289,7 +297,7 @@ class FightService:
     _GENDER_VALUES = {"male", "female", "mixed"}
     # custom: any non-empty string up to 200 chars
     # Tag types that allow only one active instance per fight
-    _ONE_PER_FIGHT_TYPES = {"supercategory", "category", "gender"}
+    _ONE_PER_FIGHT_TYPES = {"supercategory", "category", "gender", "weapon", "league", "ruleset"}
 
     async def add_tag(
         self,
@@ -339,15 +347,26 @@ class FightService:
                     f"Deactivate it before adding a new one."
                 )
 
-        # 5. Auto-link category to supercategory tag (hierarchy)
-        if tag_type_name == "category" and parent_tag_id is None:
-            sc_tag = next(
-                (t for t in fight.tags if not t.is_deactivated
-                 and t.tag_type and t.tag_type.name == "supercategory"),
-                None
-            )
-            if sc_tag:
-                parent_tag_id = sc_tag.id
+        # 5. Auto-link to parent tag (hierarchy)
+        if parent_tag_id is None:
+            if tag_type_name == "category":
+                # Category links to supercategory
+                sc_tag = next(
+                    (t for t in fight.tags if not t.is_deactivated
+                     and t.tag_type and t.tag_type.name == "supercategory"),
+                    None
+                )
+                if sc_tag:
+                    parent_tag_id = sc_tag.id
+            elif tag_type_name in ("weapon", "league", "ruleset"):
+                # Weapon/league/ruleset link to category
+                cat_tag = next(
+                    (t for t in fight.tags if not t.is_deactivated
+                     and t.tag_type and t.tag_type.name == "category"),
+                    None
+                )
+                if cat_tag:
+                    parent_tag_id = cat_tag.id
 
         # 6. Create tag
         return await self.tag_repository.create({
@@ -431,6 +450,14 @@ class FightService:
                     f"Invalid gender value '{value}'. "
                     f"Allowed: {sorted(self._GENDER_VALUES)}"
                 )
+
+        elif tag_type_name == "weapon":
+            # Get active category tag for weapon validation
+            category_tag = next(
+                (t for t in fight.tags if not t.is_deactivated and t.tag_type and t.tag_type.name == "category"),
+                None
+            )
+            self._validate_weapon_tag(category_tag, value)
 
         elif tag_type_name == "custom":
             if not value or not value.strip():
@@ -542,3 +569,28 @@ class FightService:
             await self.fight_repository.delete(fight_id)
         except ValueError:
             raise FightNotFoundError(f"Fight with ID {fight_id} not found")
+
+    # =========================================================================
+    # Phase 3B: Tag Validation Methods
+    # =========================================================================
+
+    def _validate_weapon_tag(self, category_tag: Optional[Tag], value: str) -> None:
+        """
+        Validate weapon tag can be added. Only valid for category='duel'.
+
+        Args:
+            category_tag: The current category tag (or None)
+            value: The weapon value to validate
+
+        Raises:
+            MissingParentTagError: If no category tag exists
+            InvalidTagError: If category is not 'duel'
+            InvalidTagValueError: If value is not in allowed weapons list
+        """
+        if not category_tag:
+            raise MissingParentTagError("Weapon requires a category tag")
+        if category_tag.value != "duel":
+            raise InvalidTagError("Weapon tags only valid for 'duel' category")
+        if value not in VALID_WEAPONS:
+            valid = ", ".join(VALID_WEAPONS)
+            raise InvalidTagValueError(f"Invalid weapon '{value}'. Valid options: {valid}")

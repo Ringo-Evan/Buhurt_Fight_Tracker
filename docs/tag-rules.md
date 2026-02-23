@@ -228,24 +228,29 @@ Team fights MUST have at least the min number of fighters and no more than the m
 
 | Category | Required Fighters Per Side | Action if Insufficient | Action if Excess |
 |-------------|---------------------------|------------------------|------------------|
-| 3's | 3-5 | Add "Missing Fighter" placeholders | ❌ Reject fight creation |
-| 5s | 5-8 | Add "Missing Fighter" placeholders | ❌ Reject fight creation |
-| 10s | 10-15 | Add "Missing Fighter" placeholders | ❌ Reject fight creation |
-| 12s | 12-20 | Add "Missing Fighter" placeholders | ❌ Reject fight creation |
-| 16s | 16-21 | Add "Missing Fighter" placeholders | ❌ Reject fight creation |
-| 21s | 21-30 | Add "Missing Fighter" placeholders | ❌ Reject fight creation |
-| 30s | 30-50 | Add "Missing Fighter" placeholders | ❌ Reject fight creation |
-| Mass| No requiremen | NA | ✅ Accept fight creation |
+| 3's | 3-5 | ❌ Reject fight creation | ❌ Reject fight creation |
+| 5s | 5-8 | ❌ Reject fight creation | ❌ Reject fight creation |
+| 10s | 10-15 | ❌ Reject fight creation | ❌ Reject fight creation |
+| 12s | 12-20 | ❌ Reject fight creation | ❌ Reject fight creation |
+| 16s | 16-21 | ❌ Reject fight creation | ❌ Reject fight creation |
+| 21s | 21-30 | ❌ Reject fight creation | ❌ Reject fight creation |
+| 30s | 30-50 | ❌ Reject fight creation | ❌ Reject fight creation |
+| Mass | 5+ (no max) | ❌ Reject fight creation | ✅ Accept (no max) |
 
-### Missing Fighter Behavior
+**Fallback Rule**: Melee fights without a category tag use DD-004 (minimum 5 per side).
 
-When a team has fewer fighters than required:
+### Missing Fighter Behavior (TODO - Future Enhancement)
+
+> **Note**: This feature is deferred to v2. See DD-021 in DECISIONS.md.
+> Current behavior: fights that don't meet minimum team size are rejected.
+
+**Future Enhancement** - When a team has fewer fighters than required:
 - Create placeholder `FightParticipation` records with `fighter_id = NULL`
 - Set `role = "Missing Fighter"`
 - Maintain correct `side` assignment
 - Allow these to be filled in later via fight updates
 
-**Example**: 5s fight with only 4 fighters on Side 1
+**Example**: 5s fight with only 4 fighters on Side 1 (future behavior)
 ```
 Side 1:
 - Fighter A (fighter_id = uuid-a, role = fighter)
